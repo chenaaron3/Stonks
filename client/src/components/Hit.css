@@ -1,0 +1,19 @@
+.hit-slot{
+    list-style-type: none;
+    padding: 2vh;
+    margin: 3vh;
+    width: 20vw;
+    height: 8vh;
+    background-color: darkslategray;
+    border-radius: 10px;
+    transition: box-shadow linear 200ms}
+
+.hit-slot:hover{
+    outline: none;
+    border-color: #9ecaed;
+    box-shadow: 0 0 10px #9ecaed;
+}
+
+.hit-item{
+    color: darkturquoise;
+}

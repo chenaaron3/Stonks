@@ -4,12 +4,13 @@ let fetch = require('node-fetch');
 var path = require('path');
 var fs = require('fs');
 var vendor = require('../helpers/vendor');
-const csv = require('csv')
+const csv = require('csv');
 
+let PATH_TO_METADATA = path.join(__dirname, '../helpers/metadata.json');
 let PATH_TO_RESULTS = path.join(__dirname, 'results.json');
 let PATH_TO_SYMBOLS = path.join(__dirname, "symbols.json");
 let PATH_TO_CSV = path.join(__dirname, "supported_tickers.csv");
-const INTERSECTION_SIZE = 5;
+const INTERSECTION_SIZE = 1;
 const BASE_URL = "https://api.tiingo.com/tiingo/daily";
 const MIN_VOLUME = 1000000;
 let INTERVALS = [5, 20];
@@ -17,6 +18,14 @@ let EXCHANGES = ["AMEX", "NASDAQ", "NYSE"];
 let EXPIRATION = 7;
 
 let offset = 0;
+
+router.get("/metadata", (req, res) => {
+  res.json(JSON.parse(fs.readFileSync(PATH_TO_METADATA, { encoding: "utf-8" })));
+})
+
+router.get("/results", (req, res) => {
+  res.json(JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" })));
+})
 
 // gets basic information from a symbol
 function getInfo(symbol, callback) {
@@ -47,63 +56,77 @@ router.get("/intersection", async (req, res) => {
 
 // gets the intersection for all companies
 router.get("/intersections", (req, res) => {
-  offset = req.query["offset"] ? parseInt(req.query["offset"]) : offset;
-  getSymbols(async (symbols) => {
-    res.json(symbols);
-    let intersections = {};
-    let max = Math.min(offset + 2000, symbols.length);
-    for (i = offset; i < max; ++i) {
-      console.log(`Stock ${i} of ${max}`);
-      let symbol = symbols[i];
-      let attempts = 0;
-      let fail = false;
-      let error = false;
-      // keep trying until valid key
-      while (true) {
-        try {
-          let intersection = await findIntersections(symbol);
-          // only record if if has intersection
-          if (intersection.length > 0) {
-            intersections[symbol] = intersection;
-          }
-          console.log(`${symbol} => ${intersection}`);
-          break;
-        }
-        catch (e) {
-          attempts++;
-          console.log(e);
-          if (e.includes("not found")) {
-            console.log("TICKER ERROR!");
-            error = true;
+  let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA, { encoding: "utf-8" }));
+  let today = new Date();
+  let lastUpdate = new Date(metadata["lastUpdate"]);
+  let daysDifference = daysBetween(lastUpdate, today);
+  console.log(daysDifference)
+  if (daysDifference < 1) {
+    res.json({ "status": "Already Updated!" });
+  }
+  else {
+    offset = req.query["offset"] ? parseInt(req.query["offset"]) : offset;
+    getSymbols(async (symbols) => {
+      // update data
+      res.json({"status": "Updating!"});
+      metadata["lastUpdate"] = today;
+      fs.writeFile(PATH_TO_METADATA, JSON.stringify(metadata), "utf8", (err) => { if (err) throw err; });
+      // maps symbol to list of intersecting dates
+      let intersections = {};
+      let max = Math.min(offset + 10000, symbols.length);
+      for (i = offset; i < max; ++i) {
+        console.log(`Stock ${i} of ${max}`);
+        let symbol = symbols[i];
+        let attempts = 0;
+        let fail = false;
+        let error = false;
+        // keep trying until valid key
+        while (true) {
+          try {
+            let intersection = await findIntersections(symbol);
+            // only record if if has intersection
+            if (intersection.length > 0) {
+              intersections[symbol] = intersection;
+            }
+            console.log(`${symbol} => ${intersection}`);
             break;
           }
-          // if all keys fail
-          if (attempts >= vendor.numKeys()) {
-            console.log("MAX KEY FAILURE!");
-            fail = true;
-            break;
+          catch (e) {
+            attempts++;
+            console.log(e);
+            if (e.includes("not found")) {
+              console.log("TICKER ERROR!");
+              error = true;
+              break;
+            }
+            // if all keys fail
+            if (attempts >= vendor.numKeys()) {
+              console.log("MAX KEY FAILURE!");
+              fail = true;
+              break;
+            }
           }
         }
+        if (fail) break;
+        if (error) continue;
       }
-      if (fail) break;
-      if (error) continue;
-    }
-    // merge results with existing results
-    let existing = {};
-    if (fs.existsSync(PATH_TO_RESULTS)) {
-      existing = JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" }));
-    }
-    Object.assign(existing, intersections);
-    // write results to file
-    fs.writeFile(PATH_TO_RESULTS, JSON.stringify(existing), "utf8", (err) => { if (err) throw err; });
-    // update offset
-    offset = max;
-    // reset offset to 0
-    if (offset == symbols.length) {
-      offset = 0;
-    }
-    console.log("NEW OFFSET: ", offset);
-  }, false);
+      // merge results with existing results
+      let existing = {};
+      if (fs.existsSync(PATH_TO_RESULTS)) {
+        existing = JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" }));
+      }
+      Object.assign(existing, intersections);
+      // write results to file
+      fs.writeFile(PATH_TO_RESULTS, JSON.stringify(existing), "utf8", (err) => { if (err) throw err; });
+      // update offset
+      offset = max;
+      // reset offset to 0
+      if (offset == symbols.length) {
+        offset = 0;
+      }
+      console.log("NEW OFFSET: ", offset);
+    }, false);
+  }
 })
 
 // gets the symbols from cache or from csv
@@ -173,7 +196,7 @@ function findIntersections(symbol) {
     getPrices(symbol, key, (json) => {
       // if error
       if (json["detail"]) {
-        vendor.removeKey(key);
+        // vendor.removeKey(key);
         reject(json["detail"]);
       }
       else {
@@ -293,6 +316,15 @@ function formatDate(date) {
     day = '0' + day;
 
   return [year, month, day].join('-');
+}
+
+function daysBetween(date1, date2) {
+  // The number of milliseconds in one day
+  const ONE_DAY = 1000 * 60 * 60 * 24;
+  // Calculate the difference in milliseconds
+  const differenceMs = Math.abs(date1 - date2);
+  // Convert back to days and return
+  return Math.round(differenceMs / ONE_DAY);
 }
 
 module.exports = router;
