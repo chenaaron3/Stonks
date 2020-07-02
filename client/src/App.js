@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import Hit from './components/Hit';
 import './App.css';
 
 class App extends React.Component {
-
   constructor(props) {
     super(props);
-    this.state = { results: {}, status: "" }
+    this.state = { results: {}, status: "", comparator: undefined }
+    this.selectRef = createRef();
   }
 
   componentDidMount() {
@@ -26,6 +26,22 @@ class App extends React.Component {
       })
   }
 
+  onSortChange = (e) => {
+    let val = e.target.value;
+    if (val == "alphabetical") {
+      this.setState({ comparator: undefined});
+    }
+    else if (val == "date") {
+      this.setState({ comparator: (a, b) => new Date(this.state.results[a][0]["date"]) - new Date(this.state.results[b][0]["date"])});
+    }
+    else if (val == "volume") {
+      this.setState({ comparator: (a, b) => this.state.results[a][0]["volume"] - this.state.results[b][0]["volume"] });
+    }
+    else if (val == "macd") {
+      this.setState({ comparator: (a, b) => this.state.results[a][0]["macd"] - this.state.results[b][0]["macd"] });
+    }
+  }
+
   updateResults = () => {
     this.setState({ status: "..." })
     fetch("/intersections")
@@ -37,7 +53,7 @@ class App extends React.Component {
 
   render() {
     let keys = Object.keys(this.state.results);
-    keys.sort();
+    keys.sort(this.state.comparator);
     return (
       <div className="App">
         <header className="App-header">
@@ -46,10 +62,19 @@ class App extends React.Component {
           </h1>
           <button className="App-update" type="button" onClick={this.updateResults}>Update</button>
           <h3>{this.state.status}</h3>
+          <div>
+            <label>Sort By: </label>
+            <select className="App-sort" onChange={this.onSortChange}>
+              <option value="alphabetical">Alphabetical</option>
+              <option value="date">Date</option>
+              <option value="volume">Volume</option>
+              <option value="macd">MACD</option>
+            </select>
+          </div>
           <div className="App-results">
             {
-              keys.map((value, index) => {
-                return <Hit date={this.state.results[value]} key={index} value={value}></Hit>
+              keys.map((symbol, index) => {
+                return <Hit value={this.state.results[symbol][0]} key={symbol} symbol={symbol}></Hit>
               })
             }
           </div>

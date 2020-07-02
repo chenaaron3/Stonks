@@ -3,9 +3,33 @@
     padding: 2vh;
     margin: 3vh;
     width: 20vw;
-    height: 8vh;
+    height: 12vh;
     border-radius: 10px;
-    transition: all linear 200ms
+    transition: all linear 200ms;
+    display: flex;
+    flex-direction: row;
+}
+
+.hit-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hit-header {
+    font-size: .9em;
+    margin-right: 1vw;
+}
+
+.hit-content {
+    text-align: start;
+}
+
+.hit-icon {
+    width: 10vh;
+    height: 10vh;
+    border-radius: 50%;
+    background-color: #3498db;
 }
 
 .hit-slot:hover {
@@ -20,8 +44,11 @@
 
 @media screen and (max-width: 480px) {
     .hit-slot {
-        width: 50vw;
+        width: 70vw;
         font-size: 20px;
         margin: 1vh;
+    }
+    .hit-header {
+        margin-right: 3vw;
     }
 }
