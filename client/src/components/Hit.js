@@ -28,7 +28,7 @@ class Hit extends React.Component {
             <div className="hit-content">
                     Date: <span className="hit-item">{`${mo} ${da} ${ye}`}</span> <br/>
                     Volume: <span className="hit-item">{numberWithCommas(this.props.value["volume"])}</span> <br/>
-                    CSMA: <span className="hit-item">{this.props.value["macd"].toFixed(4)}</span> <br/>
+                    MACD: <span className="hit-item">{this.props.value["macd"].toFixed(4)}</span> <br/>
             </div>
         </li>
     }
