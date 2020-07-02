@@ -28,6 +28,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  margin-left: 10vw;
+  margin-right: 10vw;
 }
 
 .App-update{
