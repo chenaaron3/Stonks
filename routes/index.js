@@ -24,7 +24,7 @@ function getInfo(symbol, callback) {
     method: 'get',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Token ${process.env.TIINGO_API_KEY}`
+      'Authorization': `Token ${vendor.getKey()}`
     },
   })
     .then(res => res.text())
@@ -51,10 +51,13 @@ router.get("/intersections", (req, res) => {
   getSymbols(async (symbols) => {
     res.json(symbols);
     let intersections = {};
-    let max = Math.min(offset + 1000, symbols.length);
+    let max = Math.min(offset + 2000, symbols.length);
     for (i = offset; i < max; ++i) {
       console.log(`Stock ${i} of ${max}`);
       let symbol = symbols[i];
+      let attempts = 0;
+      let fail = false;
+      let error = false;
       // keep trying until valid key
       while (true) {
         try {
@@ -67,9 +70,23 @@ router.get("/intersections", (req, res) => {
           break;
         }
         catch (e) {
+          attempts++;
           console.log(e);
+          if (e.includes("not found")) {
+            console.log("TICKER ERROR!");
+            error = true;
+            break;
+          }
+          // if all keys fail
+          if (attempts >= vendor.numKeys()) {
+            console.log("MAX KEY FAILURE!");
+            fail = true;
+            break;
+          }
         }
       }
+      if (fail) break;
+      if (error) continue;
     }
     // merge results with existing results
     let existing = {};
@@ -122,7 +139,7 @@ function getSymbols(callback, clearCache) {
 }
 
 // makes api call to get historic prices
-function getPrices(symbol, callback) {
+function getPrices(symbol, key, callback) {
   // have start date be a year from today
   var d = new Date();
   d.setDate(d.getDate() - 365);
@@ -131,7 +148,7 @@ function getPrices(symbol, callback) {
     method: 'get',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Token ${vendor.getKey()}`
+      'Authorization': `Token ${key}`
     },
   })
     .then(res => res.text())
@@ -150,11 +167,13 @@ function getPrices(symbol, callback) {
 
 function findIntersections(symbol) {
   console.log("FINDING INTERSECTION FOR ", symbol);
+  let key = vendor.getKey();
   return new Promise((resolve, reject) => {
     // find prices
-    getPrices(symbol, (json) => {
+    getPrices(symbol, key, (json) => {
       // if error
       if (json["detail"]) {
+        vendor.removeKey(key);
         reject(json["detail"]);
       }
       else {
