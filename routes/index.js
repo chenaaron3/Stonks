@@ -98,7 +98,6 @@ router.get("/intersections", (req, res) => {
                 let symbol = symbols[i];
                 let attempts = 0;
                 let fail = false;
-                let error = false;
                 // keep trying until valid key
                 while (true) {
                     try {
@@ -112,11 +111,6 @@ router.get("/intersections", (req, res) => {
                     } catch (e) {
                         attempts++;
                         console.log(e);
-                        if (e.includes("not found")) {
-                            console.log("TICKER ERROR!");
-                            error = true;
-                            break;
-                        }
                         // if all keys fail
                         if (attempts >= vendor.numKeys()) {
                             console.log("MAX KEY FAILURE!");
@@ -125,8 +119,7 @@ router.get("/intersections", (req, res) => {
                         }
                     }
                 }
-                if (fail) break;
-                if (error) continue;
+                if (fail) continue;
             }
             // merge results with existing results
             let existing = {};
