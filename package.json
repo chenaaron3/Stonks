@@ -1,0 +1,21 @@
+{
+  "name": "stonks",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "nodemon --ignore res/ ./bin/www",
+    "heroku-postbuild": "cd client && npm install && npm run build"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "csv": "^5.3.2",
+    "debug": "~2.6.9",
+    "dotenv": "^8.2.0",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.1",
+    "node-fetch": "^2.6.0",
+    "nodemon": "^2.0.4"
+  }
+}
