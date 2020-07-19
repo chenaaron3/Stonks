@@ -284,10 +284,13 @@ function getConfirmedSymbols(callback) {
 // given symbol, find intersections
 // index and attempts used to find appropriate key
 function findIntersections(symbol, index, attempts) {
+    //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
+    // "SMA":{"interval":9},
     let strategyOptions = {
+                            "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true},
                            "RSI":{"interval":14, "underbought":30, "overbought":70, "mainSellIndicator":true}, 
                            "MACD":{"ema1":12, "ema2":26, "signalInterval":9},
-                           "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}};
+                          };
     // get a suitable key
     let key;
     if (keyCache[symbol] && attempts == 0 && useCache) {
@@ -324,6 +327,7 @@ function findIntersections(symbol, index, attempts) {
 
                 let profit = 0;
                 let percentProfit = 0;
+                let count = 0;
                 
                 // create indicator objects
                 let mainBuyIndicator;
@@ -407,7 +411,6 @@ function findIntersections(symbol, index, attempts) {
 
                         if (allIndicatorsBuy) {
                             event["buy"] = day;
-                            profit -= prices[day];
                             buyPrice = prices[day];
                             buySignal = false;
                             buyExpiration = expiration;
@@ -433,12 +436,12 @@ function findIntersections(symbol, index, attempts) {
                         sellMap[mainSellIndicator.name] = true;
                     }
                     if (sellSignal) {
-                        // // check each non main indicator for sell signal
-                        // supportingIndicators.forEach(indicator => {
-                        //     if (indicator.getAction(day) == Indicator.SELL) {
-                        //         sellMap[indicator.name] = true;
-                        //     }
-                        // });
+                        // check each non main indicator for sell signal
+                        supportingSellIndicators.forEach(indicator => {
+                            if (indicator.getAction(day) == Indicator.SELL) {
+                                sellMap[indicator.name] = true;
+                            }
+                        });
 
                         let allIndicatorsSell = true;
 
@@ -454,8 +457,9 @@ function findIntersections(symbol, index, attempts) {
                             events.push(event);
                             event = {};
 
-                            profit += prices[day];
+                            profit += prices[day] - buyPrice;
                             percentProfit += (prices[day] - buyPrice) / buyPrice;
+                            count += 1;
                             sellSignal = false;
                             sellExpiration = expiration;
                             bought = false;
@@ -475,7 +479,7 @@ function findIntersections(symbol, index, attempts) {
                         }
                     }
                 });
-                resolve({"profit": profit, "percentProfit": percentProfit, "events": events});
+                resolve({"profit": profit, "percentProfit": percentProfit / count, "events": events});
             }
         });
     })

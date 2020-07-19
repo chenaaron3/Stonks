@@ -16,6 +16,8 @@ lossCount = 0
 gainSymbols = set()
 lossSymbols = set()
 netProfit = 0
+netPercentProfit = 0
+count = 0
 
 eventList = []
 
@@ -43,6 +45,10 @@ eventList = []
 for symbol in symbols:
     # record profits
     profit = data[symbol]["profit"]
+    if data[symbol]["percentProfit"]:
+        netPercentProfit += data[symbol]["percentProfit"]
+        count += 1
+
     if profit > 0:
         gains += profit
     else:
@@ -58,7 +64,7 @@ for symbol in symbols:
             lossCount += 1
 
 # general stats
-print(f'Gains: {gains}, Loss: {loss}, Net: {netProfit}');
+print(f'Gains: {gains}, Loss: {loss}, Net: {netProfit}, %Net: {netPercentProfit / count}')
 print(f'GainCount: {gainCount}, LossCount: {lossCount}, Ratio: {gainCount / lossCount}')
 
 sortedEvents = open("./sortedEvents.json", "w")
