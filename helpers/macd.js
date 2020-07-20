@@ -2,10 +2,10 @@ let {getMACD, getExponentialMovingAverage, isCrossed} = require('./utils');
 let Indicator = require('./indicator');
 
 class MACD extends Indicator {
-	initialize(ema1, ema2, signalPeriod) {
-		this.ema1 = ema1;
-		this.ema2 = ema2;
-		this.signalPeriod = signalPeriod;
+	initialize(options) {
+		this.ema1 = options["ema1"];
+		this.ema2 = options["ema2"];
+		this.signalPeriod = options["signalPeriod"];
 		this.name = "MACD";
 		this.graph = this.calculate();
 		this.signalLine = this.signal();
@@ -20,6 +20,10 @@ class MACD extends Indicator {
 	        return new Date(a) - new Date(b);
 	    });
 		return getExponentialMovingAverage(dates, this.graph, this.signalPeriod)["data"];
+	}
+
+	getValue(date) {
+		return this.graph[date];
 	}
 
 	getAction(date) {

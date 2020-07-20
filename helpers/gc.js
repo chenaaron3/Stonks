@@ -2,9 +2,9 @@ let {isCrossed, getSimpleMovingAverage} = require('./utils');
 let Indicator = require('./indicator');
 
 class GC extends Indicator {
-	initialize(ma1Period, ma2Period) {
-		this.ma1Period = ma1Period;
-		this.ma2Period = ma2Period;
+	initialize(options) {
+		this.ma1Period = options["ma1Period"];
+		this.ma2Period = options["ma2Period"];
 		this.name = "GC";		
 		this.calculate();
 	}

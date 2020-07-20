@@ -2,14 +2,18 @@ let {isCrossed, getSimpleMovingAverage} = require('./utils');
 let Indicator = require('./indicator');
 
 class SMA extends Indicator {
-	initialize(period) {
-		this.period = period;
+	initialize(options) {
+		this.period = options["period"];
 		this.name = "SMA";
 		this.graph = this.calculate();
 	}
 
 	calculate() {
 		return getSimpleMovingAverage(this.dates, this.prices, this.period);
+	}
+
+	getValue(date) {
+		return this.graph[date];
 	}
 
 	getAction(date) {

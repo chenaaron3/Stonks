@@ -7,10 +7,19 @@ var vendor = require('../helpers/vendor');
 const csv = require('csv');
 
 let SMA = require('../helpers/sma');
+let SMASupport = require('../helpers/smaSupport');
 let RSI = require('../helpers/rsi');
 let MACD = require('../helpers/macd');
 let GC = require('../helpers/gc');
 let Indicator = require('../helpers/indicator');
+
+let INDICATOR_OBJECTS = {
+    "SMA": SMA,
+    "SMASupport": SMASupport,
+    "RSI": RSI,
+    "MACD": MACD,
+    "GC": GC,
+}
 
 // paths to resources
 let PATH_TO_METADATA = path.join(__dirname, '../res/metadata.json');
@@ -170,12 +179,11 @@ router.get("/intersections", (req, res) => {
                 while (true) {
                     try {
                         let intersection = await findIntersections(symbol, i, attempts);
-                        intersections[symbol] = intersection;
                         // only record if if has intersection
-                        // if (intersection["events"].length > 0) {
-                        //     intersections[symbol] = intersection;
-                        // }
-                        console.log(`${symbol} => ${JSON.stringify(intersection)}`);
+                        if (intersection["events"].length > 0) {
+                            intersections[symbol] = intersection;
+                        }
+                        console.log(`${symbol} => ${intersection["events"].length}`);
                         break;
                     } catch (e) {
                         // if something went wrong, keep trying with new key
@@ -285,12 +293,20 @@ function getConfirmedSymbols(callback) {
 // index and attempts used to find appropriate key
 function findIntersections(symbol, index, attempts) {
     //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
-    // "SMA":{"interval":9},
+    // "SMA":{"period":9},
     let strategyOptions = {
-                            "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true},
-                           "RSI":{"interval":14, "underbought":30, "overbought":70, "mainSellIndicator":true}, 
-                           "MACD":{"ema1":12, "ema2":26, "signalInterval":9},
-                          };
+        "indicators": {
+            // "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true},
+            "SMA":{"period":9},
+            "RSI": { "period": 14, "underbought": 30, "overbought": 70 },
+            "MACD": { "ema1": 12, "ema2": 26, "signalPeriod": 9 },
+        },
+        "mainBuyIndicator": "RSI",
+        "mainSellIndicator": "RSI",
+        "minVolume": 1000000,
+        "expiration": 7,
+        "multipleBuys": true
+    };
     // get a suitable key
     let key;
     if (keyCache[symbol] && attempts == 0 && useCache) {
@@ -316,11 +332,11 @@ function findIntersections(symbol, index, attempts) {
                 let prices = {};
                 let volumes = {};
                 json.forEach(day => {
-                    prices[day["date"]] = day["close"];
-                    volumes[day["date"]] = day["volume"];
+                    prices[day["date"]] = day["adjClose"];
+                    volumes[day["date"]] = day["adjVolume"];
                 });
 
-                // sort dates
+                // get sorted dates
                 let dates = Object.keys(prices).sort(function (a, b) {
                     return new Date(a) - new Date(b);
                 });
@@ -328,7 +344,7 @@ function findIntersections(symbol, index, attempts) {
                 let profit = 0;
                 let percentProfit = 0;
                 let count = 0;
-                
+
                 // create indicator objects
                 let mainBuyIndicator;
                 let mainSellIndicator;
@@ -336,62 +352,75 @@ function findIntersections(symbol, index, attempts) {
                 let supportingSellIndicators = [];
                 let buyMap = {};
                 let sellMap = {};
-                Object.keys(strategyOptions).forEach(key => {
-                    let indicator;
-                    if (key == "SMA") {
-                        indicator = new SMA(symbol, dates, prices);
-                        indicator.initialize(strategyOptions[key]["interval"]);
-                    }
-                    else if (key == "RSI") {
-                        indicator = new RSI(symbol, dates, prices);
-                        indicator.initialize(strategyOptions[key]["interval"], strategyOptions[key]["underbought"], strategyOptions[key]["overbought"]);
-                    }
-                    else if (key == "MACD") {
-                        indicator = new MACD(symbol, dates, prices);
-                        indicator.initialize(strategyOptions[key]["ema1"], strategyOptions[key]["ema2"], strategyOptions[key]["signalInterval"]);
-                    }
-                    else if (key == "GC") {
-                        indicator = new GC(symbol, dates, prices);
-                        indicator.initialize(strategyOptions[key]["ma1Period"], strategyOptions[key]["ma2Period"]);
+                let validIndicators = true;
+                Object.keys(strategyOptions["indicators"]).forEach(indicatorName => {
+                    // check if indicator given is valid
+                    if (!INDICATOR_OBJECTS.hasOwnProperty(indicatorName)) {
+                        reject(`Invalid Indicator!\nGiven: ${indicatorname}, Expected one of: ${JSON.stringify(Object.keys(INDICATOR_OBJECTS))}`);
+                        validIndicators = false;
+                        return;
                     }
 
+                    let indicatorOptions = strategyOptions["indicators"][indicatorName];
+                    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
+
+                    // initialize the indicator
+                    indicator.initialize(indicatorOptions);
+
+                    // if (indicatorName == "SMASupport") {
+                    //     console.log(indicator.graph);
+                    // }
+
                     // track buy indicators
-                    if (strategyOptions[key].hasOwnProperty("mainBuyIndicator")) {
+                    if (indicatorName == strategyOptions["mainBuyIndicator"]) {
                         mainBuyIndicator = indicator;
                     }
-                    else
-                    {
+                    else {
                         supportingBuyIndicators.push(indicator);
+                        buyMap[indicatorName] = false;
                     }
 
                     // track sell indicators
-                    if (strategyOptions[key].hasOwnProperty("mainSellIndicator")) {
+                    if (indicatorName == strategyOptions["mainSellIndicator"]) {
                         mainSellIndicator = indicator;
                     }
-                    else
-                    {
+                    else {
                         supportingSellIndicators.push(indicator);
+                        sellMap[indicatorName] = false;
                     }
-                    buyMap[key] = false;
-                    sellMap[key] = false;
                 });
 
-                let bought = false;
-                let buyPrice = 0;
+                // eror checking
+                if (!validIndicators) {
+                    return;
+                }
+                if (!mainBuyIndicator) {
+                    reject(`Missing Buy Indicator!\nGiven: ${strategyOptions["mainBuyIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
+                    return;
+                }
+                else if (!mainSellIndicator) {
+                    reject(`Missing Sell Indicator!\nGiven: ${strategyOptions["mainSellIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
+                    return;
+                }
+
+                // store buy/sell information
+                let expiration = strategyOptions["expiration"];
+                let buyPrices = [];
+                let buyDates = [];
                 let buySignal;
-                let sellSignal;         
-                let expiration = 7;
+                let sellSignal;
                 let buyExpiration = expiration;
                 let sellExpiration = expiration;
 
+                // store buy/sell events for debugging
                 let events = [];
                 let event = {};
 
                 // loops over dates and checks for buy signal
                 dates.forEach(day => {
-                    if (mainBuyIndicator.getAction(day) == Indicator.BUY && !bought && volumes[day] > 1000000) {
+                    // if main buy indicator goes off
+                    if (mainBuyIndicator.getAction(day) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
                         buySignal = true;
-                        buyMap[mainBuyIndicator.name] = true;
                     }
                     if (buySignal) {
                         // check each non main indicator for buy signal
@@ -401,26 +430,27 @@ function findIntersections(symbol, index, attempts) {
                             }
                         });
 
+                        // check if all supports agree
                         let allIndicatorsBuy = true;
+                        Object.keys(buyMap).forEach(indicator => {
+                            if (!buyMap[indicator]) {
+                                allIndicatorsBuy = false;
+                            }
+                        });
 
-                        // Object.keys(buyMap).forEach(indicator => {
-                        //     if (!buyMap[indicator]) {
-                        //         allIndicatorsBuy = false;
-                        //     }
-                        // });
-
-                        if (allIndicatorsBuy) {
-                            event["buy"] = day;
-                            buyPrice = prices[day];
+                        // if all supports agree, buy the stock
+                        if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
+                            buyPrices.push(prices[day]);
+                            buyDates.push(day);
                             buySignal = false;
                             buyExpiration = expiration;
-                            bought = true;
                             Object.keys(buyMap).forEach(indicator => {
                                 buyMap[indicator] = false;
                             });
                         }
                         else {
                             buyExpiration -= 1;
+                            // look for another buy signal
                             if (buyExpiration == 0) {
                                 buySignal = false;
                                 buyExpiration = expiration;
@@ -431,9 +461,9 @@ function findIntersections(symbol, index, attempts) {
                         }
                     }
 
-                    if (mainSellIndicator.getAction(day) == Indicator.SELL && bought) {
+                    // if main seller indicator goes off and has stocks to sell
+                    if (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0) {
                         sellSignal = true;
-                        sellMap[mainSellIndicator.name] = true;
                     }
                     if (sellSignal) {
                         // check each non main indicator for sell signal
@@ -443,32 +473,63 @@ function findIntersections(symbol, index, attempts) {
                             }
                         });
 
+                        // check if all supports agree
                         let allIndicatorsSell = true;
-
                         // Object.keys(sellMap).forEach(indicator => {
                         //     if (!sellMap[indicator]) {
                         //         allIndicatorsSell = false;
                         //     }
                         // });
 
+                        // if all supports agree, sell the stock
                         if (allIndicatorsSell) {
-                            event["sell"] = day;
-                            event["profit"] = prices[day] - buyPrice;
-                            events.push(event);
-                            event = {};
+                            // sell all stocks that were bought
+                            for (let i = 0; i < buyPrices.length; ++i) {
+                                let buyPrice = buyPrices[i];
+                                let buyDate = buyDates[i];
 
-                            profit += prices[day] - buyPrice;
-                            percentProfit += (prices[day] - buyPrice) / buyPrice;
-                            count += 1;
+                                // store buy/sell conditions for contextual data
+                                let buyConditions = {};
+                                let sellConditions = {};
+                                buyConditions[mainBuyIndicator.name] = mainBuyIndicator.getValue(buyDate);
+                                supportingBuyIndicators.forEach(indicator => {
+                                    buyConditions[indicator.name] = indicator.getValue(buyDate);
+                                });
+                                sellConditions[mainSellIndicator.name] = mainSellIndicator.getValue(day);
+                                supportingSellIndicators.forEach(indicator => {
+                                    sellConditions[indicator.name] = indicator.getValue(day);
+                                });
+
+                                // populate transaction information
+                                count += 1;
+                                event["buyDate"] = buyDate;
+                                event["buyPrice"] = buyPrice;
+                                event["buyConditions"] = buyConditions;
+                                event["sellDate"] = day;
+                                event["sellPrice"] = prices[day];
+                                event["sellConditions"] = sellConditions;
+                                event["profit"] = prices[day] - buyPrice;
+                                profit += event["profit"];
+                                event["percentProfit"] = (prices[day] - buyPrice) / buyPrice
+                                percentProfit += event["percentProfit"];
+                                event["span"] = daysBetween(new Date(buyDate), new Date(day));
+
+                                // add and create new event
+                                events.push(event);
+                                event = {};
+                            }
+
+                            buyPrices = []
+                            buyDates = []
                             sellSignal = false;
                             sellExpiration = expiration;
-                            bought = false;
                             Object.keys(sellMap).forEach(indicator => {
                                 sellMap[indicator] = false;
                             });
                         }
                         else {
                             sellExpiration -= 1;
+                            // look for another sell signal
                             if (sellExpiration == 0) {
                                 sellSignal = false;
                                 sellExpiration = expiration;
@@ -479,7 +540,7 @@ function findIntersections(symbol, index, attempts) {
                         }
                     }
                 });
-                resolve({"profit": profit, "percentProfit": percentProfit / count, "events": events});
+                resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events });
             }
         });
     })
@@ -529,253 +590,6 @@ function getPrices(symbol, key, callback) {
         })
         // API error
         .catch(err => { callback({ "error": err }) });
-}
-
-// gets a list of points (date, price) for simple moving average
-function getSimpleMovingAverage(dates, prices, interval) {
-    let res = {};
-    let sum = 0;
-    let start = undefined;
-    // go through each date
-    for (let i = 0; i < dates.length; ++i) {
-        let day = dates[i];
-        // if not enough for moving sum, keep adding
-        if (i < interval) {
-            sum += prices[day];
-            if (i == interval - 1) {
-                res[day] = sum / interval;
-                start = day;
-            }
-        }
-        // start saving moving sum
-        else {
-            sum += prices[day] - prices[dates[i - interval]];
-            res[day] = sum / interval;
-        }
-    }
-    return { valid: start != undefined, start: start, data: res };
-}
-
-function getMACD(dates, prices) {
-    let res = {};
-    // get exponential averages
-    twelve = getExponentialMovingAverage(dates, prices, 12);
-    twentySix = getExponentialMovingAverage(dates, prices, 26);
-
-    // if both valid
-    if (twelve["valid"] && twentySix["valid"]) {
-        // start storing the differences
-        let startIndex = dates.indexOf(twentySix["start"]);
-        for (let i = startIndex; i < dates.length - 1; ++i) {
-            let day = dates[i];
-            res[day] = twelve["data"][day] - twentySix["data"][day];
-        }
-    }
-    else {
-        return { valid: false, start: undefined, data: res };
-    }
-    return { valid: true, start: twentySix["start"], data: res };
-}
-
-// gets a list of points (date, price) for exponential moving average
-function getExponentialMovingAverage(dates, prices, interval) {
-    let res = {};
-    let sum = 0;
-    let start = undefined;
-    let last = 0;
-    let multiplier = 2.0 / (interval + 1);
-    // go through each date
-    for (let i = 0; i < dates.length; ++i) {
-        let day = dates[i];
-        // if not enough for moving sum, keep adding
-        if (i < interval) {
-            sum += prices[day];
-        }
-        // start saving moving sum
-        else {
-            if (i == interval) {
-                start = day;
-                // last is the SMA
-                last = sum / interval;
-            }
-            res[day] = prices[day] * multiplier + last * (1 - multiplier);
-            last = res[day];
-        }
-    }
-    return { valid: start != undefined, start: start, data: res };
-}
-
-function getRSI(dates, prices) {
-    let res = {};
-    // get wilder averages
-    let avgU = getWilderSmoothing(dates, prices, true);
-    let avgD = getWilderSmoothing(dates, prices, false);
-
-    // if both valid
-    if (avgU["valid"] && avgD["valid"]) {
-        // start storing the RSI
-        let startIndex = dates.indexOf(avgU["start"]);
-        for (let i = startIndex; i < dates.length; ++i) {
-            let day = dates[i];
-            let rs = avgU["data"][day] / avgD["data"][day];
-            res[day] = 100 - (100 / (1 + rs));
-        }
-    } else {
-        return { valid: false, start: undefined, data: res };
-    }
-    return { valid: true, start: avgU["start"], data: res };
-
-}
-
-// gets a list of points (date, price) for Wilder's smoothing average
-function getWilderSmoothing(dates, prices, up) {
-    let res = {};
-    let sum = 0;
-    let start = undefined;
-    let avg = 0;
-    // go through each date
-    for (let i = 1; i < dates.length; ++i) {
-        let yesterday = dates[i - 1];
-        let day = dates[i];
-        let ut = prices[day] - prices[yesterday];
-        let dt = prices[yesterday] - prices[day];
-        ut = ut > 0 ? ut : 0;
-        dt = dt > 0 ? dt : 0;
-        // if not enough for moving sum, keep adding
-        if (i < RSI_INTERVAL) {
-            if (up) {
-                sum += ut;
-            }
-            else {
-                sum += dt;
-            }
-        }
-        // start saving moving sum
-        else {
-            if (i == RSI_INTERVAL) {
-                start = day;
-                avg = sum / RSI_INTERVAL;
-            }
-            if (up) {
-                avg = avg * ((RSI_INTERVAL - 1) / RSI_INTERVAL) + ut * (1 / RSI_INTERVAL);
-            }
-            else {
-                avg = avg * ((RSI_INTERVAL - 1) / RSI_INTERVAL) + dt * (1 / RSI_INTERVAL);
-            }
-            res[day] = avg;
-        }
-    }
-    return { valid: start != undefined, start: start, data: res };
-}
-
-// curve(k-1) has smaller interval than curve(k)
-function getGoldenCrosses(dates, curves, macd) {
-    // calculate valid date
-    let today = new Date();
-    let lastDate = new Date();
-    lastDate.setDate(today.getDate() - EXPIRATION);
-    let res = [];
-
-    // start index is last curve's start date
-    let startIndex = Math.max(dates.indexOf(curves[curves.length - 1]["start"]), dates.indexOf(macd["start"]));
-    // look through all dates
-    for (let i = startIndex; i < dates.length - 1; ++i) {
-        let day = dates[i];
-        let nextDay = dates[i + 1];
-        let valid = true;
-
-        // look through all curves
-        for (let c = 0; c < curves.length - 1; c++) {
-            let curve1 = curves[c];
-            let curve2 = curves[c + 1];
-            if (!isCrossed(curve1["data"][day], curve1["data"][nextDay], curve2["data"][day], curve2["data"][nextDay], true)) {
-                valid = false;
-                break;
-            }
-        }
-
-        // if golden cross and date is valid and macd > 0
-        if (valid && new Date(day) > lastDate) {
-            if (macd["data"][day] > 0) {
-                res.push(day);
-            }
-        }
-    }
-
-    return res;
-}
-
-function getDeathCrosses(dates, curves) {
-    // calculate valid date
-    let today = new Date();
-    let lastDate = new Date();
-    lastDate.setDate(today.getDate() - EXPIRATION);
-    let res = [];
-
-    // start index is last curve's start date
-    let startIndex = dates.indexOf(curves[curves.length - 1]["start"]);
-    // look through all dates
-    for (let i = startIndex; i < dates.length - 1; ++i) {
-        let day = dates[i];
-        let nextDay = dates[i + 1];
-        let valid = true;
-        // look through all curves
-        for (let c = 0; c < curves.length - 1; c++) {
-            let curve1 = curves[c];
-            let curve2 = curves[c + 1];
-            if (!isCrossed(curve1["data"][day], curve1["data"][nextDay], curve2["data"][day], curve2["data"][nextDay], false)) {
-                valid = false;
-                break;
-            }
-        }
-        // if golden cross and date is valid and macd > 0
-        if (valid && new Date(day) > lastDate) {
-            res.push(day);
-        }
-    }
-
-    return res;
-}
-
-function pairCrosses(golden, death) {
-    death = [...death];
-    let pairs = []
-    // for each golden day
-    golden.forEach(goldenDay => {
-        // find closest death day after 
-        while (death.length > 0 && new Date(death[0]) < new Date(goldenDay["goldenDate"])) {
-            death.shift();
-        }
-        // add pair if exists
-        if (death.length > 0) {
-            goldenDay["deathDate"] = death.shift();
-            pairs.push(goldenDay);
-        }
-    });
-    return pairs;
-}
-
-// determine if line (x1, a1) => (x2, a2) crosses line (x1, b1) => (x2, b2)
-function isCrossed(a1, a2, b1, b2, crossUp) {
-    if (crossUp) {
-        // smaller interval has to start below or equal to greater interval
-        if (a1 <= b1) {
-            // smaller interval has to end above to greater interval
-            return a2 > b2;
-        } else {
-            return false;
-        }
-    }
-    else {
-        // smaller interval has to start above or equal to greater interval
-        if (a1 >= b1) {
-            // smaller interval has to end below to greater interval
-            return a2 < b2;
-        } else {
-            return false;
-        }
-    }
-
 }
 
 // format date to api needs

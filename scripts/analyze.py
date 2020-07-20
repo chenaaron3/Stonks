@@ -13,35 +13,15 @@ gains = 0
 gainCount = 0
 loss = 0
 lossCount = 0
-gainSymbols = set()
-lossSymbols = set()
 netProfit = 0
 netPercentProfit = 0
 count = 0
 
 eventList = []
+gainEvents = []
+lossEvents = []
 
 # # start logging stats for each symbol
-# for symbol in symbols:
-#     # each symbol may have multiple golden cross events
-#     events = data[symbol]["events"]    
-#     for event in events:
-#         # record profits
-#         profit = event["profit"]
-#         if profit > 0:
-#             gains += profit
-#             gainSymbols.add(symbol)
-#             gainEvents.append(event)
-#         else:
-#             loss += profit
-#             lossSymbols.add(symbol)
-#             lossEvents.append(event)
-#         netProfit += profit
-
-#         # add to global event list
-#         event["symbol"] = symbol
-#         eventList.append(event)
-
 for symbol in symbols:
     # record profits
     profit = data[symbol]["profit"]
@@ -60,12 +40,19 @@ for symbol in symbols:
         eventList.append(event)
         if (event["profit"] > 0):
             gainCount += 1
+            gainEvents.append(event)
         else:
             lossCount += 1
+            lossEvents.append(event)
+
+print("\nGains Span")
+print(pd.Series([ event["span"] for event in gainEvents ]).describe())
+print("\nLoss Span")
+print(pd.Series([ event["span"] for event in lossEvents ]).describe())
 
 # general stats
 print(f'Gains: {gains}, Loss: {loss}, Net: {netProfit}, %Net: {netPercentProfit / count}')
 print(f'GainCount: {gainCount}, LossCount: {lossCount}, Ratio: {gainCount / lossCount}')
 
 sortedEvents = open("./sortedEvents.json", "w")
-json.dump(sorted(eventList, key=(lambda x: x["profit"])), sortedEvents)
+json.dump(sorted(eventList, key=(lambda x: x["percentProfit"])), sortedEvents)

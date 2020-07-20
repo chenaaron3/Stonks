@@ -2,16 +2,20 @@ let {getRSI} = require('./utils');
 let Indicator = require('./indicator');
 
 class RSI extends Indicator {
-	initialize(period, underbought, overbought) {
-		this.period = period;
-		this.underbought = underbought;
-		this.overbought = overbought;
+	initialize(options) {
+		this.period = options["period"];
+		this.underbought = options["underbought"];
+		this.overbought = options["overbought"];
 		this.name = "RSI";
 		this.graph = this.calculate();
 	}
 
 	calculate() {
 		return getRSI(this.dates, this.prices, this.period);
+	}
+
+	getValue(date) {
+		return this.graph[date];
 	}
 
 	getAction(date) {
