@@ -38,13 +38,9 @@ const useCache = true;
 const INTERSECTION_SIZE = 10;
 // base api url
 const BASE_URL = "https://api.tiingo.com/tiingo/daily";
-// minimum volume to consider
-const MIN_VOLUME = 1000000;
-let SMA_INTERVALS = [15, 50];
-let RSI_INTERVAL = 14;
 let EXCHANGES = ["AMEX", "NASDAQ", "NYSE"];
 // get results within expiration date
-let EXPIRATION = 1000000;
+let EXPIRATION = 14;
 // get prices from today - START_DATE
 let START_DATE = 365 * 10;
 
@@ -207,7 +203,7 @@ router.get("/intersections", (req, res) => {
 
             // store back priceCache
             console.log("\nUpdating Price Cache...");
-            // fs.writeFileSync(PATH_TO_CACHE, JSON.stringify(priceCache), { encoding: "utf-8" })
+            fs.writeFileSync(PATH_TO_CACHE, JSON.stringify(priceCache), { encoding: "utf-8" })
             console.log("Price Cache Size: ", Object.keys(priceCache).length);
 
             // store back keyCache
@@ -294,10 +290,10 @@ function getConfirmedSymbols(callback) {
 function findIntersections(symbol, index, attempts) {
     //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
     // "SMA":{"period":9},
+    // "SMASupport":{"period":180},
     let strategyOptions = {
         "indicators": {
-            // "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true},
-            "SMA":{"period":9},
+            "SMA": { "period": 9 },
             "RSI": { "period": 14, "underbought": 30, "overbought": 70 },
             "MACD": { "ema1": 12, "ema2": 26, "signalPeriod": 9 },
         },
@@ -305,7 +301,7 @@ function findIntersections(symbol, index, attempts) {
         "mainSellIndicator": "RSI",
         "minVolume": 1000000,
         "expiration": 7,
-        "multipleBuys": true
+        "multipleBuys": true,
     };
     // get a suitable key
     let key;
@@ -367,10 +363,6 @@ function findIntersections(symbol, index, attempts) {
                     // initialize the indicator
                     indicator.initialize(indicatorOptions);
 
-                    // if (indicatorName == "SMASupport") {
-                    //     console.log(indicator.graph);
-                    // }
-
                     // track buy indicators
                     if (indicatorName == strategyOptions["mainBuyIndicator"]) {
                         mainBuyIndicator = indicator;
@@ -405,6 +397,7 @@ function findIntersections(symbol, index, attempts) {
 
                 // store buy/sell information
                 let expiration = strategyOptions["expiration"];
+                let lastBuyPrice;
                 let buyPrices = [];
                 let buyDates = [];
                 let buySignal;
@@ -440,6 +433,7 @@ function findIntersections(symbol, index, attempts) {
 
                         // if all supports agree, buy the stock
                         if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
+                            lastBuyPrice = prices[day];
                             buyPrices.push(prices[day]);
                             buyDates.push(day);
                             buySignal = false;
@@ -461,8 +455,9 @@ function findIntersections(symbol, index, attempts) {
                         }
                     }
 
-                    // if main seller indicator goes off and has stocks to sell
-                    if (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0) {
+                    // if stoploss triggered or  main seller indicator goes off and has stocks to sell
+                    let stopLossTriggered = lastBuyPrice && strategyOptions["stopLoss"] && lastBuyPrice * strategyOptions["stopLoss"] > prices[day];
+                    if (stopLossTriggered || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
                         sellSignal = true;
                     }
                     if (sellSignal) {
@@ -480,6 +475,9 @@ function findIntersections(symbol, index, attempts) {
                         //         allIndicatorsSell = false;
                         //     }
                         // });
+                        if (stopLossTriggered) {
+                            allIndicatorsSell = true;
+                        }
 
                         // if all supports agree, sell the stock
                         if (allIndicatorsSell) {
@@ -489,16 +487,8 @@ function findIntersections(symbol, index, attempts) {
                                 let buyDate = buyDates[i];
 
                                 // store buy/sell conditions for contextual data
-                                let buyConditions = {};
-                                let sellConditions = {};
-                                buyConditions[mainBuyIndicator.name] = mainBuyIndicator.getValue(buyDate);
-                                supportingBuyIndicators.forEach(indicator => {
-                                    buyConditions[indicator.name] = indicator.getValue(buyDate);
-                                });
-                                sellConditions[mainSellIndicator.name] = mainSellIndicator.getValue(day);
-                                supportingSellIndicators.forEach(indicator => {
-                                    sellConditions[indicator.name] = indicator.getValue(day);
-                                });
+                                let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
+                                let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, day);
 
                                 // populate transaction information
                                 count += 1;
@@ -519,6 +509,7 @@ function findIntersections(symbol, index, attempts) {
                                 event = {};
                             }
 
+                            lastBuyPrice = undefined;
                             buyPrices = []
                             buyDates = []
                             sellSignal = false;
@@ -540,7 +531,41 @@ function findIntersections(symbol, index, attempts) {
                         }
                     }
                 });
-                resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events });
+
+                let recent = {};
+                let today = new Date();
+                // find recent buy events
+                for (let i = 0; i < buyDates.length; ++i) {
+                    let buyPrice = buyPrices[i];
+                    let buyDate = buyDates[i];
+                    let sellDate = dates[dates.length - 1];
+
+                    // store buy/sell conditions for contextual data
+                    let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
+                    let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, sellDate);
+
+                    // populate transaction information
+                    count += 1;
+                    event["buyDate"] = buyDate;
+                    event["buyPrice"] = buyPrice;
+                    event["buyConditions"] = buyConditions;
+                    event["sellDate"] = sellDate;
+                    event["sellPrice"] = prices[sellDate];
+                    event["sellConditions"] = sellConditions;
+                    event["profit"] = prices[sellDate] - buyPrice;
+                    profit += event["profit"];
+                    event["percentProfit"] = (prices[sellDate] - buyPrice) / buyPrice
+                    percentProfit += event["percentProfit"];
+                    event["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
+                    // add and create new event
+                    events.push(event);
+                    event = {};
+
+                    if (daysBetween(new Date(buyDate), today) < EXPIRATION) {
+                        recent[buyDate] = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
+                    }
+                }
+                resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "recent": recent });
             }
         });
     })
@@ -590,6 +615,16 @@ function getPrices(symbol, key, callback) {
         })
         // API error
         .catch(err => { callback({ "error": err }) });
+}
+
+// get buy or sell conditions
+function getConditions(mainIndicator, supportingIndicators, date) {
+    let conditions = {};
+    conditions[mainIndicator.name] = mainIndicator.getValue(date);
+    supportingIndicators.forEach(indicator => {
+        conditions[indicator.name] = indicator.getValue(date);
+    });
+    return conditions
 }
 
 // format date to api needs
