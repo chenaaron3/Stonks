@@ -21,3 +21,14 @@ with open('../res/priceCache.json') as data_file:
 		dictIndex["lastUpdated"] = data[symbol][-1]['date']
 		if prices.count_documents({"_id":symbol}) == 0:
 			prices.insert_one(dictIndex)
+
+# update all symbols
+with open('../res/symbols.json') as data_file:
+	data = json.load(data_file)
+	for symbol in data:
+		dictIndex = {}
+		dictIndex["_id"] = symbol
+		dictIndex["prices"] = []
+		dictIndex["lastUpdated"] = "1500-07-20T00:00:00.000Z"
+		if prices.count_documents({"_id":symbol}) == 0:
+			prices.insert_one(dictIndex)
