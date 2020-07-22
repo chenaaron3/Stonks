@@ -4,11 +4,17 @@ var fs = require('fs');
 let keys = JSON.parse(process.env.TIINGO_API_KEYS);
 let usableKeys = [...keys];
 let index = 0;
-let numSymbols = JSON.parse(fs.readFileSync(path.join(__dirname, "../res/symbols.json"), { encoding: "utf-8" })).length;
+let symbols = JSON.parse(fs.readFileSync(path.join(__dirname, "../res/symbols.json"), { encoding: "utf-8" }));
+let numSymbols = symbols.length;
 console.log(`Keys: ${keys.length}\nSymbols: ${numSymbols}\nSymbols per Key: ${numSymbols / keys.length}`);
 
 function numKeys() {
     return keys.length;
+}
+
+function getSymbolIndex(symbol) {
+    let index = symbols.indexOf(symbol);
+    return index == -1 ? 0 : index;
 }
 
 function removeKey(key) {
@@ -43,4 +49,4 @@ function getKeyRoundRobin() {
     return res;
 }
 
-module.exports = { getKey: getKey, removeKey:removeKey, numKeys: numKeys };
+module.exports = { getKey: getKey, removeKey:removeKey, numKeys: numKeys, getSymbolIndex: getSymbolIndex };
