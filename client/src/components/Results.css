@@ -14,7 +14,10 @@
 }
 
 .results-list {
+    max-height: 50vh;
     flex: 5;
+    overflow: scroll;
+    overflow-x: hidden;
 }
 
 .results-start-button {

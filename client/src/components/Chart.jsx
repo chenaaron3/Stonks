@@ -11,14 +11,19 @@ class Chart extends React.Component {
         super(props);
         this.state = {
             priceGraph: [],
-            events: [{ "buyDate": "2020-03-25T00:00:00.000Z", "sellDate": "2020-07-17T00:00:00.000Z", }],
-            buyDates: ["2020-03-25T00:00:00.000Z"],
-            sellDates: ["2020-07-17T00:00:00.000Z"]
         }
+        this.results = this.props.results;
+        this.events = this.props.results["events"];
+        this.buyDates = new Set();
+        this.sellDates = new Set();
+        Object.keys(this.events).forEach(event => {
+            this.buyDates.add(event["buyDate"]);
+            this.sellDates.add(event["sellDate"]);
+        })
     }
 
     componentDidMount() {
-        fetch("/priceGraph?symbol=AAPL")
+        fetch(`/priceGraph?symbol=${this.props.symbol}`)
             .then(res => res.json())
             .then(priceGraph => {
                 this.setState({ priceGraph: priceGraph });
@@ -65,13 +70,13 @@ class Chart extends React.Component {
 
         let dotRadius = 10;
 
-        if (this.state.buyDates.includes(payload["date"])) {
+        if (this.state.buyDates.has(payload["date"])) {
             return (
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="green" />
             );
         }
 
-        else if (this.state.sellDates.includes(payload["date"])) {
+        else if (this.state.sellDates.has(payload["date"])) {
             return (
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="red" />
             );

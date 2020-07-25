@@ -23,6 +23,13 @@
 
 .App-chart{
   flex: 8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.App-missing-chart{
+  font-size: 2em;
 }
 
 .App-details{
