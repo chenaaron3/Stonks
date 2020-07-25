@@ -13,6 +13,7 @@ class Results extends React.Component {
     }
 
     getResults = () => {
+        console.log("Fetching results with options", this.props.indicatorOptions);
         // fetch results here
         fetch("/results")
             .then(res => res.json())

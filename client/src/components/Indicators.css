@@ -5,6 +5,8 @@
     flex-direction: column;
     height: 100%;
     text-align: center;
+    max-height: 50vh;
+    overflow-y: scroll;
 }
 
 .indicators-title {

@@ -8,11 +8,18 @@ class App extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { symbol: undefined, results: undefined }
+    this.state = { symbol: undefined, results: undefined, indicatorOptions: {} }
   }
 
+  // called from results component to view a specific stock
   viewStock = (symbol, results) => {
     this.setState({ symbol: symbol, results: results });
+  }
+
+  // called from indicators component to set indicator options
+  setIndicatorOptions = (indicatorOptions) => {
+    console.log("Setting Options to", indicatorOptions);
+    this.setState({ indicatorOptions: indicatorOptions });
   }
 
   render() {
@@ -35,10 +42,10 @@ class App extends React.Component {
         </div>
         <div className="App-query">
           <div className="App-indicators">
-            <Indicators />
+            <Indicators setIndicatorOptions={this.setIndicatorOptions} />
           </div>
           <div className="App-result">
-            <Results viewStock={this.viewStock} />
+            <Results viewStock={this.viewStock} indicatorOptions={this.state.indicatorOptions} />
           </div>
         </div>
       </div>
