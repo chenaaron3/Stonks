@@ -1,66 +1,48 @@
-.App {
-  text-align: center;
+*{
+  box-sizing: border-box;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.divider{
+  width: 100%;
+  opacity: .2;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: start;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-.App-sort {
-  width: 8vw;
-  height: 100%;
-  font-size: 70%;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 0;
-  background-color: #c0392b;
-  border: none;
-  border-bottom: 2px solid #962d22;
-  color: white;
-  padding: 10px;
-  appearance: none;
-  margin-left: .5vw;
-}
-
-.App-results{
+.App{
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  margin-left: 10vw;
-  margin-right: 10vw;
 }
 
-.App-update{
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 20px 35px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 30px;
+/* Left side of page */
+.App-data{
+  flex: 10;
+  display: flex;
+  flex-direction: column;
 }
 
-@media screen and (max-width: 480px) {
-  .App-sort {
-      width: 35vw;
-  }
+.App-chart{
+  flex: 8;
+}
+
+.App-details{
+  flex: 2;
+  border-style: solid;
+}
+
+/* Right side of page */
+.App-query{
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.App-result{
+ flex: 1;
+ border-style: solid;
+}
+
+.App-indicators{
+  flex: 1;
+  border-style: solid;
 }

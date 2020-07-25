@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --ignore res/ ./bin/www",
+    "start": "nodemon --ignore res/ --ignore client/ --ignore scripts/ ./bin/www",
     "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "dependencies": {
@@ -17,6 +17,7 @@
     "mongodb": "^3.5.9",
     "morgan": "~1.9.1",
     "node-fetch": "^2.6.0",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "recharts": "^1.8.5"
   }
 }

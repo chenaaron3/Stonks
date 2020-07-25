@@ -59,6 +59,14 @@ router.get("/results", (req, res) => {
     res.json(JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" })));
 })
 
+router.get("/priceGraph", (req, res) => {
+    let symbol = req.query["symbol"];
+    if (Object.keys(priceCache).length == 0) {
+        priceCache = JSON.parse(fs.readFileSync(PATH_TO_CACHE, { encoding: "utf-8" }));
+    }
+    res.json(priceCache[symbol]);
+});
+
 router.get("/", (req, res) => {
     res.send('hi');
 })

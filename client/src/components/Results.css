@@ -1,0 +1,41 @@
+.results {
+    background-color: #E0E5EC;
+    padding: 2vh;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-align: center;
+}
+
+.results-title {
+    margin-top: 1vh;
+    margin-bottom: 1vh;
+    font-size: 1.5em;
+}
+
+.results-list {
+    flex: 5;
+}
+
+.results-start-button {
+    /* flex: 1; */
+}
+
+.results-start-text {
+    font-size: 1.5em;
+    color: #62a583;
+}
+
+.result {
+    height: 5vh;
+    display: flex;
+    flex-direction: row;
+}
+
+.result-icon{
+    margin-right: 15px;
+}
+
+.result-text{
+
+}
