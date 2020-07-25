@@ -34,11 +34,11 @@ class App extends React.Component {
           </div>
         </div>
         <div className="App-query">
-          <div className="App-result">
-            <Results viewStock={this.viewStock} />
-          </div>
           <div className="App-indicators">
             <Indicators />
+          </div>
+          <div className="App-result">
+            <Results viewStock={this.viewStock} />
           </div>
         </div>
       </div>

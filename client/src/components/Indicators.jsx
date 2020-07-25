@@ -15,8 +15,8 @@ class Indicators extends React.Component {
             <div className="indicators">
                 <span className="indicators-title">Indicators</span>
                 <div className="indicators-list">
-                    {this.indicators.map(indicator => {
-                        return <Indicator name={indicator["name"]} fields={indicator["fields"]} />
+                    {this.indicators.map((indicator, index) => {
+                        return <Indicator name={indicator["name"]} fields={indicator["fields"]} key={index} />
                     })}
                 </div>
             </div>
@@ -47,8 +47,8 @@ class Indicator extends React.Component {
             </div>
             <div className={`indicator-fields${this.state.showFields ? " indicator-show" : ""}`}>
                 {
-                    this.props.fields.map(field => {
-                        return (<div>
+                    this.props.fields.map((field, index) => {
+                        return (<div key={index}>
                             <label>{field}:</label>
                             <input type="text" name={field} />
                         </div>);

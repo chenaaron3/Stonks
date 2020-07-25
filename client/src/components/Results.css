@@ -5,6 +5,7 @@
     flex-direction: column;
     height: 100%;
     text-align: center;
+    max-height: 50vh;
 }
 
 .results-title {
@@ -14,7 +15,6 @@
 }
 
 .results-list {
-    max-height: 50vh;
     flex: 5;
     overflow: scroll;
     overflow-x: hidden;
@@ -25,7 +25,6 @@
 }
 
 .results-start-text {
-    font-size: 1.5em;
     color: #62a583;
 }
 
