@@ -15,6 +15,10 @@
     font-size: 1.5em;
 }
 
+.indicators-start-text {
+    color: #62a583;
+}
+
 .indicator-header {
     height: 5vh;
     display: flex;

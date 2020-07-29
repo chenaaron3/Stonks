@@ -55,7 +55,8 @@ router.get("/metadata", (req, res) => {
     res.json(JSON.parse(fs.readFileSync(PATH_TO_METADATA, { encoding: "utf-8" })));
 })
 
-router.get("/results", (req, res) => {
+router.post("/results", (req, res) => {
+    console.log("Calculating with ", req.body);
     res.json(JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" })));
 })
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import {
     ResponsiveContainer, LineChart, Line, XAxis, YAxis, ReferenceLine, ReferenceArea,
     ReferenceDot, Tooltip, CartesianGrid, Legend, Brush, ErrorBar, AreaChart, Area,
@@ -6,29 +7,33 @@ import {
 } from 'recharts';
 import './Chart.css';
 
+let mapStateToProps = (state) => {
+    return { symbol: state.selectedSymbol, results: state.selectedResults }
+};
+
 class Chart extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             priceGraph: [],
         }
-        this.results = this.props.results;
-        this.events = this.props.results["events"];
-        this.buyDates = new Set();
-        this.sellDates = new Set();
-        this.events.forEach(event => {
-            this.buyDates.add(event["buyDate"]);
-            this.sellDates.add(event["sellDate"]);
-        })
     }
 
-    componentDidMount() {
-        this.fetchData();
-    }
+    // componentDidMount() {
+    //     this.fetchData();
+    // }
 
     componentDidUpdate(prevProps) {
         if (this.props.symbol !== prevProps.symbol) {
             this.fetchData();
+            this.results = this.props.results;
+            this.events = this.props.results["events"];
+            this.buyDates = new Set();
+            this.sellDates = new Set();
+            this.events.forEach(event => {
+                this.buyDates.add(event["buyDate"]);
+                this.sellDates.add(event["sellDate"]);
+            })
         }
     }
 
@@ -43,6 +48,10 @@ class Chart extends React.Component {
     yAxisTickFormatter = (value) => getFormattedDate(new Date(value));
 
     render() {
+        // if no symbol, return
+        if (!this.props.symbol) {
+            return <span className="chart-missing">Run a Strategy!</span>
+        }
         return (
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart
@@ -113,4 +122,4 @@ function getFormattedDate(date) {
     return month + '/' + day + '/' + year;
 }
 
-export default Chart;
+export default connect(mapStateToProps, null)(Chart);
