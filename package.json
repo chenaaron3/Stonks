@@ -18,6 +18,8 @@
     "morgan": "~1.9.1",
     "node-fetch": "^2.6.0",
     "nodemon": "^2.0.4",
-    "recharts": "^1.8.5"
+    "pusher": "^3.0.1",
+    "recharts": "^1.8.5",
+    "save": "^2.4.0"
   }
 }

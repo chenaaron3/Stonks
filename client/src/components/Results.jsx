@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import { viewStock } from '../redux';
 import './Results.css';
 import { NeuButton } from 'neumorphism-react';
+import Pusher from 'react-pusher';
+import { setPusherClient } from 'react-pusher';
 import eye from "../eye.svg";
 
 class Results extends React.Component {
@@ -14,19 +16,29 @@ class Results extends React.Component {
         this.results = {};
     }
 
+    onResultFinished = (results) => {
+       let sortedSymbols = Object.keys(results)
+        sortedSymbols.sort((a, b) => {
+            return results[b]["percentProfit"] - results[a]["percentProfit"];
+        });
+        this.setState({ sortedSymbols })
+    }
+
     componentDidUpdate(prevProps) {
-        if (this.props.results !== prevProps.results) {
-            let sortedSymbols = Object.keys(this.props.results)
-            sortedSymbols.sort((a, b) => {
-                return this.props.results[b]["percentProfit"] - this.props.results[a]["percentProfit"];
-            });
-            this.setState({ sortedSymbols })
+        if (this.props.id !== prevProps.id) {
+            console.log("Got the new id.", this.props.id);
         }
     }
 
     render() {
+        console.log("LISTENING TO", this.props.id);
         return (
             <div className="results">
+            <Pusher
+              channel={this.props.id}
+              event="onResultsFinished"
+              onUpdate={(data) => console.log("got the event", data)}
+            />
                 <span className="results-title">Top Results</span>
                 <div className="results-list">
                     {this.state.sortedSymbols.length == 0 && (<span>
@@ -58,8 +70,8 @@ class Results extends React.Component {
 // }
 
 let mapStateToProps = (state) => {
-    console.log("New REsults", state);
-    return { results: state.results };
+    console.log(`New State ${state} Detected in Results!`);
+    return { id: state.id };
 };
 
 export default connect(mapStateToProps, { viewStock })(Results);

@@ -12,7 +12,8 @@ let RSI = require('../helpers/rsi');
 let MACD = require('../helpers/macd');
 let GC = require('../helpers/gc');
 let Indicator = require('../helpers/indicator');
-let {getStockInfo, addStockInfo} = require('../helpers/mongo');
+let {getStockInfo, addStockInfo, containsID, addID, addResult} = require('../helpers/mongo');
+let {makeid} = require('../helpers/utils');
 
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -45,17 +46,32 @@ let EXPIRATION = 14;
 let START_DATE = 365 * 10;
 
 // Globals
-// use offset to query in chunks
-let offset = 0;
 // only read/write priceCache once a big update
 let keyCache = {};
+
+var Pusher = require('pusher');
+
+var pusher = new Pusher({
+    appId: process.env.PUSHER_APP_ID,
+    key: process.env.PUSHER_KEY,
+    secret: process.env.PUSHER_SECRET,
+    cluster: process.env.PUSHER_CLUSTER,
+    encrypted: true
+});
+
+function triggerChannel(channel, event, keyID) {
+    pusher.trigger(channel, event, {
+        'message': `key: ${keyID}`
+    });
+}
 
 router.get("/metadata", (req, res) => {
     res.json(JSON.parse(fs.readFileSync(PATH_TO_METADATA, { encoding: "utf-8" })));
 })
 
-router.get("/results", (req, res) => {
+router.post("/results", (req, res) => {
     let indicatorOptions = req.body;
+    console.log(indicatorOptions);
     res.json(JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" })));
 })
 
@@ -123,7 +139,7 @@ router.get("/intersection", async (req, res) => {
 })
 
 // gets the intersection for all companies
-router.get("/intersections", (req, res) => {
+router.post("/intersections", (req, res) => {
     console.log("Loading metadata...");
     let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA, { encoding: "utf-8" }));
     let today = new Date();
@@ -143,9 +159,6 @@ router.get("/intersections", (req, res) => {
         console.log("Updating metadata...");
         fs.writeFileSync(PATH_TO_METADATA, JSON.stringify(metadata), "utf8");
 
-        // use offset if provided
-        offset = req.query["offset"] ? parseInt(req.query["offset"]) : offset;
-
         // if key cache doesnt exist
         if (!fs.existsSync(PATH_TO_KEY_CACHE)) {
             // create an empty cache
@@ -158,16 +171,26 @@ router.get("/intersections", (req, res) => {
 
         // get list of symbols to query
         getConfirmedSymbols(async (symbols) => {
-            console.log(symbols);
-            // send response so doesn't hang
-            res.json({ "status": "Updating!" });
-
             // maps symbol to list of intersecting dates
             let intersections = {};
-            let max = Math.min(offset + 100000, symbols.length);
+            let max = 10;//symbols.length;
+
+            let strategyOptions = req.body;
+            console.log(strategyOptions);
+
+            // create unique id
+            let id = makeid(10);
+            while (await containsID(id)) {
+                id = makeid(10);
+            }
+
+            addID(id);
+
+            // send response so doesn't hang and gets the unique id
+            res.json({ "id": id});
 
             // go through each symbol
-            for (i = offset; i < max; ++i) {
+            for (i = 0; i < max; ++i) {
                 console.log(`\nStock ${i + 1} of ${max}`);
                 let symbol = symbols[i];
                 let attempts = 0;
@@ -176,7 +199,7 @@ router.get("/intersections", (req, res) => {
                 // keep trying until valid key
                 while (true) {
                     try {
-                        let intersection = await findIntersections(symbol, i, attempts);
+                        let intersection = await findIntersections(strategyOptions, symbol, i, attempts);
                         // only record if if has intersection
                         if (intersection["events"].length > 0) {
                             intersections[symbol] = intersection;
@@ -203,33 +226,14 @@ router.get("/intersections", (req, res) => {
                 if (fail) continue;
             }
 
+            addResult(id, intersections);
+            console.log("Triggering channel", id);
+            triggerChannel(id, "onResultsFinished", id);
+
             // store back keyCache
             console.log("\nUpdating Key Cache...");
             fs.writeFileSync(PATH_TO_KEY_CACHE, JSON.stringify(keyCache), { encoding: "utf-8" })
             console.log("Key Cache Size: ", Object.keys(keyCache).length);
-
-            // merge results with existing results
-            let existing = {};
-            if (fs.existsSync(PATH_TO_RESULTS)) {
-                console.log("\nLoading Existing Results...");
-                existing = JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" }));
-                console.log("Existing Results Size: ", Object.keys(existing).length);
-            }
-            Object.assign(existing, intersections);
-
-            // write results to file
-            console.log("\nUpdating Results...");
-            fs.writeFileSync(PATH_TO_RESULTS, JSON.stringify(existing), "utf-8");
-            console.log("Results Size: ", Object.keys(existing).length);
-            console.log(`Results stored into '${PATH_TO_RESULTS}'!`);
-
-            // update offset
-            offset = max;
-            // reset offset to 0
-            if (offset == symbols.length) {
-                offset = 0;
-            }
-            console.log("\nNEW OFFSET: ", offset);
         });
     }
 })
@@ -284,22 +288,23 @@ function getConfirmedSymbols(callback) {
 
 // given symbol, find intersections
 // index and attempts used to find appropriate key
-function findIntersections(symbol, index, attempts) {
+function findIntersections(strategyOptions, symbol, index, attempts) {
     //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
     // "SMA":{"period":9},
     // "SMASupport":{"period":180},
-    let strategyOptions = {
-        "indicators": {
-            "SMA": { "period": 9 },
-            "RSI": { "period": 14, "underbought": 30, "overbought": 70 },
-            "MACD": { "ema1": 12, "ema2": 26, "signalPeriod": 9 },
-        },
-        "mainBuyIndicator": "RSI",
-        "mainSellIndicator": "RSI",
-        "minVolume": 1000000,
-        "expiration": 7,
-        "multipleBuys": true,
-    };
+
+    // let strategyOptions = {
+    //     "indicators": {
+    //         "SMA": { "period": 9 },
+    //         "RSI": { "period": 14, "underbought": 30, "overbought": 70 },
+    //         "MACD": { "ema1": 12, "ema2": 26, "signalPeriod": 9 },
+    //     },
+    //     "mainBuyIndicator": "RSI",
+    //     "mainSellIndicator": "RSI",
+    //     "minVolume": 1000000,
+    //     "expiration": 7,
+    //     "multipleBuys": true,
+    // };
     // get a suitable key
     let key;
     if (keyCache[symbol] && attempts == 0 && useCache) {

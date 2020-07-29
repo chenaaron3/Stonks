@@ -1,13 +1,13 @@
 // Actions
 const VIEW_STOCK = "VIEW_STOCK";
-const SET_RESULTS = "SET_RESULTS";
+const SET_ID = "SET_ID";
 const SET_INDICATOR_OPTION = "SET_INDICATOR_OPTION";
 const SET_INDICATOR_ON = "SET_INDICATOR_ON";
 
 const initialState = {
     selectedSymbol: "",
     selectedResults: {},
-    results: {},
+    id: "",
     indicatorOptions: {},
     activeIndicators: new Set()
 };
@@ -21,10 +21,12 @@ export default function reducer(state = initialState, action) {
                 selectedSymbol: action.symbol,
                 selectedResults: action.results
             })
-        case SET_RESULTS:
-            return Object.assign({}, state, {
-                results: action.results
-            })
+        case SET_ID:
+            console.log(`Reducer taking current state ${state} and action ${action} to generate new state!`);
+            return {
+                ...state,
+                id: action.id
+            }
         case SET_INDICATOR_OPTION:
             return {
                 ...state,
@@ -53,11 +55,12 @@ export default function reducer(state = initialState, action) {
 
 // Action Creators
 export function viewStock(symbol, results) {
-    return { type: VIEW_STOCK, symbol: symbol, results: results };
+    return { type: VIEW_STOCK, symbol, results };
 }
 
-export function setResults(results) {
-    return { type: SET_RESULTS, results };
+export function setID(id) {
+    console.log("Setting id", id);
+    return { type: SET_ID, id };
 }
 
 export function setIndicatorOption(indicator, field, value) {

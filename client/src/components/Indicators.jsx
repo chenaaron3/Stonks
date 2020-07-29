@@ -2,7 +2,7 @@ import React, { createRef } from 'react';
 import './Indicators.css';
 import caret from "../arrow.svg";
 import { connect } from 'react-redux';
-import { setIndicatorOption, setIndicatorOn, setResults } from '../redux';
+import { setIndicatorOption, setIndicatorOn, setID } from '../redux';
 import { NeuButton } from 'neumorphism-react';
 
 class Indicators extends React.Component {
@@ -28,7 +28,7 @@ class Indicators extends React.Component {
         };
 
         // fetch results here
-        fetch("/results", {
+        fetch("/intersections", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -37,7 +37,9 @@ class Indicators extends React.Component {
         })
             .then(res => res.json())
             .then(results => {
-                this.props.setResults(results);
+                let id = results["id"];
+                console.log(`Getting id ${id} from server!`);
+                this.props.setID(id);
             });
     }
 
@@ -98,4 +100,4 @@ let mapStateToProps = (state) => {
     return { indicatorOptions: state.indicatorOptions, activeIndicators: state.activeIndicators };
 };
 
-export default connect(mapStateToProps, { setIndicatorOption, setIndicatorOn, setResults })(Indicators);
+export default connect(mapStateToProps, { setIndicatorOption, setIndicatorOn, setID })(Indicators);

@@ -175,4 +175,14 @@ function daysBetween(date1, date2) {
     return Math.round(differenceMs / ONE_DAY);
 }
 
-module.exports = {isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, formatDate, daysBetween};
+function makeid(length) {
+   var result = '';
+   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
+module.exports = {isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, formatDate, daysBetween, makeid};

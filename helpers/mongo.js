@@ -10,7 +10,41 @@ client.connect(async function(err) {
 	// get mongo collection
 	stonks = client.db('stonks');
 	priceCollection = stonks.collection('prices');
+	resultsCollection = stonks.collection('results');
 });
+
+function containsID(id) {
+	return new Promise(async(resolve, reject) => {
+		resolve(resultsCollection.find({
+			"_id": id
+		}).count() > 0);
+	});
+}
+
+function addID(id) {
+	return new Promise(async(resolve, reject) => {
+		// update collection
+		resultsCollection.insertOne({
+			"_id": id,
+			"results": ''
+		}, (error) => {
+			if (error) reject(`failed to insert id with ${id}, error ${error}`);
+			else resolve(`updated collection with unique id ${id}`);
+		});
+	});
+}
+
+function addResult(id, result) {
+	return new Promise(async (resolve, reject) => {
+		await resultsCollection.updateOne({
+			"_id": id
+		},
+		{
+			$set: {"_id":id, "results": result}
+		});
+		resolve(result);
+	});	
+}
 
 function getStockInfo(symbol) {
 	return new Promise(async(resolve, reject) => {
@@ -39,5 +73,8 @@ function addStockInfo(symbol, pricesList) {
 
 module.exports = {
 	getStockInfo,
-	addStockInfo
+	addStockInfo,
+	containsID,
+	addID,
+	addResult
 };
