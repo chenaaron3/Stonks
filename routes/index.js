@@ -12,6 +12,7 @@ let RSI = require('../helpers/rsi');
 let MACD = require('../helpers/macd');
 let GC = require('../helpers/gc');
 let Indicator = require('../helpers/indicator');
+let {getStockInfo, addStockInfo} = require('../helpers/mongo');
 
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -27,7 +28,6 @@ let PATH_TO_OLD_RESULTS = path.join(__dirname, '../res/results.json');
 let PATH_TO_RESULTS = path.join(__dirname, '../res/resultsProfit.json');
 let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
 let PATH_TO_CSV = path.join(__dirname, "../res/supported_tickers.csv");
-let PATH_TO_CACHE = path.join(__dirname, "../res/priceCache.json");
 let PATH_TO_KEY_CACHE = path.join(__dirname, "../res/symbolToKey.json");
 
 // cache settings
@@ -48,24 +48,27 @@ let START_DATE = 365 * 10;
 // use offset to query in chunks
 let offset = 0;
 // only read/write priceCache once a big update
-let priceCache = {};
 let keyCache = {};
 
 router.get("/metadata", (req, res) => {
     res.json(JSON.parse(fs.readFileSync(PATH_TO_METADATA, { encoding: "utf-8" })));
 })
 
-router.post("/results", (req, res) => {
-    console.log("Calculating with ", req.body);
+router.get("/results", (req, res) => {
+    let indicatorOptions = req.body;
     res.json(JSON.parse(fs.readFileSync(PATH_TO_RESULTS, { encoding: "utf-8" })));
 })
 
-router.get("/priceGraph", (req, res) => {
+router.get("/priceGraph", async(req, res) => {
     let symbol = req.query["symbol"];
-    if (Object.keys(priceCache).length == 0) {
-        priceCache = JSON.parse(fs.readFileSync(PATH_TO_CACHE, { encoding: "utf-8" }));
+    let stockInfo = await getStockInfo(symbol);
+    stockInfo = await stockInfo.toArray();
+    if (stockInfo.length == 0) {
+        res.json({});
     }
-    res.json(priceCache[symbol]);
+    else {
+        res.json(stockInfo[0]["prices"]);
+    }
 });
 
 router.get("/", (req, res) => {
@@ -143,16 +146,6 @@ router.get("/intersections", (req, res) => {
         // use offset if provided
         offset = req.query["offset"] ? parseInt(req.query["offset"]) : offset;
 
-        // if price cache doesnt exist
-        if (!fs.existsSync(PATH_TO_CACHE)) {
-            // create an empty cache
-            console.log("Creating Price Cache...");
-            fs.writeFileSync(PATH_TO_CACHE, "{}");
-        }
-        // load price cache
-        console.log("Loading Price Cache...");
-        priceCache = JSON.parse(fs.readFileSync(PATH_TO_CACHE, { encoding: "utf-8" }));
-
         // if key cache doesnt exist
         if (!fs.existsSync(PATH_TO_KEY_CACHE)) {
             // create an empty cache
@@ -209,11 +202,6 @@ router.get("/intersections", (req, res) => {
                 }
                 if (fail) continue;
             }
-
-            // store back priceCache
-            console.log("\nUpdating Price Cache...");
-            fs.writeFileSync(PATH_TO_CACHE, JSON.stringify(priceCache), { encoding: "utf-8" })
-            console.log("Price Cache Size: ", Object.keys(priceCache).length);
 
             // store back keyCache
             console.log("\nUpdating Key Cache...");
@@ -581,12 +569,14 @@ function findIntersections(symbol, index, attempts) {
 }
 
 // makes api call to get historic prices
-function getPrices(symbol, key, callback) {
+async function getPrices(symbol, key, callback) {
     // try using cache
     if (useCache) {
+        let stockInfo = await getStockInfo(symbol);
+         stockInfo = await stockInfo.toArray();
         // cache hit
-        if (priceCache[symbol]) {
-            callback(priceCache[symbol]);
+        if (stockInfo.length != 0) {
+            callback(stockInfo[0]["prices"]);
             return;
         }
     }
@@ -604,7 +594,7 @@ function getPrices(symbol, key, callback) {
         },
     })
         .then(res => res.text())
-        .then(text => {
+        .then(async text => {
             // parse text to catch errors
             try {
                 res = JSON.parse(text)
@@ -613,7 +603,8 @@ function getPrices(symbol, key, callback) {
                     res["error"] = res["detail"];
                 }
                 else {
-                    priceCache[symbol] = res;
+                    let msg = await addStockInfo(symbol, res);
+                    console.log(msg);
                 }
                 callback(res);
             }
