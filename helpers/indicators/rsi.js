@@ -1,4 +1,4 @@
-let {getRSI} = require('./utils');
+let {getRSI} = require('../utils');
 let Indicator = require('./indicator');
 
 class RSI extends Indicator {

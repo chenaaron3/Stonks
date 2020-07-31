@@ -1,4 +1,4 @@
-let { getSimpleMovingAverage } = require('./utils');
+let { getSimpleMovingAverage } = require('../utils');
 let Indicator = require('./indicator');
 
 class SMASupport extends Indicator {

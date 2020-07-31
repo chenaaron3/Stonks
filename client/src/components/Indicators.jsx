@@ -28,7 +28,7 @@ class Indicators extends React.Component {
         };
 
         // fetch results here
-        fetch("/intersections", {
+        fetch("/backtest", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

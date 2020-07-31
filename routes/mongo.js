@@ -18,9 +18,10 @@ const client = new MongoClient(process.env.MONGO_DATABASE_URL, {
 const BASE_URL = "https://api.tiingo.com/tiingo/daily";
 
 /* GET users listing. */
-router.get('/update', function(req, res, next) {
+router.get('/update', function (req, res, next) {
+	console.log("Connecting to mongo!");
 	// connect to mongodb
-	client.connect(async function(err) {
+	client.connect(async function (err) {
 		// get mongo collection
 		const stonks = client.db('stonks');
 		const priceCollection = stonks.collection('prices');
@@ -28,10 +29,11 @@ router.get('/update', function(req, res, next) {
 		res.send("Updating!");
 
 		// get all docs
-		let stockInfo = await priceCollection.find({});
+		let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 });
 		stockInfo = await stockInfo.toArray();
 		var today = new Date();
-		for(let i = 0; i < stockInfo.length; ++i) {
+		for (let i = 0; i < stockInfo.length; ++i) {
+			console.log("Updating index", i);
 			let doc = stockInfo[i];
 			await updateStock(doc, today, priceCollection);
 		}
@@ -79,7 +81,7 @@ function updateStock(doc, today, priceCollection) {
 					}
 				});
 				await priceCollection.updateOne({
-					"_id": doc._id 
+					"_id": doc._id
 				}, {
 					$set: {
 						"lastUpdated": today.toString()
@@ -88,11 +90,11 @@ function updateStock(doc, today, priceCollection) {
 			}
 			resolve();
 		}
-		else{
+		else {
 			console.log("Already Updated!");
 			resolve();
 		}
-	});	
+	});
 }
 
 function getPrice(symbol, startDate, key) {

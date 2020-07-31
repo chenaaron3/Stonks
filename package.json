@@ -7,6 +7,7 @@
     "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "dependencies": {
+    "child_process": "^1.0.2",
     "cookie-parser": "~1.4.4",
     "csv": "^5.3.2",
     "debug": "~2.6.9",

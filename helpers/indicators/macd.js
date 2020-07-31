@@ -1,4 +1,4 @@
-let {getMACD, getExponentialMovingAverage, isCrossed} = require('./utils');
+let {getMACD, getExponentialMovingAverage, isCrossed} = require('../utils');
 let Indicator = require('./indicator');
 
 class MACD extends Indicator {

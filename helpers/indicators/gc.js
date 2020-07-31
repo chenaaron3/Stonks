@@ -1,4 +1,4 @@
-let {isCrossed, getSimpleMovingAverage} = require('./utils');
+let {isCrossed, getSimpleMovingAverage} = require('../utils');
 let Indicator = require('./indicator');
 
 class GC extends Indicator {
