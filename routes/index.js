@@ -47,7 +47,7 @@ router.post("/backtest", async (req, res) => {
 
     // spawn child to do work
     let child = fork(path.join(__dirname, "../helpers/worker.js"));
-    child.send({ type: "start", strategyOptions, id });
+    child.send({ type: "startBacktest", strategyOptions, id });
     child.on('message', function (message) {
         console.log(message);
         if (message.status == "finished") {

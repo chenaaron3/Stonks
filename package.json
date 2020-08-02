@@ -21,6 +21,7 @@
     "nodemon": "^2.0.4",
     "pusher": "^3.0.1",
     "recharts": "^1.8.5",
-    "save": "^2.4.0"
+    "save": "^2.4.0",
+    "yahoo-finance": "^0.3.6"
   }
 }

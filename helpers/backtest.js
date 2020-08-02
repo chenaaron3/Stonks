@@ -1,12 +1,13 @@
 let fetch = require('node-fetch');
 var path = require('path');
 var fs = require('fs');
+const { fork } = require('child_process');
 
 // own helpers
-var vendor = require('../helpers/vendor');
 const csv = require('csv');
-let { getStockInfo, addStockInfo, addResult } = require('../helpers/mongo');
-let { formatDate, daysBetween } = require('../helpers/utils');
+let { addResult } = require('../helpers/mongo');
+let { daysBetween } = require('../helpers/utils');
+let { getPrices } = require('../helpers/stock');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
@@ -27,91 +28,53 @@ let INDICATOR_OBJECTS = {
 let PATH_TO_OLD_RESULTS = path.join(__dirname, '../res/results.json');
 let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
 let PATH_TO_CSV = path.join(__dirname, "../res/supported_tickers.csv");
-let PATH_TO_KEY_CACHE = path.join(__dirname, "../res/symbolToKey.json");
 
-// base api url
-const BASE_URL = "https://api.tiingo.com/tiingo/daily";
+// only get symbols from these exchanges
 let EXCHANGES = ["AMEX", "NASDAQ", "NYSE"];
 // get recent results within expiration date
 let EXPIRATION = 14;
 // get prices from today - START_DATE
 let START_DATE = 365 * 100;
+// how many threads to spawn on each request
+const NUM_THREADS = 5;
 
 // cache settings
 const useCache = true;
-let keyCache = {};
-initKeyCache();
-
-// intialize key cache
-function initKeyCache() {
-    // if key cache doesnt exist
-    if (!fs.existsSync(PATH_TO_KEY_CACHE)) {
-        // create an empty cache
-        console.log("Creating Key Cache...");
-        fs.writeFileSync(PATH_TO_KEY_CACHE, "{}");
-    }
-    if (Object.keys(keyCache).length == 0) {
-        // load key cache
-        console.log("Loading Key Cache...");
-        keyCache = JSON.parse(fs.readFileSync(PATH_TO_KEY_CACHE, { encoding: "utf-8" }));
-        console.log("Key Cache loaded!");
-    }
-}
 
 // conduct a backtest with given strategy
 function conductBacktest(strategyOptions, id) {
     return new Promise(resolve => {
         // get list of symbols to query
         getSymbols(async (symbols) => {
+            // Uncomment to test a portion of symbols
+            // symbols = symbols.slice(0, 10);
+
             // maps symbol to list of intersecting dates
             let intersections = {};
 
-            // go through each symbol
-            for (i = 0; i < 50; ++i) {
-                console.log(`\nStock ${i + 1} of ${symbols.length}`);
-                let symbol = symbols[i];
-                let attempts = 0;
-                let fail = false;
+            // create threads that split up the work
+            let finishedWorkers = 0;
+            let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+            for (let i = 0; i < NUM_THREADS; ++i) {
+                // divy up the symbols for each thread to work on
+                let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
 
-                // keep trying until valid key
-                while (true) {
-                    try {
-                        let intersection = await findIntersections(strategyOptions, symbol, i, attempts);
-                        // only record if if has intersection
-                        if (intersection["events"].length > 0) {
-                            intersections[symbol] = intersection;
-                        }
-                        console.log(`${symbol} => ${intersection["events"].length}`);
-                        break;
-                    } catch (e) {
-                        // if something went wrong, keep trying with new key
-                        attempts++;
-                        console.log(e);
-                        if (e.includes("not found")) {
-                            console.log("TICKER ERROR!");
-                            fail = true;
-                            break;
-                        }
-                        // if all keys fail
-                        if (attempts >= vendor.numKeys()) {
-                            console.log("MAX KEY FAILURE!");
-                            fail = true;
-                            break;
+                // spawn child to do work
+                let child = fork(path.join(__dirname, "worker.js"));
+                child.send({ type: "startIntersection", strategyOptions, id, partition });
+                child.on('message', async (msg) => {
+                    if (msg.status == "finished") {
+                        // assign partition's results to collective results
+                        Object.assign(intersections, msg.intersections);
+                        // if all worker threads are finished
+                        if (++finishedWorkers == NUM_THREADS) {
+                            // add result to database
+                            await addResult(id, intersections);
+                            resolve();
                         }
                     }
-                }
-                if (fail) continue;
+                })
             }
-
-            // add result to database
-            addResult(id, intersections);
-
-            // store back keyCache
-            console.log("\nUpdating Key Cache...");
-            fs.writeFileSync(PATH_TO_KEY_CACHE, JSON.stringify(keyCache), { encoding: "utf-8" })
-            console.log("Key Cache Size: ", Object.keys(keyCache).length);
-
-            resolve();
         });
     })
 }
@@ -166,7 +129,7 @@ function getConfirmedSymbols(callback) {
 
 // given symbol, find intersections
 // index and attempts used to find appropriate key
-function findIntersections(strategyOptions, symbol, index, attempts) {
+function findIntersections(strategyOptions, symbol) {
     //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
     // "SMA":{"period":9},
     // "SMASupport":{"period":180},
@@ -184,320 +147,262 @@ function findIntersections(strategyOptions, symbol, index, attempts) {
     //     "multipleBuys": true,
     // };
     // get a suitable key
-    let key;
-    if (keyCache[symbol] && attempts == 0 && useCache) {
-        key = keyCache[symbol];
-    }
-    else {
-        key = vendor.getKey(index, attempts);
-    }
 
     return new Promise((resolve, reject) => {
         // find prices
-        getPrices(symbol, key, (json) => {
-            // if error
-            if (json["error"]) {
-                reject(json["error"]);
-            }
-            // if valid prices
-            else {
-                // save working key
-                keyCache[symbol] = key;
+        getPrices(symbol)
+            .then(json => {
+                // if error
+                if (json["error"]) {
+                    reject(json["error"]);
+                }
+                // if valid prices
+                else {
+                    // maps date to closing price
+                    let prices = {};
+                    let volumes = {};
+                    json.forEach(day => {
+                        prices[day["date"]] = day["adjClose"];
+                        volumes[day["date"]] = day["volume"];
+                    });
 
-                // maps date to closing price
-                let prices = {};
-                let volumes = {};
-                json.forEach(day => {
-                    prices[day["date"]] = day["adjClose"];
-                    volumes[day["date"]] = day["adjVolume"];
-                });
+                    // get sorted dates
+                    let dates = Object.keys(prices).sort(function (a, b) {
+                        return new Date(a) - new Date(b);
+                    });
 
-                // get sorted dates
-                let dates = Object.keys(prices).sort(function (a, b) {
-                    return new Date(a) - new Date(b);
-                });
+                    let profit = 0;
+                    let percentProfit = 0;
+                    let count = 0;
 
-                let profit = 0;
-                let percentProfit = 0;
-                let count = 0;
+                    // create indicator objects
+                    let mainBuyIndicator;
+                    let mainSellIndicator;
+                    let supportingBuyIndicators = [];
+                    let supportingSellIndicators = [];
+                    let buyMap = {};
+                    let sellMap = {};
+                    let validIndicators = true;
+                    Object.keys(strategyOptions["indicators"]).forEach(indicatorName => {
+                        // check if indicator given is valid
+                        if (!INDICATOR_OBJECTS.hasOwnProperty(indicatorName)) {
+                            reject(`Invalid Indicator!\nGiven: ${indicatorname}, Expected one of: ${JSON.stringify(Object.keys(INDICATOR_OBJECTS))}`);
+                            validIndicators = false;
+                            return;
+                        }
 
-                // create indicator objects
-                let mainBuyIndicator;
-                let mainSellIndicator;
-                let supportingBuyIndicators = [];
-                let supportingSellIndicators = [];
-                let buyMap = {};
-                let sellMap = {};
-                let validIndicators = true;
-                Object.keys(strategyOptions["indicators"]).forEach(indicatorName => {
-                    // check if indicator given is valid
-                    if (!INDICATOR_OBJECTS.hasOwnProperty(indicatorName)) {
-                        reject(`Invalid Indicator!\nGiven: ${indicatorname}, Expected one of: ${JSON.stringify(Object.keys(INDICATOR_OBJECTS))}`);
-                        validIndicators = false;
+                        let indicatorOptions = strategyOptions["indicators"][indicatorName];
+                        let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
+
+                        // initialize the indicator
+                        indicator.initialize(indicatorOptions);
+
+                        // track buy indicators
+                        if (indicatorName == strategyOptions["mainBuyIndicator"]) {
+                            mainBuyIndicator = indicator;
+                        }
+                        else {
+                            supportingBuyIndicators.push(indicator);
+                            buyMap[indicatorName] = false;
+                        }
+
+                        // track sell indicators
+                        if (indicatorName == strategyOptions["mainSellIndicator"]) {
+                            mainSellIndicator = indicator;
+                        }
+                        else {
+                            supportingSellIndicators.push(indicator);
+                            sellMap[indicatorName] = false;
+                        }
+                    });
+
+                    // eror checking
+                    if (!validIndicators) {
+                        return;
+                    }
+                    if (!mainBuyIndicator) {
+                        reject(`Missing Buy Indicator!\nGiven: ${strategyOptions["mainBuyIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
+                        return;
+                    }
+                    else if (!mainSellIndicator) {
+                        reject(`Missing Sell Indicator!\nGiven: ${strategyOptions["mainSellIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
                         return;
                     }
 
-                    let indicatorOptions = strategyOptions["indicators"][indicatorName];
-                    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
+                    // store buy/sell information
+                    let expiration = strategyOptions["expiration"];
+                    let lastBuyPrice;
+                    let buyPrices = [];
+                    let buyDates = [];
+                    let buySignal;
+                    let sellSignal;
+                    let buyExpiration = expiration;
+                    let sellExpiration = expiration;
 
-                    // initialize the indicator
-                    indicator.initialize(indicatorOptions);
+                    // store buy/sell events for debugging
+                    let events = [];
+                    let event = {};
 
-                    // track buy indicators
-                    if (indicatorName == strategyOptions["mainBuyIndicator"]) {
-                        mainBuyIndicator = indicator;
-                    }
-                    else {
-                        supportingBuyIndicators.push(indicator);
-                        buyMap[indicatorName] = false;
-                    }
-
-                    // track sell indicators
-                    if (indicatorName == strategyOptions["mainSellIndicator"]) {
-                        mainSellIndicator = indicator;
-                    }
-                    else {
-                        supportingSellIndicators.push(indicator);
-                        sellMap[indicatorName] = false;
-                    }
-                });
-
-                // eror checking
-                if (!validIndicators) {
-                    return;
-                }
-                if (!mainBuyIndicator) {
-                    reject(`Missing Buy Indicator!\nGiven: ${strategyOptions["mainBuyIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
-                    return;
-                }
-                else if (!mainSellIndicator) {
-                    reject(`Missing Sell Indicator!\nGiven: ${strategyOptions["mainSellIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
-                    return;
-                }
-
-                // store buy/sell information
-                let expiration = strategyOptions["expiration"];
-                let lastBuyPrice;
-                let buyPrices = [];
-                let buyDates = [];
-                let buySignal;
-                let sellSignal;
-                let buyExpiration = expiration;
-                let sellExpiration = expiration;
-
-                // store buy/sell events for debugging
-                let events = [];
-                let event = {};
-
-                // loops over dates and checks for buy signal
-                dates.forEach(day => {
-                    // if main buy indicator goes off
-                    if (mainBuyIndicator.getAction(day) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
-                        buySignal = true;
-                    }
-                    if (buySignal) {
-                        // check each non main indicator for buy signal
-                        supportingBuyIndicators.forEach(indicator => {
-                            if (indicator.getAction(day) == Indicator.BUY) {
-                                buyMap[indicator.name] = true;
-                            }
-                        });
-
-                        // check if all supports agree
-                        let allIndicatorsBuy = true;
-                        Object.keys(buyMap).forEach(indicator => {
-                            if (!buyMap[indicator]) {
-                                allIndicatorsBuy = false;
-                            }
-                        });
-
-                        // if all supports agree, buy the stock
-                        if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
-                            lastBuyPrice = prices[day];
-                            buyPrices.push(prices[day]);
-                            buyDates.push(day);
-                            buySignal = false;
-                            buyExpiration = expiration;
-                            Object.keys(buyMap).forEach(indicator => {
-                                buyMap[indicator] = false;
-                            });
+                    // loops over dates and checks for buy signal
+                    dates.forEach(day => {
+                        // if main buy indicator goes off
+                        if (mainBuyIndicator.getAction(day) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
+                            buySignal = true;
                         }
-                        else {
-                            buyExpiration -= 1;
-                            // look for another buy signal
-                            if (buyExpiration == 0) {
+                        if (buySignal) {
+                            // check each non main indicator for buy signal
+                            supportingBuyIndicators.forEach(indicator => {
+                                if (indicator.getAction(day) == Indicator.BUY) {
+                                    buyMap[indicator.name] = true;
+                                }
+                            });
+
+                            // check if all supports agree
+                            let allIndicatorsBuy = true;
+                            Object.keys(buyMap).forEach(indicator => {
+                                if (!buyMap[indicator]) {
+                                    allIndicatorsBuy = false;
+                                }
+                            });
+
+                            // if all supports agree, buy the stock
+                            if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
+                                lastBuyPrice = prices[day];
+                                buyPrices.push(prices[day]);
+                                buyDates.push(day);
                                 buySignal = false;
                                 buyExpiration = expiration;
                                 Object.keys(buyMap).forEach(indicator => {
                                     buyMap[indicator] = false;
                                 });
                             }
-                        }
-                    }
-
-                    // if stoploss triggered or  main seller indicator goes off and has stocks to sell
-                    let stopLossTriggered = lastBuyPrice && strategyOptions["stopLoss"] && lastBuyPrice * strategyOptions["stopLoss"] > prices[day];
-                    if (stopLossTriggered || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
-                        sellSignal = true;
-                    }
-                    if (sellSignal) {
-                        // check each non main indicator for sell signal
-                        supportingSellIndicators.forEach(indicator => {
-                            if (indicator.getAction(day) == Indicator.SELL) {
-                                sellMap[indicator.name] = true;
+                            else {
+                                buyExpiration -= 1;
+                                // look for another buy signal
+                                if (buyExpiration == 0) {
+                                    buySignal = false;
+                                    buyExpiration = expiration;
+                                    Object.keys(buyMap).forEach(indicator => {
+                                        buyMap[indicator] = false;
+                                    });
+                                }
                             }
-                        });
-
-                        // check if all supports agree
-                        let allIndicatorsSell = true;
-                        // Object.keys(sellMap).forEach(indicator => {
-                        //     if (!sellMap[indicator]) {
-                        //         allIndicatorsSell = false;
-                        //     }
-                        // });
-                        if (stopLossTriggered) {
-                            allIndicatorsSell = true;
                         }
 
-                        // if all supports agree, sell the stock
-                        if (allIndicatorsSell) {
-                            // sell all stocks that were bought
-                            for (let i = 0; i < buyPrices.length; ++i) {
-                                let buyPrice = buyPrices[i];
-                                let buyDate = buyDates[i];
-
-                                // store buy/sell conditions for contextual data
-                                let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
-                                let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, day);
-
-                                // populate transaction information
-                                count += 1;
-                                event["buyDate"] = buyDate;
-                                event["buyPrice"] = buyPrice;
-                                event["buyConditions"] = buyConditions;
-                                event["sellDate"] = day;
-                                event["sellPrice"] = prices[day];
-                                event["sellConditions"] = sellConditions;
-                                event["profit"] = prices[day] - buyPrice;
-                                profit += event["profit"];
-                                event["percentProfit"] = (prices[day] - buyPrice) / buyPrice
-                                percentProfit += event["percentProfit"];
-                                event["span"] = daysBetween(new Date(buyDate), new Date(day));
-
-                                // add and create new event
-                                events.push(event);
-                                event = {};
-                            }
-
-                            lastBuyPrice = undefined;
-                            buyPrices = []
-                            buyDates = []
-                            sellSignal = false;
-                            sellExpiration = expiration;
-                            Object.keys(sellMap).forEach(indicator => {
-                                sellMap[indicator] = false;
+                        // if stoploss triggered or  main seller indicator goes off and has stocks to sell
+                        let stopLossTriggered = lastBuyPrice && strategyOptions["stopLoss"] && lastBuyPrice * strategyOptions["stopLoss"] > prices[day];
+                        if (stopLossTriggered || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
+                            sellSignal = true;
+                        }
+                        if (sellSignal) {
+                            // check each non main indicator for sell signal
+                            supportingSellIndicators.forEach(indicator => {
+                                if (indicator.getAction(day) == Indicator.SELL) {
+                                    sellMap[indicator.name] = true;
+                                }
                             });
-                        }
-                        else {
-                            sellExpiration -= 1;
-                            // look for another sell signal
-                            if (sellExpiration == 0) {
+
+                            // check if all supports agree
+                            let allIndicatorsSell = true;
+                            // Object.keys(sellMap).forEach(indicator => {
+                            //     if (!sellMap[indicator]) {
+                            //         allIndicatorsSell = false;
+                            //     }
+                            // });
+                            if (stopLossTriggered) {
+                                allIndicatorsSell = true;
+                            }
+
+                            // if all supports agree, sell the stock
+                            if (allIndicatorsSell) {
+                                // sell all stocks that were bought
+                                for (let i = 0; i < buyPrices.length; ++i) {
+                                    let buyPrice = buyPrices[i];
+                                    let buyDate = buyDates[i];
+
+                                    // store buy/sell conditions for contextual data
+                                    let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
+                                    let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, day);
+
+                                    // populate transaction information
+                                    count += 1;
+                                    event["buyDate"] = buyDate;
+                                    event["buyPrice"] = buyPrice;
+                                    event["buyConditions"] = buyConditions;
+                                    event["sellDate"] = day;
+                                    event["sellPrice"] = prices[day];
+                                    event["sellConditions"] = sellConditions;
+                                    event["profit"] = prices[day] - buyPrice;
+                                    profit += event["profit"];
+                                    event["percentProfit"] = (prices[day] - buyPrice) / buyPrice
+                                    percentProfit += event["percentProfit"];
+                                    event["span"] = daysBetween(new Date(buyDate), new Date(day));
+
+                                    // add and create new event
+                                    events.push(event);
+                                    event = {};
+                                }
+
+                                lastBuyPrice = undefined;
+                                buyPrices = []
+                                buyDates = []
                                 sellSignal = false;
                                 sellExpiration = expiration;
                                 Object.keys(sellMap).forEach(indicator => {
                                     sellMap[indicator] = false;
                                 });
                             }
+                            else {
+                                sellExpiration -= 1;
+                                // look for another sell signal
+                                if (sellExpiration == 0) {
+                                    sellSignal = false;
+                                    sellExpiration = expiration;
+                                    Object.keys(sellMap).forEach(indicator => {
+                                        sellMap[indicator] = false;
+                                    });
+                                }
+                            }
+                        }
+                    });
+
+                    let recent = {};
+                    let today = new Date();
+                    // find recent buy events
+                    for (let i = 0; i < buyDates.length; ++i) {
+                        let buyPrice = buyPrices[i];
+                        let buyDate = buyDates[i];
+                        let sellDate = dates[dates.length - 1];
+
+                        // store buy/sell conditions for contextual data
+                        let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
+                        let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, sellDate);
+
+                        // populate transaction information
+                        count += 1;
+                        event["buyDate"] = buyDate;
+                        event["buyPrice"] = buyPrice;
+                        event["buyConditions"] = buyConditions;
+                        event["sellDate"] = sellDate;
+                        event["sellPrice"] = prices[sellDate];
+                        event["sellConditions"] = sellConditions;
+                        event["profit"] = prices[sellDate] - buyPrice;
+                        profit += event["profit"];
+                        event["percentProfit"] = (prices[sellDate] - buyPrice) / buyPrice
+                        percentProfit += event["percentProfit"];
+                        event["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
+                        // add and create new event
+                        events.push(event);
+                        event = {};
+
+                        if (daysBetween(new Date(buyDate), today) < EXPIRATION) {
+                            recent[buyDate] = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
                         }
                     }
-                });
-
-                let recent = {};
-                let today = new Date();
-                // find recent buy events
-                for (let i = 0; i < buyDates.length; ++i) {
-                    let buyPrice = buyPrices[i];
-                    let buyDate = buyDates[i];
-                    let sellDate = dates[dates.length - 1];
-
-                    // store buy/sell conditions for contextual data
-                    let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
-                    let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, sellDate);
-
-                    // populate transaction information
-                    count += 1;
-                    event["buyDate"] = buyDate;
-                    event["buyPrice"] = buyPrice;
-                    event["buyConditions"] = buyConditions;
-                    event["sellDate"] = sellDate;
-                    event["sellPrice"] = prices[sellDate];
-                    event["sellConditions"] = sellConditions;
-                    event["profit"] = prices[sellDate] - buyPrice;
-                    profit += event["profit"];
-                    event["percentProfit"] = (prices[sellDate] - buyPrice) / buyPrice
-                    percentProfit += event["percentProfit"];
-                    event["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
-                    // add and create new event
-                    events.push(event);
-                    event = {};
-
-                    if (daysBetween(new Date(buyDate), today) < EXPIRATION) {
-                        recent[buyDate] = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
-                    }
+                    resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "recent": recent });
                 }
-                resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "recent": recent });
-            }
-        });
+            });
     })
-}
-
-// makes api call to get historic prices
-async function getPrices(symbol, key, callback) {
-    // try using cache
-    if (useCache) {
-        let stockInfo = await getStockInfo(symbol);
-        stockInfo = await stockInfo.toArray();
-        // cache hit
-        if (stockInfo.length != 0) {
-            callback(stockInfo[0]["prices"]);
-            return;
-        }
-    }
-
-    // get start date
-    let startDate = new Date();
-    startDate.setDate(startDate.getDate() - START_DATE);
-
-    // fetch price data from API
-    fetch(BASE_URL + `/${symbol}/prices?startDate=${formatDate(startDate)}`, {
-        method: 'get',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Token ${key}`
-        },
-    })
-        .then(res => res.text())
-        .then(async text => {
-            // parse text to catch errors
-            try {
-                res = JSON.parse(text)
-                // if failed
-                if (res["detail"]) {
-                    res["error"] = res["detail"];
-                }
-                else {
-                    let msg = await addStockInfo(symbol, res);
-                    console.log(msg);
-                }
-                callback(res);
-            }
-            // parsing error
-            catch (e) {
-                callback({ "error": text })
-            }
-        })
-        // API error
-        .catch(err => { callback({ "error": err }) });
 }
 
 // get buy or sell conditions
@@ -510,4 +415,4 @@ function getConditions(mainIndicator, supportingIndicators, date) {
     return conditions
 }
 
-module.exports = { conductBacktest };
+module.exports = { conductBacktest, findIntersections };

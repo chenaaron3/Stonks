@@ -1,3 +1,5 @@
+# Import skeleton documents to mongo
+
 import pymongo
 from pathlib import Path
 from dotenv import load_dotenv
