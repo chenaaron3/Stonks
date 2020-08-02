@@ -5,15 +5,16 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { getStockInfo, containsID, addID } = require('../helpers/mongo');
+let { getStockInfo, containsID, addID, getDocument } = require('../helpers/mongo');
 let { makeid } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 
 // get backtest results
-router.get("/results", (req, res) => {
-    let id = req.id;
+router.get("/results", async (req, res) => {
+    let id = req.query.id;
     console.log(`Fetching results for id ${id}`);
-    res.json({});
+    let doc = await getDocument("results", id);
+    res.json(doc["results"]);
 })
 
 // get price data for a company
@@ -52,7 +53,7 @@ router.post("/backtest", async (req, res) => {
         console.log(message);
         if (message.status == "finished") {
             console.log("Trigger client", id);
-            // triggerChannel(id, "onResultsFinished", `${id}`);
+            triggerChannel(id, "onResultsFinished", `${id}`);
         }
     });
 })

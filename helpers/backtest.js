@@ -6,7 +6,7 @@ const { fork } = require('child_process');
 // own helpers
 const csv = require('csv');
 let { addResult } = require('../helpers/mongo');
-let { daysBetween } = require('../helpers/utils');
+let { daysBetween, formatDate } = require('../helpers/utils');
 let { getPrices } = require('../helpers/stock');
 
 // indicators
@@ -36,7 +36,7 @@ let EXPIRATION = 14;
 // get prices from today - START_DATE
 let START_DATE = 365 * 100;
 // how many threads to spawn on each request
-const NUM_THREADS = 5;
+const NUM_THREADS = 10;
 
 // cache settings
 const useCache = true;
@@ -47,7 +47,7 @@ function conductBacktest(strategyOptions, id) {
         // get list of symbols to query
         getSymbols(async (symbols) => {
             // Uncomment to test a portion of symbols
-            // symbols = symbols.slice(0, 10);
+            symbols = symbols.slice(0, 50);
 
             // maps symbol to list of intersecting dates
             let intersections = {};
@@ -61,7 +61,6 @@ function conductBacktest(strategyOptions, id) {
 
                 // spawn child to do work
                 let child = fork(path.join(__dirname, "worker.js"));
-                child.send({ type: "startIntersection", strategyOptions, id, partition });
                 child.on('message', async (msg) => {
                     if (msg.status == "finished") {
                         // assign partition's results to collective results
@@ -74,6 +73,7 @@ function conductBacktest(strategyOptions, id) {
                         }
                     }
                 })
+                child.send({ type: "startIntersection", strategyOptions, id, partition });
             }
         });
     })
@@ -162,8 +162,9 @@ function findIntersections(strategyOptions, symbol) {
                     let prices = {};
                     let volumes = {};
                     json.forEach(day => {
-                        prices[day["date"]] = day["adjClose"];
-                        volumes[day["date"]] = day["volume"];
+                        let formattedDate = new Date(day["date"]).toISOString();
+                        prices[formattedDate] = day["adjClose"];
+                        volumes[formattedDate] = day["volume"];
                     });
 
                     // get sorted dates
@@ -242,6 +243,8 @@ function findIntersections(strategyOptions, symbol) {
                     // store buy/sell events for debugging
                     let events = [];
                     let event = {};
+                    let recent = {buy: [], sell: []};
+                    let today = new Date();
 
                     // loops over dates and checks for buy signal
                     dates.forEach(day => {
@@ -275,6 +278,11 @@ function findIntersections(strategyOptions, symbol) {
                                 Object.keys(buyMap).forEach(indicator => {
                                     buyMap[indicator] = false;
                                 });
+
+                                // check if is recent buy
+                                if (daysBetween(new Date(day), today) < EXPIRATION) {
+                                    recent["buy"].push(day);
+                                }
                             }
                             else {
                                 buyExpiration -= 1;
@@ -315,6 +323,11 @@ function findIntersections(strategyOptions, symbol) {
 
                             // if all supports agree, sell the stock
                             if (allIndicatorsSell) {
+                                // check if is recent sell
+                                if (daysBetween(new Date(day), today) < EXPIRATION) {
+                                    recent["sell"].push(day);
+                                }
+
                                 // sell all stocks that were bought
                                 for (let i = 0; i < buyPrices.length; ++i) {
                                     let buyPrice = buyPrices[i];
@@ -366,40 +379,7 @@ function findIntersections(strategyOptions, symbol) {
                         }
                     });
 
-                    let recent = {};
-                    let today = new Date();
-                    // find recent buy events
-                    for (let i = 0; i < buyDates.length; ++i) {
-                        let buyPrice = buyPrices[i];
-                        let buyDate = buyDates[i];
-                        let sellDate = dates[dates.length - 1];
-
-                        // store buy/sell conditions for contextual data
-                        let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
-                        let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, sellDate);
-
-                        // populate transaction information
-                        count += 1;
-                        event["buyDate"] = buyDate;
-                        event["buyPrice"] = buyPrice;
-                        event["buyConditions"] = buyConditions;
-                        event["sellDate"] = sellDate;
-                        event["sellPrice"] = prices[sellDate];
-                        event["sellConditions"] = sellConditions;
-                        event["profit"] = prices[sellDate] - buyPrice;
-                        profit += event["profit"];
-                        event["percentProfit"] = (prices[sellDate] - buyPrice) / buyPrice
-                        percentProfit += event["percentProfit"];
-                        event["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
-                        // add and create new event
-                        events.push(event);
-                        event = {};
-
-                        if (daysBetween(new Date(buyDate), today) < EXPIRATION) {
-                            recent[buyDate] = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
-                        }
-                    }
-                    resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "recent": recent });
+                    resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "recent": recent, "holdings": buyDates });
                 }
             });
     })

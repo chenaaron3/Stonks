@@ -117,7 +117,7 @@ function getStockInfo(symbol) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
 		// get stock info matching symbol
-		priceCollection.find({
+		let stockInfo = await priceCollection.find({
 			"_id": symbol
 		});
 		resolve(stockInfo);

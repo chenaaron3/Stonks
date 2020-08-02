@@ -11,7 +11,8 @@ class Results extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            sortedSymbols: []
+            sortedSymbols: [],
+            results: {}
         };
         this.results = {};
     }
@@ -21,13 +22,18 @@ class Results extends React.Component {
         sortedSymbols.sort((a, b) => {
             return results[b]["percentProfit"] - results[a]["percentProfit"];
         });
-        this.setState({ sortedSymbols })
+        this.setState({ sortedSymbols, results });
+        console.log(JSON.stringify(results["AAWW"]));
     }
 
     componentDidUpdate(prevProps) {
         if (this.props.id !== prevProps.id) {
             console.log("Got the new id.", this.props.id);
         }
+    }
+
+    handleGetResult = (symbol) => {
+        this.props.viewStock(symbol, this.state.results[symbol])
     }
 
     render() {
@@ -37,7 +43,14 @@ class Results extends React.Component {
             <Pusher
               channel={this.props.id}
               event="onResultsFinished"
-              onUpdate={(data) => console.log("got the event", data)}
+              onUpdate={(data) => {
+                fetch(`/results?id=${data["id"]}`, {
+                    method: 'GET'
+                }).then(res => res.json())
+                .then(json => {
+                    this.onResultFinished(json);
+                })
+            }}
             />
                 <span className="results-title">Top Results</span>
                 <div className="results-list">
@@ -48,7 +61,7 @@ class Results extends React.Component {
                     {this.state.sortedSymbols.length != 0 && (
                         this.state.sortedSymbols.map((symbol, index) => {
                             return <div className="result" key={index}>
-                                <img className="result-icon" width="25px" height="25px" src={eye} alt="Eye" onClick={() => { this.props.viewStock(symbol, this.props.results[symbol]) }} />
+                                <img className="result-icon" width="25px" height="25px" src={eye} alt="Eye" onClick={()=>this.handleGetResult(symbol)} />
                                 <span className="result-text">{`${index + 1}. ${symbol}`}</span>
                             </div>;
                         })

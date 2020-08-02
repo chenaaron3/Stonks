@@ -12,7 +12,7 @@ var pusher = new Pusher({
 // trigger a pusher channel
 function triggerChannel(channel, event, message) {
     pusher.trigger(channel, event, {
-        'message': message
+        'id': message
     });
 }
 
