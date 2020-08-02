@@ -41,7 +41,7 @@ class Chart extends React.Component {
         fetch(`/priceGraph?symbol=${this.props.symbol}`)
             .then(res => res.json())
             .then(priceGraph => {
-                this.setState({ priceGraph: priceGraph });
+                this.setState({ priceGraph: priceGraph.reverse() });
             })
     }
 
@@ -89,6 +89,7 @@ class Chart extends React.Component {
 
         let dotRadius = 10;
 
+        
         if (this.buyDates.has(payload["date"])) {
             return (
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="green" />

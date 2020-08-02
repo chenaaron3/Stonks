@@ -49,11 +49,10 @@ process.on('message', async (msg) => {
         // notify parent
         process.send({ status: "finished", intersections });
 
-
         // log end information
         let time = Math.floor((Date.now() - start) / 1000);
         fs.appendFileSync(logDirectory + `\\intersectionLogs.txt`, `Worker ${msg.id}: Finished backtest for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
-        process.exit(0);
+        setTimeout(()=>{process.exit(0);}, 1000)
     }
     // thread to run updates
     else if (msg.type == "startUpdate") {

@@ -48,7 +48,7 @@ export default function reducer(state = initialState, action) {
             }
             return Object.assign({}, state, {
                 activeIndicators: newActive
-            })
+            })            
         default: return state;
     }
 }

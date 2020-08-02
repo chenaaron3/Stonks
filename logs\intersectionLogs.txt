@@ -1,0 +1,390 @@
+Worker aNfI60sv4l: Finding intersections for tickers A to AA
+Worker aNfI60sv4l: Finding intersections for tickers AAN to AAOI
+Worker aNfI60sv4l: Finding intersections for tickers AAMC to AAME
+Worker aNfI60sv4l: Finding intersections for tickers AACG to AAL
+Worker aNfI60sv4l: Finding intersections for tickers AAON to AAP
+Worker aNfI60sv4l: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker aNfI60sv4l: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker aNfI60sv4l: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker aNfI60sv4l: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker aNfI60sv4l: Finished backtest for tickers A to AA in 2 seconds
+Worker NS67gMcHUg: Finding intersections for tickers A to AA
+Worker NS67gMcHUg: Finding intersections for tickers AAMC to AAME
+Worker NS67gMcHUg: Finding intersections for tickers AACG to AAL
+Worker NS67gMcHUg: Finding intersections for tickers AAN to AAOI
+Worker NS67gMcHUg: Finding intersections for tickers AAON to AAP
+Worker NS67gMcHUg: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker NS67gMcHUg: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker NS67gMcHUg: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker NS67gMcHUg: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker NS67gMcHUg: Finished backtest for tickers A to AA in 2 seconds
+Worker QUqQqpuKm4: Finding intersections for tickers A to AA
+Worker QUqQqpuKm4: Finding intersections for tickers AAMC to AAME
+Worker QUqQqpuKm4: Finding intersections for tickers AAN to AAOI
+Worker QUqQqpuKm4: Finding intersections for tickers AACG to AAL
+Worker QUqQqpuKm4: Finding intersections for tickers AAON to AAP
+Worker QUqQqpuKm4: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker QUqQqpuKm4: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker QUqQqpuKm4: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker QUqQqpuKm4: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker QUqQqpuKm4: Finished backtest for tickers A to AA in 2 seconds
+Worker OMpoyG81Jy: Finding intersections for tickers AACG to AAL
+Worker OMpoyG81Jy: Finding intersections for tickers A to AA
+Worker OMpoyG81Jy: Finding intersections for tickers AAN to AAOI
+Worker OMpoyG81Jy: Finding intersections for tickers AAMC to AAME
+Worker OMpoyG81Jy: Finding intersections for tickers AAON to AAP
+Worker CoXNB7vyh5: Finding intersections for tickers AACG to AAL
+Worker CoXNB7vyh5: Finding intersections for tickers A to AA
+Worker CoXNB7vyh5: Finding intersections for tickers AAMC to AAME
+Worker CoXNB7vyh5: Finding intersections for tickers AAN to AAOI
+Worker CoXNB7vyh5: Finding intersections for tickers AAON to AAP
+Worker CoXNB7vyh5: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker CoXNB7vyh5: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker CoXNB7vyh5: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker CoXNB7vyh5: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker CoXNB7vyh5: Finished backtest for tickers A to AA in 2 seconds
+Worker 2Cb9nJmCVQ: Finding intersections for tickers AAMC to AAME
+Worker 2Cb9nJmCVQ: Finding intersections for tickers A to AA
+Worker 2Cb9nJmCVQ: Finding intersections for tickers AAN to AAOI
+Worker 2Cb9nJmCVQ: Finding intersections for tickers AACG to AAL
+Worker 2Cb9nJmCVQ: Finding intersections for tickers AAON to AAP
+Worker 2Cb9nJmCVQ: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker 2Cb9nJmCVQ: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker 2Cb9nJmCVQ: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker 2Cb9nJmCVQ: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker 2Cb9nJmCVQ: Finished backtest for tickers A to AA in 2 seconds
+Worker lvkLLXfpMu: Finding intersections for tickers AACG to AAL
+Worker lvkLLXfpMu: Finding intersections for tickers AAMC to AAME
+Worker lvkLLXfpMu: Finding intersections for tickers A to AA
+Worker lvkLLXfpMu: Finding intersections for tickers AAN to AAOI
+Worker lvkLLXfpMu: Finding intersections for tickers AAON to AAP
+Worker lvkLLXfpMu: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker lvkLLXfpMu: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker lvkLLXfpMu: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker lvkLLXfpMu: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker lvkLLXfpMu: Finished backtest for tickers A to AA in 2 seconds
+Worker faygFHDYSh: Finding intersections for tickers A to AA
+Worker faygFHDYSh: Finding intersections for tickers AAMC to AAME
+Worker faygFHDYSh: Finding intersections for tickers AACG to AAL
+Worker faygFHDYSh: Finding intersections for tickers AAN to AAOI
+Worker faygFHDYSh: Finding intersections for tickers AAON to AAP
+Worker faygFHDYSh: Finished backtest for tickers AACG to AAL in 0 seconds
+Worker faygFHDYSh: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker faygFHDYSh: Finished backtest for tickers AAMC to AAME in 1 seconds
+Worker faygFHDYSh: Finished backtest for tickers AAN to AAOI in 1 seconds
+Worker faygFHDYSh: Finished backtest for tickers A to AA in 2 seconds
+Worker X6MhIkGFSj: Finding intersections for tickers AAMC to AAME
+Worker X6MhIkGFSj: Finding intersections for tickers A to AA
+Worker X6MhIkGFSj: Finding intersections for tickers AAON to AAP
+Worker X6MhIkGFSj: Finding intersections for tickers AACG to AAL
+Worker X6MhIkGFSj: Finding intersections for tickers AAN to AAOI
+Worker X6MhIkGFSj: Finished backtest for tickers AACG to AAL in 1 seconds
+Worker X6MhIkGFSj: Finished backtest for tickers AAON to AAP in 1 seconds
+Worker X6MhIkGFSj: Finished backtest for tickers AAMC to AAME in 2 seconds
+Worker X6MhIkGFSj: Finished backtest for tickers AAN to AAOI in 2 seconds
+Worker X6MhIkGFSj: Finished backtest for tickers A to AA in 2 seconds
+Worker xYcV1OxpyL: Finding intersections for tickers A to CLNE
+Worker xYcV1OxpyL: Finding intersections for tickers CLNY to GPK
+Worker xYcV1OxpyL: Finding intersections for tickers MTRX to SF
+Worker xYcV1OxpyL: Finding intersections for tickers GPL to MTRN
+Worker xYcV1OxpyL: Finding intersections for tickers SF-P-A to ZYXI
+Worker C5yRs6DmWg: Finding intersections for tickers GPL to MTRN
+Worker C5yRs6DmWg: Finding intersections for tickers A to CLNE
+Worker C5yRs6DmWg: Finding intersections for tickers SF-P-A to ZYXI
+Worker C5yRs6DmWg: Finding intersections for tickers CLNY to GPK
+Worker C5yRs6DmWg: Finding intersections for tickers MTRX to SF
+Worker HZXej0sF8G: Finding intersections for tickers CLNY to GPK
+Worker HZXej0sF8G: Finding intersections for tickers A to CLNE
+Worker HZXej0sF8G: Finding intersections for tickers MTRX to SF
+Worker HZXej0sF8G: Finding intersections for tickers GPL to MTRN
+Worker HZXej0sF8G: Finding intersections for tickers SF-P-A to ZYXI
+Worker PFY6zM42jg: Finding intersections for tickers A to CLNE
+Worker PFY6zM42jg: Finding intersections for tickers GPL to MTRN
+Worker PFY6zM42jg: Finding intersections for tickers CLNY to GPK
+Worker PFY6zM42jg: Finding intersections for tickers SF-P-A to ZYXI
+Worker PFY6zM42jg: Finding intersections for tickers MTRX to SF
+Worker yJIYGLvHFm: Finding intersections for tickers GPL to MTRN
+Worker yJIYGLvHFm: Finding intersections for tickers A to CLNE
+Worker yJIYGLvHFm: Finding intersections for tickers CLNY to GPK
+Worker yJIYGLvHFm: Finding intersections for tickers MTRX to SF
+Worker yJIYGLvHFm: Finding intersections for tickers SF-P-A to ZYXI
+Worker kMHdXnxEMn: Finding intersections for tickers CLNY-P-B to ELF
+Worker kMHdXnxEMn: Finding intersections for tickers B to CLNY
+Worker kMHdXnxEMn: Finding intersections for tickers A to AZZ
+Worker kMHdXnxEMn: Finding intersections for tickers ELGX to GPMT
+Worker kMHdXnxEMn: Finding intersections for tickers GPN to KBSF
+Worker kMHdXnxEMn: Finding intersections for tickers KC to MTSI
+Worker kMHdXnxEMn: Finding intersections for tickers SFBS to TRNO
+Worker kMHdXnxEMn: Finding intersections for tickers PHG to SFBC
+Worker kMHdXnxEMn: Finding intersections for tickers MTSL to PHCF
+Worker kMHdXnxEMn: Finding intersections for tickers TRNS to ZYXI
+Worker kMHdXnxEMn: Finished backtest for tickers PHG to SFBC in 646 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers ELGX to GPMT in 656 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers A to AZZ in 672 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers MTSL to PHCF in 688 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers B to CLNY in 703 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers SFBS to TRNO in 710 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers KC to MTSI in 717 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers GPN to KBSF in 718 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers CLNY-P-B to ELF in 721 seconds
+Worker kMHdXnxEMn: Finished backtest for tickers TRNS to ZYXI in 722 seconds
+Worker wb4iiLaIyu: Finding intersections for tickers ABDC to ABIO
+Worker wb4iiLaIyu: Finding intersections for tickers A to AAMC
+Worker wb4iiLaIyu: Finding intersections for tickers AB to ABCB
+Worker wb4iiLaIyu: Finding intersections for tickers AAME to AAP
+Worker wb4iiLaIyu: Finding intersections for tickers AAPL to AAXN
+Worker wb4iiLaIyu: Finding intersections for tickers ACB to ACEL
+Worker wb4iiLaIyu: Finding intersections for tickers ABR-P-C to AC
+Worker wb4iiLaIyu: Finding intersections for tickers ABM to ABR-P-B
+Worker wb4iiLaIyu: Finding intersections for tickers ACEL-WS to ACGLP
+Worker wb4iiLaIyu: Finding intersections for tickers ACA to ACAMW
+Worker wb4iiLaIyu: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers AB to ABCB in 4 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers AAPL to AAXN in 4 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers ABM to ABR-P-B in 5 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers ABDC to ABIO in 5 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers A to AAMC in 5 seconds
+Worker wb4iiLaIyu: Finished backtest for tickers AAME to AAP in 5 seconds
+Worker GDYXvmoUrk: Finding intersections for tickers A to AAMC
+Worker GDYXvmoUrk: Finding intersections for tickers AAPL to AAXN
+Worker GDYXvmoUrk: Finding intersections for tickers AAME to AAP
+Worker GDYXvmoUrk: Finding intersections for tickers AB to ABCB
+Worker GDYXvmoUrk: Finding intersections for tickers ACEL-WS to ACGLP
+Worker GDYXvmoUrk: Finding intersections for tickers ABDC to ABIO
+Worker GDYXvmoUrk: Finding intersections for tickers ABR-P-C to AC
+Worker GDYXvmoUrk: Finding intersections for tickers ACB to ACEL
+Worker GDYXvmoUrk: Finding intersections for tickers ACA to ACAMW
+Worker GDYXvmoUrk: Finding intersections for tickers ABM to ABR-P-B
+Worker GDYXvmoUrk: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers AAPL to AAXN in 5 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers ABM to ABR-P-B in 5 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers ABDC to ABIO in 5 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers AB to ABCB in 5 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers A to AAMC in 5 seconds
+Worker GDYXvmoUrk: Finished backtest for tickers AAME to AAP in 5 seconds
+Worker UdZF7gBXOG: Finding intersections for tickers AB to ABCB
+Worker UdZF7gBXOG: Finding intersections for tickers AAPL to AAXN
+Worker UdZF7gBXOG: Finding intersections for tickers A to AAMC
+Worker UdZF7gBXOG: Finding intersections for tickers AAME to AAP
+Worker UdZF7gBXOG: Finding intersections for tickers ABM to ABR-P-B
+Worker UdZF7gBXOG: Finding intersections for tickers ABR-P-C to AC
+Worker UdZF7gBXOG: Finding intersections for tickers ABDC to ABIO
+Worker UdZF7gBXOG: Finding intersections for tickers ACEL-WS to ACGLP
+Worker UdZF7gBXOG: Finding intersections for tickers ACA to ACAMW
+Worker UdZF7gBXOG: Finding intersections for tickers ACB to ACEL
+Worker UdZF7gBXOG: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers ABR-P-C to AC in 4 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers AAPL to AAXN in 5 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers AB to ABCB in 5 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers ABM to ABR-P-B in 5 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers ABDC to ABIO in 5 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers A to AAMC in 5 seconds
+Worker UdZF7gBXOG: Finished backtest for tickers AAME to AAP in 5 seconds
+Worker F7vDXxKvEW: Finding intersections for tickers AAME to AAP
+Worker F7vDXxKvEW: Finding intersections for tickers AB to ABCB
+Worker F7vDXxKvEW: Finding intersections for tickers A to AAMC
+Worker F7vDXxKvEW: Finding intersections for tickers AAPL to AAXN
+Worker F7vDXxKvEW: Finding intersections for tickers ACA to ACAMW
+Worker F7vDXxKvEW: Finding intersections for tickers ABM to ABR-P-B
+Worker F7vDXxKvEW: Finding intersections for tickers ABR-P-C to AC
+Worker F7vDXxKvEW: Finding intersections for tickers ACB to ACEL
+Worker F7vDXxKvEW: Finding intersections for tickers ABDC to ABIO
+Worker F7vDXxKvEW: Finding intersections for tickers ACEL-WS to ACGLP
+Worker F7vDXxKvEW: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers AAPL to AAXN in 4 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers AB to ABCB in 5 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers ABM to ABR-P-B in 4 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers ABDC to ABIO in 4 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers A to AAMC in 5 seconds
+Worker F7vDXxKvEW: Finished backtest for tickers AAME to AAP in 5 seconds
+Worker AhpnXGjxAP: Finding intersections for tickers AAME to AAP
+Worker AhpnXGjxAP: Finding intersections for tickers A to AAMC
+Worker AhpnXGjxAP: Finding intersections for tickers AAPL to AAXN
+Worker AhpnXGjxAP: Finding intersections for tickers AB to ABCB
+Worker AhpnXGjxAP: Finding intersections for tickers ACEL-WS to ACGLP
+Worker AhpnXGjxAP: Finding intersections for tickers ACB to ACEL
+Worker AhpnXGjxAP: Finding intersections for tickers ACA to ACAMW
+Worker AhpnXGjxAP: Finding intersections for tickers ABR-P-C to AC
+Worker AhpnXGjxAP: Finding intersections for tickers ABM to ABR-P-B
+Worker AhpnXGjxAP: Finding intersections for tickers ABDC to ABIO
+Worker 6ywe63B3Uf: Finding intersections for tickers AB to ABCB
+Worker 6ywe63B3Uf: Finding intersections for tickers A to AAMC
+Worker 6ywe63B3Uf: Finding intersections for tickers AAME to AAP
+Worker 6ywe63B3Uf: Finding intersections for tickers ABDC to ABIO
+Worker 6ywe63B3Uf: Finding intersections for tickers AAPL to AAXN
+Worker 6ywe63B3Uf: Finding intersections for tickers ABM to ABR-P-B
+Worker 6ywe63B3Uf: Finding intersections for tickers ACA to ACAMW
+Worker 6ywe63B3Uf: Finding intersections for tickers ACEL-WS to ACGLP
+Worker 6ywe63B3Uf: Finding intersections for tickers ABR-P-C to AC
+Worker 6ywe63B3Uf: Finding intersections for tickers ACB to ACEL
+Worker XXsTRoCGTX: Finding intersections for tickers ABM to ABR-P-B
+Worker XXsTRoCGTX: Finding intersections for tickers AB to ABCB
+Worker XXsTRoCGTX: Finding intersections for tickers AAPL to AAXN
+Worker XXsTRoCGTX: Finding intersections for tickers A to AAMC
+Worker XXsTRoCGTX: Finding intersections for tickers AAME to AAP
+Worker XXsTRoCGTX: Finding intersections for tickers ABR-P-C to AC
+Worker XXsTRoCGTX: Finding intersections for tickers ABDC to ABIO
+Worker XXsTRoCGTX: Finding intersections for tickers ACEL-WS to ACGLP
+Worker XXsTRoCGTX: Finding intersections for tickers ACB to ACEL
+Worker XXsTRoCGTX: Finding intersections for tickers ACA to ACAMW
+Worker XXsTRoCGTX: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers ABM to ABR-P-B in 4 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers AAPL to AAXN in 4 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers AB to ABCB in 4 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers ABDC to ABIO in 4 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers A to AAMC in 5 seconds
+Worker XXsTRoCGTX: Finished backtest for tickers AAME to AAP in 5 seconds
+Worker dZYFE6lZs6: Finding intersections for tickers A to AAMC
+Worker dZYFE6lZs6: Finding intersections for tickers AB to ABCB
+Worker dZYFE6lZs6: Finding intersections for tickers AAME to AAP
+Worker dZYFE6lZs6: Finding intersections for tickers ACB to ACEL
+Worker dZYFE6lZs6: Finding intersections for tickers ABDC to ABIO
+Worker dZYFE6lZs6: Finding intersections for tickers AAPL to AAXN
+Worker dZYFE6lZs6: Finding intersections for tickers ACA to ACAMW
+Worker dZYFE6lZs6: Finding intersections for tickers ABM to ABR-P-B
+Worker dZYFE6lZs6: Finding intersections for tickers ACEL-WS to ACGLP
+Worker dZYFE6lZs6: Finding intersections for tickers ABR-P-C to AC
+Worker dZYFE6lZs6: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers ABR-P-C to AC in 4 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers AB to ABCB in 4 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers AAPL to AAXN in 5 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers ABDC to ABIO in 5 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers A to AAMC in 5 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers ABM to ABR-P-B in 5 seconds
+Worker dZYFE6lZs6: Finished backtest for tickers AAME to AAP in 5 seconds
+Worker wZIoEUdlue: Finding intersections for tickers AAME to AAP
+Worker wZIoEUdlue: Finding intersections for tickers AB to ABCB
+Worker wZIoEUdlue: Finding intersections for tickers ABR-P-C to AC
+Worker wZIoEUdlue: Finding intersections for tickers ABM to ABR-P-B
+Worker wZIoEUdlue: Finding intersections for tickers ABDC to ABIO
+Worker wZIoEUdlue: Finding intersections for tickers AAPL to AAXN
+Worker wZIoEUdlue: Finding intersections for tickers A to AAMC
+Worker wZIoEUdlue: Finding intersections for tickers ACB to ACEL
+Worker wZIoEUdlue: Finding intersections for tickers ACEL-WS to ACGLP
+Worker wZIoEUdlue: Finding intersections for tickers ACA to ACAMW
+Worker wZIoEUdlue: Finished backtest for tickers ACA to ACAMW in 2 seconds
+Worker wZIoEUdlue: Finished backtest for tickers ACB to ACEL in 3 seconds
+Worker wZIoEUdlue: Finished backtest for tickers ACEL-WS to ACGLP in 4 seconds
+Worker wZIoEUdlue: Finished backtest for tickers ABR-P-C to AC in 6 seconds
+Worker wZIoEUdlue: Finished backtest for tickers ABM to ABR-P-B in 7 seconds
+Worker wZIoEUdlue: Finished backtest for tickers AAPL to AAXN in 8 seconds
+Worker wZIoEUdlue: Finished backtest for tickers AB to ABCB in 8 seconds
+Worker wZIoEUdlue: Finished backtest for tickers ABDC to ABIO in 8 seconds
+Worker wZIoEUdlue: Finished backtest for tickers A to AAMC in 8 seconds
+Worker wZIoEUdlue: Finished backtest for tickers AAME to AAP in 8 seconds
+Worker 3C3tbiNx8v: Finding intersections for tickers A to AAMC
+Worker 3C3tbiNx8v: Finding intersections for tickers ACA to ACAMW
+Worker 3C3tbiNx8v: Finding intersections for tickers AB to ABCB
+Worker 3C3tbiNx8v: Finding intersections for tickers AAPL to AAXN
+Worker 3C3tbiNx8v: Finding intersections for tickers AAME to AAP
+Worker 3C3tbiNx8v: Finding intersections for tickers ABDC to ABIO
+Worker 3C3tbiNx8v: Finding intersections for tickers ACEL-WS to ACGLP
+Worker 3C3tbiNx8v: Finding intersections for tickers ABM to ABR-P-B
+Worker 3C3tbiNx8v: Finding intersections for tickers ACB to ACEL
+Worker 3C3tbiNx8v: Finding intersections for tickers ABR-P-C to AC
+Worker 3C3tbiNx8v: Finished backtest for tickers ACA to ACAMW in 2 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers ACB to ACEL in 3 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers ACEL-WS to ACGLP in 4 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers ABR-P-C to AC in 6 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers AAPL to AAXN in 7 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers AB to ABCB in 8 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers ABDC to ABIO in 8 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers ABM to ABR-P-B in 8 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers A to AAMC in 8 seconds
+Worker 3C3tbiNx8v: Finished backtest for tickers AAME to AAP in 9 seconds
+Worker ovbkLa8AGX: Finding intersections for tickers AAME to AAP
+Worker ovbkLa8AGX: Finding intersections for tickers AB to ABCB
+Worker ovbkLa8AGX: Finding intersections for tickers A to AAMC
+Worker ovbkLa8AGX: Finding intersections for tickers AAPL to AAXN
+Worker ovbkLa8AGX: Finding intersections for tickers ACEL-WS to ACGLP
+Worker ovbkLa8AGX: Finding intersections for tickers ABDC to ABIO
+Worker ovbkLa8AGX: Finding intersections for tickers ABM to ABR-P-B
+Worker ovbkLa8AGX: Finding intersections for tickers ACB to ACEL
+Worker ovbkLa8AGX: Finding intersections for tickers ABR-P-C to AC
+Worker ovbkLa8AGX: Finding intersections for tickers ACA to ACAMW
+Worker ovbkLa8AGX: Finished backtest for tickers ACA to ACAMW in 3 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers ACEL-WS to ACGLP in 5 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers ACB to ACEL in 5 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers ABR-P-C to AC in 8 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers AB to ABCB in 9 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers AAPL to AAXN in 10 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers ABM to ABR-P-B in 10 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers ABDC to ABIO in 10 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers A to AAMC in 10 seconds
+Worker ovbkLa8AGX: Finished backtest for tickers AAME to AAP in 10 seconds
+Worker IalECbt0cm: Finding intersections for tickers A to AAMC
+Worker IalECbt0cm: Finding intersections for tickers AAME to AAP
+Worker IalECbt0cm: Finding intersections for tickers AB to ABCB
+Worker IalECbt0cm: Finding intersections for tickers AAPL to AAXN
+Worker IalECbt0cm: Finding intersections for tickers ABDC to ABIO
+Worker IalECbt0cm: Finding intersections for tickers ABM to ABR-P-B
+Worker IalECbt0cm: Finding intersections for tickers ACB to ACEL
+Worker IalECbt0cm: Finding intersections for tickers ACEL-WS to ACGLP
+Worker IalECbt0cm: Finding intersections for tickers ACA to ACAMW
+Worker IalECbt0cm: Finding intersections for tickers ABR-P-C to AC
+Worker IalECbt0cm: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker IalECbt0cm: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker IalECbt0cm: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker IalECbt0cm: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker IalECbt0cm: Finished backtest for tickers AB to ABCB in 3 seconds
+Worker IalECbt0cm: Finished backtest for tickers AAPL to AAXN in 4 seconds
+Worker IalECbt0cm: Finished backtest for tickers ABM to ABR-P-B in 4 seconds
+Worker IalECbt0cm: Finished backtest for tickers A to AAMC in 4 seconds
+Worker IalECbt0cm: Finished backtest for tickers ABDC to ABIO in 4 seconds
+Worker IalECbt0cm: Finished backtest for tickers AAME to AAP in 4 seconds
+Worker cApW51tTht: Finding intersections for tickers A to AAMC
+Worker cApW51tTht: Finding intersections for tickers AAPL to AAXN
+Worker cApW51tTht: Finding intersections for tickers AB to ABCB
+Worker cApW51tTht: Finding intersections for tickers AAME to AAP
+Worker cApW51tTht: Finding intersections for tickers ACA to ACAMW
+Worker cApW51tTht: Finding intersections for tickers ABR-P-C to AC
+Worker cApW51tTht: Finding intersections for tickers ABM to ABR-P-B
+Worker cApW51tTht: Finding intersections for tickers ACB to ACEL
+Worker cApW51tTht: Finding intersections for tickers ABDC to ABIO
+Worker cApW51tTht: Finding intersections for tickers ACEL-WS to ACGLP
+Worker cApW51tTht: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker cApW51tTht: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker cApW51tTht: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker cApW51tTht: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker cApW51tTht: Finished backtest for tickers AAPL to AAXN in 4 seconds
+Worker cApW51tTht: Finished backtest for tickers AB to ABCB in 4 seconds
+Worker cApW51tTht: Finished backtest for tickers ABDC to ABIO in 4 seconds
+Worker cApW51tTht: Finished backtest for tickers A to AAMC in 4 seconds
+Worker cApW51tTht: Finished backtest for tickers ABM to ABR-P-B in 4 seconds
+Worker cApW51tTht: Finished backtest for tickers AAME to AAP in 4 seconds
+Worker BbQo9As4hP: Finding intersections for tickers AAME to AAP
+Worker BbQo9As4hP: Finding intersections for tickers A to AAMC
+Worker BbQo9As4hP: Finding intersections for tickers AAPL to AAXN
+Worker BbQo9As4hP: Finding intersections for tickers ABDC to ABIO
+Worker BbQo9As4hP: Finding intersections for tickers ABM to ABR-P-B
+Worker BbQo9As4hP: Finding intersections for tickers AB to ABCB
+Worker BbQo9As4hP: Finding intersections for tickers ABR-P-C to AC
+Worker BbQo9As4hP: Finding intersections for tickers ACB to ACEL
+Worker BbQo9As4hP: Finding intersections for tickers ACEL-WS to ACGLP
+Worker BbQo9As4hP: Finding intersections for tickers ACA to ACAMW
+Worker BbQo9As4hP: Finished backtest for tickers ACA to ACAMW in 1 seconds
+Worker BbQo9As4hP: Finished backtest for tickers ACB to ACEL in 2 seconds
+Worker BbQo9As4hP: Finished backtest for tickers ACEL-WS to ACGLP in 2 seconds
+Worker BbQo9As4hP: Finished backtest for tickers ABR-P-C to AC in 3 seconds
+Worker BbQo9As4hP: Finished backtest for tickers AAPL to AAXN in 4 seconds
+Worker BbQo9As4hP: Finished backtest for tickers ABDC to ABIO in 4 seconds
+Worker BbQo9As4hP: Finished backtest for tickers ABM to ABR-P-B in 4 seconds
+Worker BbQo9As4hP: Finished backtest for tickers A to AAMC in 4 seconds
+Worker BbQo9As4hP: Finished backtest for tickers AB to ABCB in 4 seconds
+Worker BbQo9As4hP: Finished backtest for tickers AAME to AAP in 4 seconds
