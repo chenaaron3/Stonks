@@ -27,29 +27,33 @@ let INDICATOR_OBJECTS = {
 // paths to resources
 let PATH_TO_OLD_RESULTS = path.join(__dirname, '../res/results.json');
 let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
-let PATH_TO_CSV = path.join(__dirname, "../res/supported_tickers.csv");
 
 // only get symbols from these exchanges
-let EXCHANGES = ["AMEX", "NASDAQ", "NYSE"];
+let EXCHANGES = ["amex", "nasdaq", "nyse"];
 // get recent results within expiration date
 let EXPIRATION = 14;
 // get prices from today - START_DATE
 let START_DATE = 365 * 100;
 // how many threads to spawn on each request
-const NUM_THREADS = 10;
+const NUM_THREADS = 5;
 
 // cache settings
-const useCache = true;
+const useCache = false;
+
+// updates a backtest
+function updateBacktest(previousResults) {
+
+}
 
 // conduct a backtest with given strategy
 function conductBacktest(strategyOptions, id) {
     return new Promise(resolve => {
         // get list of symbols to query
-        getSymbols(async (symbols) => {
+        getSymbols().then(async (symbols) => {
             // Uncomment to test a portion of symbols
-            symbols = symbols.slice(0, 50);
+            // symbols = symbols.slice(0, 50);
 
-            // maps symbol to list of intersecting dates
+            // maps symbol to buy/sell data
             let intersections = {};
 
             // create threads that split up the work
@@ -67,8 +71,18 @@ function conductBacktest(strategyOptions, id) {
                         Object.assign(intersections, msg.intersections);
                         // if all worker threads are finished
                         if (++finishedWorkers == NUM_THREADS) {
+                            // calculate overall information
+                            let allSymbols = Object.keys(intersections);
+                            let netProfit = 0;
+                            let netPercentProfit = 0;
+                            allSymbols.forEach(symbol => {
+                                netProfit += intersections[symbol]["profit"];
+                                netPercentProfit += intersections[symbol]["percentProfit"];
+                            })
+                            let results = { strategyOptions, netProfit, netPercentProfit: netPercentProfit / allSymbols.length, symbolData: intersections, lastUpdated: new Date() };
+
                             // add result to database
-                            await addResult(id, intersections);
+                            await addResult(id, results);
                             resolve();
                         }
                     }
@@ -80,43 +94,51 @@ function conductBacktest(strategyOptions, id) {
 }
 
 // gets the symbols from cache or from csv
-function getSymbols(callback) {
-    // read from cache
-    if (fs.existsSync(PATH_TO_SYMBOLS) && useCache) {
-        console.log("Loading Symbols from Cache...");
-        let symbols = JSON.parse(fs.readFileSync(PATH_TO_SYMBOLS, { encoding: "utf-8" }));
-        callback(symbols);
-    }
-    // parse info from csv
-    else {
-        console.log("Loading Symbols from CSV...");
-        // read csv
-        let data = fs.readFileSync(PATH_TO_CSV, { encoding: "utf-8" });
-        let symbols = [];
+function getSymbols() {
+    return new Promise((resolve, reject) => {
+        // read from cache
+        if (fs.existsSync(PATH_TO_SYMBOLS) && useCache) {
+            console.log("Loading Symbols from Cache...");
+            let symbols = JSON.parse(fs.readFileSync(PATH_TO_SYMBOLS, { encoding: "utf-8" }));
+            resolve(symbols);
+        }
+        // parse info from csv
+        else {
+            console.log("Loading Symbols from CSV...");
+            let symbols = [];
+            let finished = 0;
 
-        // parse data
-        csv.parse(data, {
-            comment: '#'
-        }, function (err, output) {
-            let today = new Date(Date.now());
-            // ticker, exchange, assetType, priceCurrency, startDate, endDate
-            let labels = output.shift();
+            EXCHANGES.forEach(exchange => {
+                let csvPath = path.join(__dirname, `../res/${exchange}.csv`);
+                let data = fs.readFileSync(csvPath, { encoding: "utf-8" });
 
-            // filter out unwanted stocks
-            output.forEach(stock => {
-                let d = new Date(stock[5]);
-                // US exchanges only, stock only, updated within this year
-                if (EXCHANGES.includes(stock[1]) && stock[2] == "Stock" && stock[3] == "USD" && stock[5] && d.getFullYear() == today.getFullYear()) {
-                    symbols.push(stock[0]);
-                }
+                // parse data
+                csv.parse(data, {
+                    comment: '#'
+                }, function (err, output) {
+                    // "Symbol","Name","LastSale","MarketCap","IPOyear","Sector","industry","Summary Quote"
+                    let labels = output.shift();
+
+                    output.forEach(stock => {
+                        let symbol = stock[0];
+                        // exclude index and sub stocks
+                        if (!stock[0].includes(".") && !stock[0].includes("^"))
+                            symbols.push(stock[0].trim());
+                    })
+
+                    // if all exchanges are finished
+                    if (++finished == EXCHANGES.length) {
+                        // sort so its easier to check progress
+                        symbols.sort();
+                        console.log("Writing", symbols.length, "Symbols to cache!");
+                        // Write to cache
+                        fs.writeFileSync(PATH_TO_SYMBOLS, JSON.stringify(symbols), { encoding: "utf-8" });
+                        resolve(symbols);
+                    }
+                })
             })
-
-            // cache for next use
-            console.log("Caching Symbols!");
-            fs.writeFile(PATH_TO_SYMBOLS, JSON.stringify(symbols), "utf8", (err) => { if (err) throw err; });
-            callback(symbols);
-        })
-    }
+        }
+    });
 }
 
 // get symbols from results
@@ -125,6 +147,13 @@ function getConfirmedSymbols(callback) {
     console.log("Loading Symbols from Old Results...");
     let symbols = JSON.parse(fs.readFileSync(PATH_TO_OLD_RESULTS, { encoding: "utf-8" }));
     callback(Object.keys(symbols));
+}
+
+// gets an indicator object
+function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices) {
+    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
+    indicator.initialize(indicatorOptions);
+    return indicator;
 }
 
 // given symbol, find intersections
@@ -243,7 +272,7 @@ function findIntersections(strategyOptions, symbol) {
                     // store buy/sell events for debugging
                     let events = [];
                     let event = {};
-                    let recent = {buy: [], sell: []};
+                    let recent = { buy: [], sell: [] };
                     let today = new Date();
 
                     // loops over dates and checks for buy signal
@@ -297,8 +326,9 @@ function findIntersections(strategyOptions, symbol) {
                             }
                         }
 
-                        // if stoploss triggered or  main seller indicator goes off and has stocks to sell
+                        // trigger stoploss if price goes below stoploss threshold
                         let stopLossTriggered = lastBuyPrice && strategyOptions["stopLoss"] && lastBuyPrice * strategyOptions["stopLoss"] > prices[day];
+                        // if stoploss triggered or main seller indicator goes off and has stocks to sell
                         if (stopLossTriggered || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
                             sellSignal = true;
                         }
@@ -317,12 +347,9 @@ function findIntersections(strategyOptions, symbol) {
                             //         allIndicatorsSell = false;
                             //     }
                             // });
-                            if (stopLossTriggered) {
-                                allIndicatorsSell = true;
-                            }
 
-                            // if all supports agree, sell the stock
-                            if (allIndicatorsSell) {
+                            // if all supports agree or stoploss triggered, sell the stock
+                            if (allIndicatorsSell || stopLossTriggered) {
                                 // check if is recent sell
                                 if (daysBetween(new Date(day), today) < EXPIRATION) {
                                     recent["sell"].push(day);
@@ -395,4 +422,4 @@ function getConditions(mainIndicator, supportingIndicators, date) {
     return conditions
 }
 
-module.exports = { conductBacktest, findIntersections };
+module.exports = { conductBacktest, findIntersections, getSymbols, getIndicator };

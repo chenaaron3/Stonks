@@ -8,6 +8,7 @@ const csv = require('csv');
 let { getStockInfo, containsID, addID, getDocument } = require('../helpers/mongo');
 let { makeid } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
+let { getIndicator } = require('../helpers/backtest');
 
 // get backtest results
 router.get("/results", async (req, res) => {
@@ -17,16 +18,45 @@ router.get("/results", async (req, res) => {
     res.json(doc["results"]);
 })
 
+// start fake backtesting for testing
+router.get("/fakeBacktest", async (req, res) => {
+    let id = req.query.id;
+    res.json({ "id": id });
+    setTimeout(() => {
+        triggerChannel(id, "onResultsFinished", `${id}`);
+    }, 1000);
+})
+
 // get price data for a company
-router.get("/priceGraph", async (req, res) => {
-    let symbol = req.query["symbol"];
+router.post("/priceGraph", async (req, res) => {
+    let symbol = req.body["symbol"];
+    let indicators = req.body["indicators"];
+
+    // get prices from database
     let stockInfo = await getStockInfo(symbol);
     stockInfo = await stockInfo.toArray();
-    if (stockInfo.length == 0) {
-        res.json({});
+    if (stockInfo.length != 0) {
+        let pricesJSON = stockInfo[0]["prices"];
+        let prices = {};
+        pricesJSON.forEach(day => {
+            let formattedDate = new Date(day["date"]).toISOString();
+            prices[formattedDate] = day["adjClose"];
+        });
+        // get sorted dates
+        let dates = Object.keys(prices).sort(function (a, b) {
+            return new Date(a) - new Date(b);
+        });
+
+        let indicatorGraphs = {};
+        Object.keys(indicators).forEach(indicatorName => {
+            let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices);
+            indicatorGraphs[indicatorName] = indicator.getGraph();
+        })
+        
+        res.json({ price: pricesJSON, indicators: indicatorGraphs });
     }
     else {
-        res.json(stockInfo[0]["prices"]);
+        res.json({ price: [], indicators: {} });
     }
 });
 

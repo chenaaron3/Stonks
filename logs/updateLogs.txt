@@ -1,0 +1,167 @@
+Worker AO2rc: Starting update for tickers MTRX to SESN
+Worker AO2rc: Starting update for tickers GPL to MTRN
+Worker AO2rc: Starting update for tickers SF to ZYXI
+Worker AO2rc: Starting update for tickers CLNY to GPK
+Worker AO2rc: Starting update for tickers A to CLNE
+Worker AO2rc: Finished update for tickers CLNY to GPK in 219 seconds
+Worker AO2rc: Finished update for tickers SF to ZYXI in 220 seconds
+Worker AO2rc: Finished update for tickers A to CLNE in 223 seconds
+Worker AO2rc: Finished update for tickers GPL to MTRN in 225 seconds
+Worker AO2rc: Finished update for tickers MTRX to SESN in 229 seconds
+Worker mH8C1: Starting update for tickers GPL to MTRN
+Worker mH8C1: Starting update for tickers SF to ZYXI
+Worker mH8C1: Starting update for tickers A to CLNE
+Worker mH8C1: Starting update for tickers MTRX to SESN
+Worker mH8C1: Starting update for tickers CLNY to GPK
+Worker mH8C1: Finished update for tickers SF to ZYXI in 304 seconds
+Worker mH8C1: Finished update for tickers A to CLNE in 304 seconds
+Worker mH8C1: Finished update for tickers GPL to MTRN in 305 seconds
+Worker mH8C1: Finished update for tickers MTRX to SESN in 307 seconds
+Worker mH8C1: Finished update for tickers CLNY to GPK in 308 seconds
+Worker v0epF: Starting update for tickers GOED to FAST
+Worker v0epF: Starting update for tickers USA to ZYME
+Worker v0epF: Starting update for tickers FAT to ORGS
+Worker v0epF: Starting update for tickers AN to DFNS.WS
+Worker v0epF: Starting update for tickers ORIC to ALV
+Worker rCYQh: Starting update for tickers USA to ZYME
+Worker rCYQh: Starting update for tickers GOED to FAST
+Worker rCYQh: Starting update for tickers FAT to ORGS
+Worker rCYQh: Starting update for tickers AN to DFNS.WS
+Worker rCYQh: Starting update for tickers ORIC to ALV
+Worker rCYQh: Finished update for tickers FAT to ORGS in 1249 seconds
+Worker rCYQh: Finished update for tickers ORIC to ALV in 1409 seconds
+Worker rCYQh: Finished update for tickers GOED to FAST in 1424 seconds
+Worker rCYQh: Finished update for tickers USA to ZYME in 1639 seconds
+Worker rCYQh: Finished update for tickers AN to DFNS.WS in 1639 seconds
+Worker 40HhS: Starting update for tickers AN to DFNS.WS
+Worker 40HhS: Starting update for tickers ORIC to ALV
+Worker 40HhS: Finished update for tickers ORIC to ALV in 0 seconds
+Worker 40HhS: Starting update for tickers USA to ZYME
+Worker 40HhS: Finished update for tickers USA to ZYME in 0 seconds
+Worker 40HhS: Starting update for tickers GOED to FAST
+Worker 40HhS: Finished update for tickers GOED to FAST in 0 seconds
+Worker 40HhS: Starting update for tickers FAT to ORGS
+Worker 40HhS: Finished update for tickers FAT to ORGS in 0 seconds
+Worker 40HhS: Finished update for tickers AN to DFNS.WS in 0 seconds
+Worker O27PD: Starting update for tickers ORIC to ALV
+Worker O27PD: Starting update for tickers USA to ZYME
+Worker O27PD: Starting update for tickers GOED to FAST
+Worker O27PD: Starting update for tickers AN to DFNS.WS
+Worker O27PD: Starting update for tickers FAT to ORGS
+Worker O27PD: Finished update for tickers FAT to ORGS in 303 seconds
+Worker O27PD: Finished update for tickers GOED to FAST in 307 seconds
+Worker O27PD: Finished update for tickers ORIC to ALV in 314 seconds
+Worker O27PD: Finished update for tickers AN to DFNS.WS in 320 seconds
+Worker O27PD: Finished update for tickers USA to ZYME in 323 seconds
+Worker Eaw1j: Starting update for tickers EXPO to NVEE
+Worker Eaw1j: Starting update for tickers NVEC to AMN
+Worker Eaw1j: Starting update for tickers GOED to EXPCU
+Worker Eaw1j: Starting update for tickers AMRX to MDU
+Worker Eaw1j: Starting update for tickers MTL to ZYME
+Worker Eaw1j: Finished update for tickers EXPO to NVEE in 0 seconds
+Worker Eaw1j: Finished update for tickers AMRX to MDU in 0 seconds
+Worker Eaw1j: Finished update for tickers GOED to EXPCU in 0 seconds
+Worker Eaw1j: Finished update for tickers NVEC to AMN in 0 seconds
+Worker Eaw1j: Finished update for tickers MTL to ZYME in 133 seconds
+Worker Vo7xR: Starting update for tickers GOED to ACY
+Worker Vo7xR: Starting update for tickers BCV to BRBS
+Worker Vo7xR: Starting update for tickers USAS to BTN
+Worker Vo7xR: Starting update for tickers UAVS to AMS
+Worker Vo7xR: Starting update for tickers BRG to CHAQ
+Worker Vo7xR: Finished update for tickers USAS to BTN in 23 seconds
+Worker Vo7xR: Finished update for tickers UAVS to AMS in 26 seconds
+Worker Vo7xR: Finished update for tickers BCV to BRBS in 29 seconds
+Worker Vo7xR: Finished update for tickers BRG to CHAQ in 29 seconds
+Worker Vo7xR: Finished update for tickers GOED to ACY in 32 seconds
+Worker Z3ZkG: Starting update for tickers GOED to ACY
+Worker Z3ZkG: Starting update for tickers UAVS to AMS
+Worker Z3ZkG: Finished update for tickers UAVS to AMS in 0 seconds
+Worker Z3ZkG: Starting update for tickers BCV to BRBS
+Worker Z3ZkG: Finished update for tickers BCV to BRBS in 0 seconds
+Worker Z3ZkG: Finished update for tickers GOED to ACY in 0 seconds
+Worker Z3ZkG: Starting update for tickers USAS to BTN
+Worker Z3ZkG: Finished update for tickers USAS to BTN in 0 seconds
+Worker Z3ZkG: Starting update for tickers BRG to CHAQ
+Worker Z3ZkG: Finished update for tickers BRG to CHAQ in 0 seconds
+Worker rZWnS: Starting update for tickers USAS to BTN
+Worker rZWnS: Starting update for tickers BCV to BRBS
+Worker rZWnS: Starting update for tickers UAVS to AMS
+Worker rZWnS: Starting update for tickers GOED to ACY
+Worker rZWnS: Starting update for tickers BRG to CHAQ
+Worker rZWnS: Finished update for tickers UAVS to AMS in 3 seconds
+Worker rZWnS: Finished update for tickers BRG to CHAQ in 2 seconds
+Worker rZWnS: Finished update for tickers USAS to BTN in 3 seconds
+Worker rZWnS: Finished update for tickers BCV to BRBS in 3 seconds
+Worker rZWnS: Finished update for tickers GOED to ACY in 3 seconds
+Worker iH4zp: Starting update for tickers WVFC to VTA
+Worker iH4zp: Starting update for tickers GOED to ENG
+Worker iH4zp: Starting update for tickers ENLV to NNDM
+Worker iH4zp: Starting update for tickers NSTG to WSFS
+Worker iH4zp: Starting update for tickers IHIT to ZYME
+Worker iH4zp: Finished update for tickers ENLV to NNDM in 2929 seconds
+Worker iH4zp: Finished update for tickers GOED to ENG in 3199 seconds
+Worker iH4zp: Finished update for tickers NSTG to WSFS in 3201 seconds
+Worker iH4zp: Finished update for tickers WVFC to VTA in 3667 seconds
+Worker iH4zp: Finished update for tickers IHIT to ZYME in 3779 seconds
+Worker 8WmlV: Starting update for tickers ENLV to NNDM
+Worker 8WmlV: Starting update for tickers NSTG to WSFS
+Worker 8WmlV: Starting update for tickers WVFC to VTA
+Worker 8WmlV: Starting update for tickers IHIT to ZYME
+Worker 8WmlV: Starting update for tickers GOED to ENG
+Worker 8WmlV: Finished update for tickers ENLV to NNDM in 230 seconds
+Worker 8WmlV: Finished update for tickers NSTG to WSFS in 233 seconds
+Worker 8WmlV: Finished update for tickers GOED to ENG in 233 seconds
+Worker 8WmlV: Finished update for tickers WVFC to VTA in 245 seconds
+Worker 8WmlV: Finished update for tickers IHIT to ZYME in 252 seconds
+Worker 874iZ: Starting update for tickers ENLV to NNDM
+Worker 874iZ: Starting update for tickers WVFC to VTA
+Worker 874iZ: Finished update for tickers WVFC to VTA in 0 seconds
+Worker 874iZ: Finished update for tickers ENLV to NNDM in 0 seconds
+Worker 874iZ: Starting update for tickers NSTG to WSFS
+Worker 874iZ: Finished update for tickers NSTG to WSFS in 0 seconds
+Worker 874iZ: Starting update for tickers IHIT to ZYME
+Worker 874iZ: Finished update for tickers IHIT to ZYME in 0 seconds
+Worker 874iZ: Starting update for tickers GOED to ENG
+Worker 874iZ: Finished update for tickers GOED to ENG in 0 seconds
+Worker 4TLjO: Starting update for tickers NSTG to WSFS
+Worker 4TLjO: Starting update for tickers GOED to ENG
+Worker 4TLjO: Starting update for tickers ENLV to NNDM
+Worker 4TLjO: Finished update for tickers GOED to ENG in 0 seconds
+Worker 4TLjO: Finished update for tickers ENLV to NNDM in 0 seconds
+Worker 4TLjO: Starting update for tickers IHIT to ZYME
+Worker 4TLjO: Starting update for tickers WVFC to VTA
+Worker 4TLjO: Finished update for tickers IHIT to ZYME in 0 seconds
+Worker 4TLjO: Finished update for tickers WVFC to VTA in 0 seconds
+Worker 4TLjO: Finished update for tickers NSTG to WSFS in 0 seconds
+Worker vWWYp: Starting update for tickers ENLV to NNDM
+Worker vWWYp: Starting update for tickers WVFC to VTA
+Worker vWWYp: Starting update for tickers GOED to ENG
+Worker vWWYp: Starting update for tickers IHIT to ZYME
+Worker vWWYp: Starting update for tickers NSTG to WSFS
+Worker eQVzF: Starting update for tickers ENLV to NNDM
+Worker eQVzF: Starting update for tickers WVFC to VTA
+Worker eQVzF: Starting update for tickers IHIT to ZYME
+Worker eQVzF: Starting update for tickers NSTG to WSFS
+Worker eQVzF: Starting update for tickers GOED to ENG
+Worker jLtGV: Starting update for tickers GOED to GOED
+Worker jLtGV: Finished update for tickers GOED to GOED in 1 seconds
+Worker j6HFJ: Starting update for tickers FAX to IAF
+Worker j6HFJ: Starting update for tickers GOED to XXII
+Worker j6HFJ: Starting update for tickers ACU to ATNM
+Worker j6HFJ: Starting update for tickers AE to ACY
+Worker j6HFJ: Starting update for tickers AEF to FCO
+Worker j6HFJ: Finished update for tickers GOED to XXII in 1 seconds
+Worker j6HFJ: Finished update for tickers FAX to IAF in 2 seconds
+Worker j6HFJ: Finished update for tickers AE to ACY in 1 seconds
+Worker j6HFJ: Finished update for tickers ACU to ATNM in 1 seconds
+Worker j6HFJ: Finished update for tickers AEF to FCO in 1 seconds
+Worker CLZlp: Starting update for tickers ENLV to NNDM
+Worker CLZlp: Starting update for tickers IHIT to ZYME
+Worker CLZlp: Starting update for tickers WVFC to VTA
+Worker CLZlp: Starting update for tickers GOED to ENG
+Worker CLZlp: Starting update for tickers NSTG to WSFS
+Worker CLZlp: Finished update for tickers ENLV to NNDM in 247 seconds
+Worker CLZlp: Finished update for tickers GOED to ENG in 251 seconds
+Worker CLZlp: Finished update for tickers NSTG to WSFS in 253 seconds
+Worker CLZlp: Finished update for tickers WVFC to VTA in 278 seconds
+Worker CLZlp: Finished update for tickers IHIT to ZYME in 285 seconds

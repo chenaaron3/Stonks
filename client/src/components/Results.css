@@ -18,6 +18,7 @@
     flex: 5;
     overflow: scroll;
     overflow-x: hidden;
+    max-height: 30vh;
 }
 
 .results-start-button {
@@ -29,15 +30,39 @@
 }
 
 .result {
+    cursor: pointer;
     height: 5vh;
     display: flex;
     flex-direction: row;
+    align-items: center;
 }
 
-.result-icon{
-    margin-right: 15px;
+.result-icon {
+    margin-left: 1vw;
+    margin-right: 1vw;
+    visibility: hidden;
 }
 
-.result-text{
+.result-icon.result-hover {
+    visibility: visible;
+}
 
+.result-text {
+    flex-grow: 1;
+    text-align: start;
+    font-size: 1em;
+}
+
+.result-edit {
+    height: 100%;
+    font-size: 1em;
+}
+
+.result-trailer {
+    margin-right: 1vw;
+    visibility: hidden;
+}
+
+.result-trailer.result-hover {
+    visibility: visible;
 }

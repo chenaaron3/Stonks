@@ -29,10 +29,12 @@ prices = db['prices']
 with open('../res/symbols.json') as data_file:
 	data = json.load(data_file)
 	for symbol in data:
+		if symbol.count(".") or symbol.count("^"):
+			continue
 		print(f"Indexing {symbol}")
 		dictIndex = {}
 		dictIndex["_id"] = symbol
 		dictIndex["prices"] = []
-		dictIndex["lastUpdated"] = "1500-07-20T00:00:00.000Z"
+		dictIndex["lastUpdated"] = "1990-01-01T00:00:00.000Z"
 		if prices.count_documents({"_id":symbol}) == 0:
 			prices.insert_one(dictIndex)

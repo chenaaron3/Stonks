@@ -14,6 +14,14 @@ class GC extends Indicator {
 		this.ma2 = getSimpleMovingAverage(this.dates, this.prices, this.ma2Period);
 	}
 
+	getGraph() {
+		return {};
+	}
+
+	getValue(date) {
+		return `MA1: ${this.ma1[date]}, MA2: ${this.ma2[date]}`;
+	}
+
 	getAction(date) {
 		let yesterday = this.dates[this.dates.indexOf(date) - 1];
 

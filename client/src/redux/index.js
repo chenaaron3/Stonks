@@ -14,7 +14,7 @@ const initialState = {
 
 // Reducer
 export default function reducer(state = initialState, action) {
-    console.log(action);
+    console.log("ACTION", action);
     switch (action.type) {
         case VIEW_STOCK:
             return Object.assign({}, state, {

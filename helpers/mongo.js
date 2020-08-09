@@ -47,6 +47,29 @@ function getCollection(collectionName) {
 	});
 }
 
+function addDocument(collectionName, document) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		// get collection
+		getCollection(collectionName)
+			.then(async (collection) => {
+				// if document not in collection already
+				let count = await collection.countDocuments({ "_id": document["_id"] });
+				if (count == 0) {
+					// Add the document
+					collection.insertOne(document, (error) => {
+						if (error) reject(error);
+						else resolve();
+					});
+				}
+				else
+				{
+					resolve();
+				}
+			});
+	});
+}
+
 // gets a document from a collection
 function getDocument(collectionName, documentID) {
 	return new Promise(async (resolve, reject) => {
@@ -71,11 +94,27 @@ function getDocument(collectionName, documentID) {
 	});
 }
 
+function deleteDocument(collectionName, documentID) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		// get collection
+		getCollection(collectionName)
+			.then(async (collection) => {
+				// get document
+				await collection.deleteOne({
+					"_id": documentID
+				});
+				resolve();
+			})
+			.catch(err => reject(err));
+	});
+}
+
 // checks if id exists in result collection
 function containsID(id) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
-		resolve(resultsCollection.find({
+		resolve(await resultsCollection.find({
 			"_id": id
 		}).count() > 0);
 	});
@@ -142,10 +181,9 @@ function addStockInfo(symbol, pricesList) {
 }
 
 // updates a stock by adding prices to it
-function updateStockInfo(symbol, pricesList) {
+function updateStockInfo(symbol, pricesList, updateDate) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
-		let today = new Date();
 		await priceCollection.updateOne({
 			"_id": symbol
 		}, {
@@ -155,7 +193,7 @@ function updateStockInfo(symbol, pricesList) {
 				}
 			},
 			$set: {
-				"lastUpdated": today.toString()
+				"lastUpdated": updateDate.toString()
 			}
 		});
 		resolve();
@@ -164,7 +202,9 @@ function updateStockInfo(symbol, pricesList) {
 
 module.exports = {
 	getCollection,
+	addDocument,
 	getDocument,
+	deleteDocument,
 	getStockInfo,
 	addStockInfo,
 	containsID,

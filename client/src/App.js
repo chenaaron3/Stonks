@@ -18,9 +18,9 @@ class App extends React.Component {
           <div className="App-chart">
             <Chart />
           </div>
-          <div className="App-details">
+          {/* <div className="App-details">
             Details here
-          </div>
+          </div> */}
         </div>
         <div className="App-query">
           <div className="App-indicators">

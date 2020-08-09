@@ -15,6 +15,12 @@
     font-size: 1.5em;
 }
 
+.indicators-subtitle {
+    margin-top: 1vh;
+    margin-bottom: 1vh;
+    font-size: 1.25em;
+}
+
 .indicators-start-text {
     color: #62a583;
 }

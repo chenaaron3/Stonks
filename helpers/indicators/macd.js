@@ -22,6 +22,10 @@ class MACD extends Indicator {
 		return getExponentialMovingAverage(dates, this.graph, this.signalPeriod)["data"];
 	}
 
+	getGraph() {
+		return this.graph;
+	}
+
 	getValue(date) {
 		return this.graph[date];
 	}

@@ -12,6 +12,10 @@ class SMA extends Indicator {
 		return getSimpleMovingAverage(this.dates, this.prices, this.period);
 	}
 
+	getGraph() {
+		return this.graph;
+	}
+
 	getValue(date) {
 		return this.graph[date];
 	}

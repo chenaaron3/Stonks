@@ -388,3 +388,328 @@ Worker BbQo9As4hP: Finished backtest for tickers ABM to ABR-P-B in 4 seconds
 Worker BbQo9As4hP: Finished backtest for tickers A to AAMC in 4 seconds
 Worker BbQo9As4hP: Finished backtest for tickers AB to ABCB in 4 seconds
 Worker BbQo9As4hP: Finished backtest for tickers AAME to AAP in 4 seconds
+Worker Vc8ahnsgOP: Finding intersections for tickers ABR-P-C to ACAMW
+Worker Vc8ahnsgOP: Finding intersections for tickers ABDC to ABR-P-B
+Worker Vc8ahnsgOP: Finding intersections for tickers AAPL to ABCB
+Worker Vc8ahnsgOP: Finding intersections for tickers A to AAP
+Worker Vc8ahnsgOP: Finding intersections for tickers ACB to ACGLP
+Worker 87b16BZMEG: Finding intersections for tickers ACB to ACGLP
+Worker 87b16BZMEG: Finding intersections for tickers ABR-P-C to ACAMW
+Worker 87b16BZMEG: Finding intersections for tickers A to AAP
+Worker 87b16BZMEG: Finding intersections for tickers ABDC to ABR-P-B
+Worker 87b16BZMEG: Finding intersections for tickers AAPL to ABCB
+Worker 87b16BZMEG: Finished backtest for tickers ACB to ACGLP in 3 seconds
+Worker 87b16BZMEG: Finished backtest for tickers ABR-P-C to ACAMW in 3 seconds
+Worker 87b16BZMEG: Finished backtest for tickers ABDC to ABR-P-B in 3 seconds
+Worker 87b16BZMEG: Finished backtest for tickers A to AAP in 3 seconds
+Worker 87b16BZMEG: Finished backtest for tickers AAPL to ABCB in 3 seconds
+Worker AbfMuqM1qH: Finding intersections for tickers A to AAP
+Worker AbfMuqM1qH: Finding intersections for tickers ABDC to ABR-P-B
+Worker AbfMuqM1qH: Finding intersections for tickers AAPL to ABCB
+Worker AbfMuqM1qH: Finding intersections for tickers ABR-P-C to ACAMW
+Worker AbfMuqM1qH: Finding intersections for tickers ACB to ACGLP
+Worker AbfMuqM1qH: Finished backtest for tickers ABR-P-C to ACAMW in 3 seconds
+Worker AbfMuqM1qH: Finished backtest for tickers ACB to ACGLP in 3 seconds
+Worker AbfMuqM1qH: Finished backtest for tickers AAPL to ABCB in 4 seconds
+Worker AbfMuqM1qH: Finished backtest for tickers ABDC to ABR-P-B in 4 seconds
+Worker AbfMuqM1qH: Finished backtest for tickers A to AAP in 4 seconds
+Worker JDikSBv5Rw: Finding intersections for tickers ABDC to ABR-P-B
+Worker JDikSBv5Rw: Finding intersections for tickers ABR-P-C to ACAMW
+Worker JDikSBv5Rw: Finding intersections for tickers A to AAP
+Worker JDikSBv5Rw: Finding intersections for tickers AAPL to ABCB
+Worker JDikSBv5Rw: Finding intersections for tickers ACB to ACGLP
+Worker JDikSBv5Rw: Finished backtest for tickers ACB to ACGLP in 2 seconds
+Worker JDikSBv5Rw: Finished backtest for tickers ABR-P-C to ACAMW in 3 seconds
+Worker JDikSBv5Rw: Finished backtest for tickers ABDC to ABR-P-B in 3 seconds
+Worker JDikSBv5Rw: Finished backtest for tickers AAPL to ABCB in 3 seconds
+Worker JDikSBv5Rw: Finished backtest for tickers A to AAP in 4 seconds
+Worker 4swPiGFv3k: Finding intersections for tickers A to CLNE
+Worker 4swPiGFv3k: Finding intersections for tickers MTRX to SF
+Worker 4swPiGFv3k: Finding intersections for tickers CLNY to GPK
+Worker 4swPiGFv3k: Finding intersections for tickers GPL to MTRN
+Worker 4swPiGFv3k: Finding intersections for tickers SF-P-A to ZYXI
+Worker 4swPiGFv3k: Finished backtest for tickers A to CLNE in 310 seconds
+Worker 4swPiGFv3k: Finished backtest for tickers MTRX to SF in 329 seconds
+Worker 4swPiGFv3k: Finished backtest for tickers CLNY to GPK in 331 seconds
+Worker 4swPiGFv3k: Finished backtest for tickers SF-P-A to ZYXI in 340 seconds
+Worker 4swPiGFv3k: Finished backtest for tickers GPL to MTRN in 341 seconds
+Worker ZngVS9r5JY: Finding intersections for tickers GPL to MTRN
+Worker ZngVS9r5JY: Finding intersections for tickers MTRX to SF
+Worker ZngVS9r5JY: Finding intersections for tickers A to CLNE
+Worker ZngVS9r5JY: Finding intersections for tickers CLNY to GPK
+Worker ZngVS9r5JY: Finding intersections for tickers SF-P-A to ZYXI
+Worker ZngVS9r5JY: Finished backtest for tickers MTRX to SF in 276 seconds
+Worker ZngVS9r5JY: Finished backtest for tickers GPL to MTRN in 282 seconds
+Worker ZngVS9r5JY: Finished backtest for tickers CLNY to GPK in 283 seconds
+Worker ZngVS9r5JY: Finished backtest for tickers A to CLNE in 283 seconds
+Worker ZngVS9r5JY: Finished backtest for tickers SF-P-A to ZYXI in 285 seconds
+Worker t8qYP0ANOH: Finding intersections for tickers A to CLNE
+Worker t8qYP0ANOH: Finding intersections for tickers CLNY to GPK
+Worker t8qYP0ANOH: Finding intersections for tickers MTRX to SF
+Worker t8qYP0ANOH: Finding intersections for tickers GPL to MTRN
+Worker t8qYP0ANOH: Finding intersections for tickers SF-P-A to ZYXI
+Worker t8qYP0ANOH: Finished backtest for tickers MTRX to SF in 287 seconds
+Worker t8qYP0ANOH: Finished backtest for tickers CLNY to GPK in 293 seconds
+Worker t8qYP0ANOH: Finished backtest for tickers SF-P-A to ZYXI in 296 seconds
+Worker t8qYP0ANOH: Finished backtest for tickers A to CLNE in 300 seconds
+Worker t8qYP0ANOH: Finished backtest for tickers GPL to MTRN in 303 seconds
+Worker 5bzS7HjeAk: Finding intersections for tickers A to CLNE
+Worker 5bzS7HjeAk: Finding intersections for tickers CLNY to GPK
+Worker 5bzS7HjeAk: Finding intersections for tickers GPL to MTRN
+Worker 5bzS7HjeAk: Finding intersections for tickers MTRX to SF
+Worker 5bzS7HjeAk: Finding intersections for tickers SF-P-A to ZYXI
+Worker 5bzS7HjeAk: Finished backtest for tickers MTRX to SF in 359 seconds
+Worker 5bzS7HjeAk: Finished backtest for tickers A to CLNE in 360 seconds
+Worker 5bzS7HjeAk: Finished backtest for tickers GPL to MTRN in 375 seconds
+Worker 5bzS7HjeAk: Finished backtest for tickers CLNY to GPK in 376 seconds
+Worker 5bzS7HjeAk: Finished backtest for tickers SF-P-A to ZYXI in 379 seconds
+Worker CkzRPTHPTi: Finding intersections for tickers CLNY to GPK
+Worker CkzRPTHPTi: Finding intersections for tickers A to CLNE
+Worker CkzRPTHPTi: Finding intersections for tickers MTRX to SF
+Worker CkzRPTHPTi: Finding intersections for tickers GPL to MTRN
+Worker CkzRPTHPTi: Finding intersections for tickers SF-P-A to ZYXI
+Worker CkzRPTHPTi: Finished backtest for tickers A to CLNE in 381 seconds
+Worker CkzRPTHPTi: Finished backtest for tickers CLNY to GPK in 387 seconds
+Worker CkzRPTHPTi: Finished backtest for tickers GPL to MTRN in 387 seconds
+Worker CkzRPTHPTi: Finished backtest for tickers MTRX to SF in 393 seconds
+Worker CkzRPTHPTi: Finished backtest for tickers SF-P-A to ZYXI in 393 seconds
+Worker swjLQUi01K: Finding intersections for tickers CLNY to GPK
+Worker swjLQUi01K: Finding intersections for tickers SF-P-A to ZYXI
+Worker swjLQUi01K: Finding intersections for tickers A to CLNE
+Worker swjLQUi01K: Finding intersections for tickers GPL to MTRN
+Worker swjLQUi01K: Finding intersections for tickers MTRX to SF
+Worker pbjrl2NFpL: Finding intersections for tickers CLNY to GPK
+Worker pbjrl2NFpL: Finding intersections for tickers MTRX to SF
+Worker pbjrl2NFpL: Finding intersections for tickers SF-P-A to ZYXI
+Worker pbjrl2NFpL: Finding intersections for tickers A to CLNE
+Worker pbjrl2NFpL: Finding intersections for tickers GPL to MTRN
+Worker pbjrl2NFpL: Finished backtest for tickers A to CLNE in 888 seconds
+Worker pbjrl2NFpL: Finished backtest for tickers CLNY to GPK in 891 seconds
+Worker pbjrl2NFpL: Finished backtest for tickers MTRX to SF in 893 seconds
+Worker pbjrl2NFpL: Finished backtest for tickers SF-P-A to ZYXI in 893 seconds
+Worker pbjrl2NFpL: Finished backtest for tickers GPL to MTRN in 901 seconds
+Worker mQros5tb63: Finding intersections for tickers CLNY to GPK
+Worker mQros5tb63: Finding intersections for tickers A to CLNE
+Worker mQros5tb63: Finding intersections for tickers SF-P-A to ZYXI
+Worker mQros5tb63: Finding intersections for tickers GPL to MTRN
+Worker mQros5tb63: Finding intersections for tickers MTRX to SF
+Worker mQros5tb63: Finished backtest for tickers MTRX to SF in 393 seconds
+Worker mQros5tb63: Finished backtest for tickers CLNY to GPK in 403 seconds
+Worker mQros5tb63: Finished backtest for tickers A to CLNE in 407 seconds
+Worker mQros5tb63: Finished backtest for tickers SF-P-A to ZYXI in 408 seconds
+Worker mQros5tb63: Finished backtest for tickers GPL to MTRN in 411 seconds
+Worker bM2Vtg1vu5: Finding intersections for tickers A to CLNE
+Worker bM2Vtg1vu5: Finding intersections for tickers SF-P-A to ZYXI
+Worker bM2Vtg1vu5: Finding intersections for tickers GPL to MTRN
+Worker bM2Vtg1vu5: Finding intersections for tickers MTRX to SF
+Worker bM2Vtg1vu5: Finding intersections for tickers CLNY to GPK
+Worker IkQpxK53hq: Finding intersections for tickers CLNY to GPK
+Worker IkQpxK53hq: Finding intersections for tickers A to CLNE
+Worker IkQpxK53hq: Finding intersections for tickers MTRX to SF
+Worker IkQpxK53hq: Finding intersections for tickers GPL to MTRN
+Worker IkQpxK53hq: Finding intersections for tickers SF-P-A to ZYXI
+Worker bM2Vtg1vu5: Finished backtest for tickers MTRX to SF in 814 seconds
+Worker bM2Vtg1vu5: Finished backtest for tickers GPL to MTRN in 817 seconds
+Worker bM2Vtg1vu5: Finished backtest for tickers A to CLNE in 819 seconds
+Worker bM2Vtg1vu5: Finished backtest for tickers CLNY to GPK in 825 seconds
+Worker IkQpxK53hq: Finished backtest for tickers CLNY to GPK in 807 seconds
+Worker IkQpxK53hq: Finished backtest for tickers A to CLNE in 807 seconds
+Worker bM2Vtg1vu5: Finished backtest for tickers SF-P-A to ZYXI in 842 seconds
+Worker IkQpxK53hq: Finished backtest for tickers MTRX to SF in 811 seconds
+Worker IkQpxK53hq: Finished backtest for tickers GPL to MTRN in 811 seconds
+Worker IkQpxK53hq: Finished backtest for tickers SF-P-A to ZYXI in 811 seconds
+Worker fDRPInckO4: Finding intersections for tickers SF-P-A to ZYXI
+Worker fDRPInckO4: Finding intersections for tickers GPL to MTRN
+Worker fDRPInckO4: Finding intersections for tickers A to CLNE
+Worker fDRPInckO4: Finding intersections for tickers CLNY to GPK
+Worker fDRPInckO4: Finding intersections for tickers MTRX to SF
+Worker fDRPInckO4: Finished backtest for tickers MTRX to SF in 271 seconds
+Worker fDRPInckO4: Finished backtest for tickers A to CLNE in 276 seconds
+Worker fDRPInckO4: Finished backtest for tickers CLNY to GPK in 280 seconds
+Worker fDRPInckO4: Finished backtest for tickers SF-P-A to ZYXI in 282 seconds
+Worker fDRPInckO4: Finished backtest for tickers GPL to MTRN in 285 seconds
+Worker S1xeo0AKPd: Finding intersections for tickers CLNY to GPK
+Worker S1xeo0AKPd: Finding intersections for tickers SF-P-A to ZYXI
+Worker S1xeo0AKPd: Finding intersections for tickers MTRX to SF
+Worker S1xeo0AKPd: Finding intersections for tickers GPL to MTRN
+Worker S1xeo0AKPd: Finding intersections for tickers A to CLNE
+Worker S1xeo0AKPd: Finished backtest for tickers CLNY to GPK in 292 seconds
+Worker S1xeo0AKPd: Finished backtest for tickers MTRX to SF in 293 seconds
+Worker S1xeo0AKPd: Finished backtest for tickers A to CLNE in 295 seconds
+Worker S1xeo0AKPd: Finished backtest for tickers SF-P-A to ZYXI in 296 seconds
+Worker S1xeo0AKPd: Finished backtest for tickers GPL to MTRN in 302 seconds
+Worker gmVFtFlxY7: Finding intersections for tickers A to CLNE
+Worker gmVFtFlxY7: Finding intersections for tickers GPL to MTRN
+Worker gmVFtFlxY7: Finding intersections for tickers MTRX to SF
+Worker gmVFtFlxY7: Finding intersections for tickers CLNY to GPK
+Worker gmVFtFlxY7: Finding intersections for tickers SF-P-A to ZYXI
+Worker gmVFtFlxY7: Finished backtest for tickers A to CLNE in 284 seconds
+Worker gmVFtFlxY7: Finished backtest for tickers MTRX to SF in 285 seconds
+Worker gmVFtFlxY7: Finished backtest for tickers CLNY to GPK in 288 seconds
+Worker gmVFtFlxY7: Finished backtest for tickers GPL to MTRN in 291 seconds
+Worker gmVFtFlxY7: Finished backtest for tickers SF-P-A to ZYXI in 291 seconds
+Worker 7QBJyvpQ1g: Finding intersections for tickers CLNY to GPK
+Worker 7QBJyvpQ1g: Finding intersections for tickers MTRX to SF
+Worker 7QBJyvpQ1g: Finding intersections for tickers SF-P-A to ZYXI
+Worker 7QBJyvpQ1g: Finding intersections for tickers GPL to MTRN
+Worker 7QBJyvpQ1g: Finding intersections for tickers A to CLNE
+Worker 7QBJyvpQ1g: Finished backtest for tickers MTRX to SF in 292 seconds
+Worker 7QBJyvpQ1g: Finished backtest for tickers A to CLNE in 297 seconds
+Worker 7QBJyvpQ1g: Finished backtest for tickers CLNY to GPK in 299 seconds
+Worker 7QBJyvpQ1g: Finished backtest for tickers SF-P-A to ZYXI in 299 seconds
+Worker 7QBJyvpQ1g: Finished backtest for tickers GPL to MTRN in 304 seconds
+Worker vBkXtZQ8zY: Finding intersections for tickers A to CLNE
+Worker vBkXtZQ8zY: Finding intersections for tickers MTRX to SF
+Worker vBkXtZQ8zY: Finding intersections for tickers CLNY to GPK
+Worker vBkXtZQ8zY: Finding intersections for tickers GPL to MTRN
+Worker vBkXtZQ8zY: Finding intersections for tickers SF-P-A to ZYXI
+Worker vBkXtZQ8zY: Finished backtest for tickers CLNY to GPK in 338 seconds
+Worker vBkXtZQ8zY: Finished backtest for tickers MTRX to SF in 347 seconds
+Worker vBkXtZQ8zY: Finished backtest for tickers SF-P-A to ZYXI in 346 seconds
+Worker vBkXtZQ8zY: Finished backtest for tickers A to CLNE in 348 seconds
+Worker vBkXtZQ8zY: Finished backtest for tickers GPL to MTRN in 354 seconds
+Worker Qo15Uo6HFk: Finding intersections for tickers CLNY to GPK
+Worker Qo15Uo6HFk: Finding intersections for tickers GPL to MTRN
+Worker Qo15Uo6HFk: Finding intersections for tickers MTRX to SF
+Worker Qo15Uo6HFk: Finding intersections for tickers A to CLNE
+Worker Qo15Uo6HFk: Finding intersections for tickers SF-P-A to ZYXI
+Worker Qo15Uo6HFk: Finished backtest for tickers MTRX to SF in 322 seconds
+Worker Qo15Uo6HFk: Finished backtest for tickers A to CLNE in 333 seconds
+Worker Qo15Uo6HFk: Finished backtest for tickers CLNY to GPK in 339 seconds
+Worker Qo15Uo6HFk: Finished backtest for tickers GPL to MTRN in 341 seconds
+Worker Qo15Uo6HFk: Finished backtest for tickers SF-P-A to ZYXI in 341 seconds
+Worker DMlrGayVDf: Finding intersections for tickers CLNY to GPK
+Worker DMlrGayVDf: Finding intersections for tickers MTRX to SF
+Worker DMlrGayVDf: Finding intersections for tickers A to CLNE
+Worker DMlrGayVDf: Finding intersections for tickers GPL to MTRN
+Worker DMlrGayVDf: Finding intersections for tickers SF-P-A to ZYXI
+Worker DMlrGayVDf: Finished backtest for tickers CLNY to GPK in 404 seconds
+Worker DMlrGayVDf: Finished backtest for tickers A to CLNE in 404 seconds
+Worker DMlrGayVDf: Finished backtest for tickers MTRX to SF in 413 seconds
+Worker DMlrGayVDf: Finished backtest for tickers SF-P-A to ZYXI in 417 seconds
+Worker DMlrGayVDf: Finished backtest for tickers GPL to MTRN in 420 seconds
+Worker sYZHleEMqY: Finding intersections for tickers MTRX to SF
+Worker sYZHleEMqY: Finding intersections for tickers A to CLNE
+Worker sYZHleEMqY: Finding intersections for tickers CLNY to GPK
+Worker sYZHleEMqY: Finding intersections for tickers SF-P-A to ZYXI
+Worker sYZHleEMqY: Finding intersections for tickers GPL to MTRN
+Worker sYZHleEMqY: Finished backtest for tickers MTRX to SF in 302 seconds
+Worker sYZHleEMqY: Finished backtest for tickers CLNY to GPK in 313 seconds
+Worker sYZHleEMqY: Finished backtest for tickers A to CLNE in 318 seconds
+Worker sYZHleEMqY: Finished backtest for tickers SF-P-A to ZYXI in 319 seconds
+Worker sYZHleEMqY: Finished backtest for tickers GPL to MTRN in 322 seconds
+Worker LCPjDNuppB: Finding intersections for tickers SF-P-A to ZYXI
+Worker LCPjDNuppB: Finding intersections for tickers A to CLNE
+Worker LCPjDNuppB: Finding intersections for tickers GPL to MTRN
+Worker LCPjDNuppB: Finding intersections for tickers CLNY to GPK
+Worker LCPjDNuppB: Finding intersections for tickers MTRX to SF
+Worker LCPjDNuppB: Finished backtest for tickers A to CLNE in 407 seconds
+Worker LCPjDNuppB: Finished backtest for tickers MTRX to SF in 414 seconds
+Worker LCPjDNuppB: Finished backtest for tickers CLNY to GPK in 420 seconds
+Worker LCPjDNuppB: Finished backtest for tickers SF-P-A to ZYXI in 423 seconds
+Worker LCPjDNuppB: Finished backtest for tickers GPL to MTRN in 426 seconds
+Worker fxprw7coqw: Finding intersections for tickers SF-P-A to ZYXI
+Worker fxprw7coqw: Finding intersections for tickers A to CLNE
+Worker fxprw7coqw: Finding intersections for tickers CLNY to GPK
+Worker fxprw7coqw: Finding intersections for tickers MTRX to SF
+Worker fxprw7coqw: Finding intersections for tickers GPL to MTRN
+Worker fxprw7coqw: Finished backtest for tickers MTRX to SF in 366 seconds
+Worker fxprw7coqw: Finished backtest for tickers CLNY to GPK in 368 seconds
+Worker fxprw7coqw: Finished backtest for tickers A to CLNE in 381 seconds
+Worker fxprw7coqw: Finished backtest for tickers SF-P-A to ZYXI in 381 seconds
+Worker fxprw7coqw: Finished backtest for tickers GPL to MTRN in 391 seconds
+Worker hsJpwLSM7A: Finding intersections for tickers CLNY to GPK
+Worker hsJpwLSM7A: Finding intersections for tickers A to CLNE
+Worker hsJpwLSM7A: Finding intersections for tickers GPL to MTRN
+Worker hsJpwLSM7A: Finding intersections for tickers SF-P-A to ZYXI
+Worker hsJpwLSM7A: Finding intersections for tickers MTRX to SF
+Worker hsJpwLSM7A: Finished backtest for tickers MTRX to SF in 299 seconds
+Worker hsJpwLSM7A: Finished backtest for tickers CLNY to GPK in 301 seconds
+Worker hsJpwLSM7A: Finished backtest for tickers A to CLNE in 306 seconds
+Worker hsJpwLSM7A: Finished backtest for tickers SF-P-A to ZYXI in 305 seconds
+Worker hsJpwLSM7A: Finished backtest for tickers GPL to MTRN in 309 seconds
+Worker rSCzTE2mlL: Finding intersections for tickers MTRX to SF
+Worker rSCzTE2mlL: Finding intersections for tickers GPL to MTRN
+Worker rSCzTE2mlL: Finding intersections for tickers A to CLNE
+Worker rSCzTE2mlL: Finding intersections for tickers CLNY to GPK
+Worker rSCzTE2mlL: Finding intersections for tickers SF-P-A to ZYXI
+Worker rSCzTE2mlL: Finished backtest for tickers CLNY to GPK in 380 seconds
+Worker rSCzTE2mlL: Finished backtest for tickers MTRX to SF in 383 seconds
+Worker rSCzTE2mlL: Finished backtest for tickers GPL to MTRN in 387 seconds
+Worker rSCzTE2mlL: Finished backtest for tickers SF-P-A to ZYXI in 387 seconds
+Worker rSCzTE2mlL: Finished backtest for tickers A to CLNE in 390 seconds
+Worker OKFCKHqR72: Finding intersections for tickers FATBP to OBNK
+Worker OKFCKHqR72: Finding intersections for tickers GOED to FAT
+Worker OKFCKHqR72: Finding intersections for tickers OESX to AZO
+Worker OKFCKHqR72: Finding intersections for tickers ASG to ZYME
+Worker OKFCKHqR72: Finding intersections for tickers AVLR to USA
+Worker YRHBLpBEu4: Finding intersections for tickers ASG to ZYME
+Worker YRHBLpBEu4: Finding intersections for tickers GOED to FAT
+Worker YRHBLpBEu4: Finding intersections for tickers FATBP to OBNK
+Worker YRHBLpBEu4: Finding intersections for tickers OESX to AZO
+Worker YRHBLpBEu4: Finding intersections for tickers AVLR to USA
+Worker iN63BWRos2: Finding intersections for tickers GOED to FAT
+Worker iN63BWRos2: Finding intersections for tickers AVLR to USA
+Worker iN63BWRos2: Finding intersections for tickers OESX to AZO
+Worker iN63BWRos2: Finding intersections for tickers ASG to ZYME
+Worker iN63BWRos2: Finding intersections for tickers FATBP to OBNK
+Worker V6MfxmhAaX: Finding intersections for tickers FATBP to OBNK
+Worker V6MfxmhAaX: Finding intersections for tickers GOED to FAT
+Worker V6MfxmhAaX: Finding intersections for tickers AVLR to USA
+Worker V6MfxmhAaX: Finding intersections for tickers ASG to ZYME
+Worker V6MfxmhAaX: Finding intersections for tickers OESX to AZO
+Worker rONAZntoPs: Finding intersections for tickers EQ to NFINW
+Worker rONAZntoPs: Finding intersections for tickers HPF to ZYME
+Worker rONAZntoPs: Finding intersections for tickers NFLX to ACCO
+Worker rONAZntoPs: Finding intersections for tickers ATV to JHI
+Worker rONAZntoPs: Finding intersections for tickers GOED to EPSN
+Worker rONAZntoPs: Finished backtest for tickers EQ to NFINW in 199 seconds
+Worker rONAZntoPs: Finished backtest for tickers NFLX to ACCO in 227 seconds
+Worker d8zwLywUS2: Finding intersections for tickers GOED to ACY
+Worker d8zwLywUS2: Finding intersections for tickers BCV to BGI
+Worker d8zwLywUS2: Finding intersections for tickers UAVS to AMS
+Worker d8zwLywUS2: Finding intersections for tickers BKTI to CANF
+Worker d8zwLywUS2: Finding intersections for tickers USAS to BTN
+Worker d8zwLywUS2: Finished backtest for tickers UAVS to AMS in 4 seconds
+Worker d8zwLywUS2: Finished backtest for tickers USAS to BTN in 4 seconds
+Worker d8zwLywUS2: Finished backtest for tickers GOED to ACY in 4 seconds
+Worker MKWVnsMnAb: Finding intersections for tickers USAS to BTN
+Worker MKWVnsMnAb: Finding intersections for tickers BCV to BRBS
+Worker MKWVnsMnAb: Finding intersections for tickers GOED to ACY
+Worker MKWVnsMnAb: Finding intersections for tickers BRG to CHAQ
+Worker MKWVnsMnAb: Finding intersections for tickers UAVS to AMS
+Worker MKWVnsMnAb: Finished backtest for tickers USAS to BTN in 3 seconds
+Worker MKWVnsMnAb: Finished backtest for tickers BRG to CHAQ in 4 seconds
+Worker MKWVnsMnAb: Finished backtest for tickers GOED to ACY in 4 seconds
+Worker MKWVnsMnAb: Finished backtest for tickers UAVS to AMS in 3 seconds
+Worker MKWVnsMnAb: Finished backtest for tickers BCV to BRBS in 4 seconds
+Worker T3IhpLe6bS: Finding intersections for tickers ENPH to NSSC
+Worker T3IhpLe6bS: Finding intersections for tickers XBIO to OIA
+Worker T3IhpLe6bS: Finding intersections for tickers GOED to ENOB
+Worker T3IhpLe6bS: Finding intersections for tickers NDAQ to XNCR
+Worker T3IhpLe6bS: Finding intersections for tickers VMO to ZYME
+Worker T3IhpLe6bS: Finished backtest for tickers ENPH to NSSC in 310 seconds
+Worker T3IhpLe6bS: Finished backtest for tickers NDAQ to XNCR in 322 seconds
+Worker T3IhpLe6bS: Finished backtest for tickers GOED to ENOB in 329 seconds
+Worker T3IhpLe6bS: Finished backtest for tickers XBIO to OIA in 356 seconds
+Worker T3IhpLe6bS: Finished backtest for tickers VMO to ZYME in 366 seconds
+Worker DA4YxIz3ju: Finding intersections for tickers VMO to ZYME
+Worker DA4YxIz3ju: Finding intersections for tickers XBIO to OIA
+Worker DA4YxIz3ju: Finding intersections for tickers GOED to ENOB
+Worker DA4YxIz3ju: Finding intersections for tickers NDAQ to XNCR
+Worker DA4YxIz3ju: Finding intersections for tickers ENPH to NSSC
+Worker DA4YxIz3ju: Finished backtest for tickers ENPH to NSSC in 254 seconds
+Worker DA4YxIz3ju: Finished backtest for tickers NDAQ to XNCR in 273 seconds
+Worker DA4YxIz3ju: Finished backtest for tickers GOED to ENOB in 281 seconds
+Worker DA4YxIz3ju: Finished backtest for tickers XBIO to OIA in 304 seconds
+Worker DA4YxIz3ju: Finished backtest for tickers VMO to ZYME in 311 seconds
+Worker kiOkBKem21: Finding intersections for tickers GNL to MQT
+Worker kiOkBKem21: Finding intersections for tickers CMLS to GNK
+Worker kiOkBKem21: Finding intersections for tickers A to CMI
+Worker kiOkBKem21: Finding intersections for tickers SBAC to ZYXI
+Worker kiOkBKem21: Finding intersections for tickers MQY to SB
+Worker kiOkBKem21: Finished backtest for tickers CMLS to GNK in 366 seconds
+Worker kiOkBKem21: Finished backtest for tickers A to CMI in 370 seconds
+Worker kiOkBKem21: Finished backtest for tickers MQY to SB in 377 seconds
+Worker kiOkBKem21: Finished backtest for tickers SBAC to ZYXI in 381 seconds
+Worker kiOkBKem21: Finished backtest for tickers GNL to MQT in 383 seconds
