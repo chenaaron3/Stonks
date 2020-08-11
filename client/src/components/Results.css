@@ -5,7 +5,7 @@
     flex-direction: column;
     height: 100%;
     text-align: center;
-    max-height: 50vh;
+    max-height: 100vh;
 }
 
 .results-title {
@@ -15,18 +15,11 @@
 }
 
 .results-list {
+    text-align: left;
     flex: 5;
     overflow: scroll;
     overflow-x: hidden;
-    max-height: 30vh;
-}
-
-.results-start-button {
-    /* flex: 1; */
-}
-
-.results-start-text {
-    color: #62a583;
+    max-height: 80vh;
 }
 
 .result {

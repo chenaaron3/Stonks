@@ -51,7 +51,7 @@ function conductBacktest(strategyOptions, id) {
         // get list of symbols to query
         getSymbols().then(async (symbols) => {
             // Uncomment to test a portion of symbols
-            // symbols = symbols.slice(0, 50);
+            symbols = symbols.slice(0, 50);
 
             // maps symbol to buy/sell data
             let intersections = {};
@@ -157,7 +157,6 @@ function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices) {
 }
 
 // given symbol, find intersections
-// index and attempts used to find appropriate key
 function findIntersections(strategyOptions, symbol) {
     //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
     // "SMA":{"period":9},
@@ -213,17 +212,11 @@ function findIntersections(strategyOptions, symbol) {
                     let buyMap = {};
                     let sellMap = {};
                     let validIndicators = true;
-                    Object.keys(strategyOptions["indicators"]).forEach(indicatorName => {
-                        // check if indicator given is valid
-                        if (!INDICATOR_OBJECTS.hasOwnProperty(indicatorName)) {
-                            reject(`Invalid Indicator!\nGiven: ${indicatorname}, Expected one of: ${JSON.stringify(Object.keys(INDICATOR_OBJECTS))}`);
-                            validIndicators = false;
-                            return;
-                        }
 
-                        let indicatorOptions = strategyOptions["indicators"][indicatorName];
+                    // set main/support buy indicators
+                    Object.keys(strategyOptions["buyIndicators"]).forEach(indicatorName => {
+                        let indicatorOptions = strategyOptions["buyIndicators"][indicatorName];
                         let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
-
                         // initialize the indicator
                         indicator.initialize(indicatorOptions);
 
@@ -235,6 +228,14 @@ function findIntersections(strategyOptions, symbol) {
                             supportingBuyIndicators.push(indicator);
                             buyMap[indicatorName] = false;
                         }
+                    })
+
+                    // set main/support sell indicators
+                    Object.keys(strategyOptions["sellIndicators"]).forEach(indicatorName => {
+                        let indicatorOptions = strategyOptions["sellIndicators"][indicatorName];
+                        let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
+                        // initialize the indicator
+                        indicator.initialize(indicatorOptions);
 
                         // track sell indicators
                         if (indicatorName == strategyOptions["mainSellIndicator"]) {
@@ -244,20 +245,7 @@ function findIntersections(strategyOptions, symbol) {
                             supportingSellIndicators.push(indicator);
                             sellMap[indicatorName] = false;
                         }
-                    });
-
-                    // eror checking
-                    if (!validIndicators) {
-                        return;
-                    }
-                    if (!mainBuyIndicator) {
-                        reject(`Missing Buy Indicator!\nGiven: ${strategyOptions["mainBuyIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
-                        return;
-                    }
-                    else if (!mainSellIndicator) {
-                        reject(`Missing Sell Indicator!\nGiven: ${strategyOptions["mainSellIndicator"]}, Expected one of: ${JSON.stringify(Object.keys(strategyOptions["indicators"]))}`);
-                        return;
-                    }
+                    })
 
                     // store buy/sell information
                     let expiration = strategyOptions["expiration"];

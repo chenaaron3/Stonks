@@ -2,139 +2,136 @@ import React, { createRef } from 'react';
 import { connect } from 'react-redux';
 import { viewStock } from '../redux';
 import './Results.css';
-import Pusher from 'react-pusher';
-import edit from "../edit.svg";
-import check from "../check.svg";
-import cross from "../cross.svg";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-import Result from "./Result";
+import eye from "../eye.svg";
+import { formatDate, daysBetween } from "../helpers/utils";
+
 
 class Results extends React.Component {
     constructor(props) {
         super(props);
-        // create saved results if it doesnt exist
-        if (!localStorage.getItem("savedResults")) {
-            localStorage.setItem("savedResults", "[]")
-        }
-        this.state = {
-            sortedSymbols: [],
-            results: {},
-            savedResults: JSON.parse(localStorage.getItem("savedResults"))
-        };
-    }
-
-    // when server signals that the results are ready
-    onResultFinished = async (data) => {
-        let id = data["id"];
-
-        let results = await this.fetchResults(id);
-        let displayName = Object.keys(results["strategyOptions"]["indicators"]).join("/");
-
-        // add id to saved results, map id to display name
-        this.setState({ savedResults: [...this.state.savedResults, { id, display: displayName }] }, 
-            () => {
-            // store back into local storage
-            localStorage.setItem("savedResults", JSON.stringify(this.state.savedResults));
-        });
-    }
-
-    // change display name for saved results
-    editSavedResults = (id, newDisplay) => {
-        let newSave = [];
-        this.state.savedResults.forEach(save => {
-            if (save["id"] == id) {
-                newSave.push({ id, display: newDisplay });
-            }
-            else {
-                newSave.push(save);
-            }
-        })
-        this.setState({ savedResults: newSave }, () => {
-            // store back into local storage
-            localStorage.setItem("savedResults", JSON.stringify(this.state.savedResults));
-        });
-    }
-
-    // remove a saved result
-    removeSavedResults = (id) => {
-        let newSave = [];
-        this.state.savedResults.forEach(save => {
-            if (save["id"] != id) {
-                newSave.push(save);
-            }
-        })
-        this.setState({ savedResults: newSave }, () => {
-            // store back into local storage
-            localStorage.setItem("savedResults", JSON.stringify(this.state.savedResults));
-        });
-    }
-
-    // display results from the server
-    fetchResults = (id) => {
-        return new Promise(resolve => {
-            // get the data from the server
-            fetch(`/results?id=${id}`, {
-                method: 'GET'
-            }).then(res => res.json())
-                .then(results => {
-                    // sort the results
-                    let sortedSymbols = Object.keys(results["symbolData"]);
-                    sortedSymbols.sort((a, b) => {
-                        return results["symbolData"][b]["percentProfit"] - results["symbolData"][a]["percentProfit"];
-                    });                    
-                    // update the display
-                    this.setState({ sortedSymbols, results });
-                    resolve(results);
-                });
-        })
-    }
-
-    // when starting backtest with new id
-    componentDidUpdate(prevProps) {
-        if (this.props.id !== prevProps.id) {
-            console.log("Got the new id.", this.props.id);
-        }
+        this.state = { numWins: 0, numLosses: 0 }
     }
 
     // when clicking on an item
     handleGetResult = (symbol) => {
-        this.props.viewStock(symbol, this.state.results["symbolData"][symbol])
+        this.props.viewStock(symbol)
+    }
+
+    componentDidMount() {
+        let numWins = 0;
+        let numLosses = 0;
+        this.props.sortedSymbols.forEach(symbol => {
+            this.props.results["symbolData"][symbol]["events"].forEach(event => {
+                if (event["profit"] < 0) {
+                    numLosses += 1;
+                }
+                else {
+                    numWins += 1;
+                }
+            })
+        })
+        this.setState({ numWins, numLosses });
+    }
+
+    componentDidUpdate(prevProps) {
+        console.log("PREV", prevProps);
+        if (this.props.id != prevProps.id) {
+            console.log("HIHI");
+
+        }
     }
 
     render() {
+        let netProfit = this.props.results["netProfit"].toFixed(2);
+        let percentProfit = (100 * this.props.results["netPercentProfit"]).toFixed(4);
+
         return (
             <div className="results">
-                <Pusher
-                    channel={this.props.id}
-                    event="onResultsFinished"
-                    onUpdate={this.onResultFinished}
-                />
-                <span className="results-title">Results</span>
+                <span className="results-title">Backtest Results</span>
                 <Tabs>
                     <TabList>
-                        <Tab>Past</Tab>
-                        <Tab>Active</Tab>
+                        <Tab>Summary</Tab>
+                        <Tab>All</Tab>
+                        <Tab>Buys</Tab>
+                        <Tab>Sells</Tab>
                     </TabList>
                     <TabPanel>
                         <div className="results-list">
-                            {this.state.savedResults.length == 0 && (<span>
-                                There are no past results...
+                            {this.props.sortedSymbols.length == 0 && (<span>
+                                There are no results...
                             </span>)
                             }
-                            {this.state.savedResults.length != 0 && (
-                                this.state.savedResults.map((save, index) => {
-                                    return <SavedResult id={save["id"]} display={save["display"]} fetchResults={this.fetchResults}
-                                        editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} />
+                            {this.props.sortedSymbols.length != 0 && (
+                                <>
+                                    <div>Wins: {this.state.numWins}</div>
+                                    <div>Losses: {this.state.numLosses}</div>
+                                    <div>Win Rate: {(this.state.numWins / (this.state.numLosses + this.state.numWins) * 100).toFixed(2)}%</div>
+                                    <div>Net Profit: ${netProfit}</div>
+                                    <div>Net Percent Profit: {percentProfit}%</div>
+                                    <div>Buy Indicators: {Object.keys(this.props.results["strategyOptions"]["buyIndicators"]).join(", ")}</div>
+                                    <div>Sell Indicators: {Object.keys(this.props.results["strategyOptions"]["sellIndicators"]).join(", ")}</div>
+                                    <div>Last Updated: {formatDate(new Date(this.props.results["lastUpdated"]))}</div>
+                                    {daysBetween(new Date(this.props.results["lastUpdated"]), new Date()) > 0 && (
+                                        <input type="button" value="Update Results" />
+                                    )}
+                                </>
+                            )
+                            }
+                        </div>
+                    </TabPanel>
+                    <TabPanel>
+                        <div className="results-list">
+                            {this.props.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
+                            {this.props.sortedSymbols.length != 0 && (
+                                this.props.sortedSymbols.map((symbol, index) => {
+                                    return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
                                 })
                             )
                             }
                         </div>
                     </TabPanel>
                     <TabPanel>
-                        {
-                            this.state.sortedSymbols.length > 0 && <Result sortedSymbols={this.state.sortedSymbols} results={this.state.results} handleGetResult={this.handleGetResult}></Result>
-                        }
+                        <div className="results-list">
+                            {this.props.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
+                            {this.props.sortedSymbols.length != 0 && (
+                                this.props.sortedSymbols.map((symbol, index) => {
+                                    // only show if there are recent events
+                                    let recentEvents = this.props.results["symbolData"][symbol]["recent"];
+                                    let numEvents = recentEvents["buy"].length;
+                                    if (numEvents > 0) {
+                                        return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
+                                    }
+                                })
+                            )
+                            }
+                        </div>
+                    </TabPanel>
+                    <TabPanel>
+                        <div className="results-list">
+                            {this.props.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
+                            {this.props.sortedSymbols.length != 0 && (
+                                this.props.sortedSymbols.map((symbol, index) => {
+                                    // only show if there are recent events
+                                    let recentEvents = this.props.results["symbolData"][symbol]["recent"];
+                                    let numEvents = recentEvents["sell"].length;
+                                    if (numEvents > 0) {
+                                        return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
+                                    }
+                                })
+                            )
+                            }
+                        </div>
                     </TabPanel>
                 </Tabs>
             </div>
@@ -142,43 +139,20 @@ class Results extends React.Component {
     }
 }
 
-class SavedResult extends React.Component {
-    state = { editting: false, display: this.props.display, hovered: false }
-
-    onRemove = () => {
-        this.props.removeSavedResults(this.props.id);
-    }
-
-    onEditStart = () => {
-        this.setState({ editting: true });
-    }
-
-    onEditFinish = () => {
-        this.props.editSavedResults(this.props.id, this.state.display);
-        this.setState({ editting: false });
-    }
-
+class Result extends React.Component {
     render() {
-        return <div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
-            {this.state.editting && (
-                <>
-                    <img className="result-icon result-hover" width="20px" height="20px" src={check} alt="Check" onClick={this.onEditFinish} />
-                    <input className="result-edit" type="text" value={this.state.display} onChange={(e) => { this.setState({ display: e.target.value }); }}></input>
-                </>
-            )}
-            {!this.state.editting && (
-                <>
-                    <img className={`result-icon ${this.state.hovered ? "result-hover" : ""}`} width="20px" height="20px" src={edit} alt="Edit" onClick={this.onEditStart} />
-                    <span className="result-text" onClick={() => { this.props.fetchResults(this.props.id) }}>{this.props.display}</span>
-                    <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="20px" height="20px" src={cross} alt="Cross" onClick={this.onRemove} />
-                </>
-            )}
-        </div>
+        return (<div className="result">
+            <img className="result-icon result-hover" width="25px" height="25px" src={eye} alt="Eye" onClick={() => this.props.handleGetResult(this.props.symbol)} />
+            <span className="result-text">{`${this.props.index + 1}. ${this.props.symbol}`}</span>
+        </div>);
     }
 }
 
 let mapStateToProps = (state) => {
-    return { id: state.id };
+    let results = state.backtestResults;
+    let sortedSymbols = Object.keys(results["symbolData"]);
+    sortedSymbols.sort((a, b) => a["percentProfit"] - b["percentProfit"]);
+    return { sortedSymbols, results, id: state.id };
 };
 
 export default connect(mapStateToProps, { viewStock })(Results);

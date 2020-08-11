@@ -1,0 +1,61 @@
+* {
+    box-sizing: border-box;
+}
+
+.divider {
+    width: 100%;
+    opacity: .2;
+}
+
+.review-page {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+
+.review-page-backtest-results {
+    flex: 2;
+}
+
+/* Left side of page */
+
+.review-page-data {
+    flex: 9;
+    display: flex;
+    flex-direction: column;
+}
+
+.review-page-chart {
+    flex: 8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.review-page-missing-chart {
+    font-size: 2em;
+}
+
+.review-page-details {
+    flex: 2;
+    border-style: solid;
+}
+
+/* Right side of page */
+
+.review-page-query {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+.review-page-result {
+    flex: 1;
+    border-style: solid;
+}
+
+.review-page-indicators {
+    flex: 1;
+    border-style: solid;
+}

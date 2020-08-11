@@ -1,0 +1,17 @@
+.create-page{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+
+.create-page-recents{
+    flex: 1;
+    background-color: #34495e;
+    color: white;
+}
+
+.create-page-new{
+    flex: 5;
+    background-color: #ecf0f1;
+}

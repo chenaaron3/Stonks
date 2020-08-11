@@ -713,3 +713,78 @@ Worker kiOkBKem21: Finished backtest for tickers A to CMI in 370 seconds
 Worker kiOkBKem21: Finished backtest for tickers MQY to SB in 377 seconds
 Worker kiOkBKem21: Finished backtest for tickers SBAC to ZYXI in 381 seconds
 Worker kiOkBKem21: Finished backtest for tickers GNL to MQT in 383 seconds
+Worker o6rKuVsCLg: Finding intersections for tickers MQY to SB
+Worker o6rKuVsCLg: Finding intersections for tickers A to CMI
+Worker o6rKuVsCLg: Finding intersections for tickers CMLS to GNK
+Worker o6rKuVsCLg: Finding intersections for tickers GNL to MQT
+Worker o6rKuVsCLg: Finding intersections for tickers SBAC to ZYXI
+Worker zSaWbWI1ts: Finding intersections for tickers CMLS to GNK
+Worker zSaWbWI1ts: Finding intersections for tickers SBAC to ZYXI
+Worker zSaWbWI1ts: Finding intersections for tickers MQY to SB
+Worker zSaWbWI1ts: Finding intersections for tickers A to CMI
+Worker zSaWbWI1ts: Finding intersections for tickers GNL to MQT
+Worker zSaWbWI1ts: Finished backtest for tickers MQY to SB in 526 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers A to CMI in 526 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers SBAC to ZYXI in 532 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers CMLS to GNK in 534 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers GNL to MQT in 534 seconds
+Worker HT0SMnBlvQ: Finding intersections for tickers ABC to ABT
+Worker HT0SMnBlvQ: Finding intersections for tickers A to AAON
+Worker HT0SMnBlvQ: Finding intersections for tickers ABTX to ACBI
+Worker HT0SMnBlvQ: Finding intersections for tickers ACC to ACGLP
+Worker HT0SMnBlvQ: Finding intersections for tickers AAP to ABBV
+Worker HT0SMnBlvQ: Finished backtest for tickers ABTX to ACBI in 4 seconds
+Worker HT0SMnBlvQ: Finished backtest for tickers ACC to ACGLP in 4 seconds
+Worker HT0SMnBlvQ: Finished backtest for tickers AAP to ABBV in 5 seconds
+Worker HT0SMnBlvQ: Finished backtest for tickers A to AAON in 6 seconds
+Worker HT0SMnBlvQ: Finished backtest for tickers ABC to ABT in 7 seconds
+Worker 75gtlO7p56: Finding intersections for tickers ABC to ABT
+Worker 75gtlO7p56: Finding intersections for tickers AAP to ABBV
+Worker 75gtlO7p56: Finding intersections for tickers ABTX to ACBI
+Worker 75gtlO7p56: Finding intersections for tickers A to AAON
+Worker 75gtlO7p56: Finding intersections for tickers ACC to ACGLP
+Worker 75gtlO7p56: Finished backtest for tickers ABTX to ACBI in 2 seconds
+Worker 75gtlO7p56: Finished backtest for tickers ACC to ACGLP in 3 seconds
+Worker 75gtlO7p56: Finished backtest for tickers AAP to ABBV in 5 seconds
+Worker 75gtlO7p56: Finished backtest for tickers A to AAON in 5 seconds
+Worker 75gtlO7p56: Finished backtest for tickers ABC to ABT in 7 seconds
+Worker kQHsBxtZqW: Finding intersections for tickers ACC to ACGLP
+Worker kQHsBxtZqW: Finding intersections for tickers A to AAON
+Worker kQHsBxtZqW: Finding intersections for tickers ABC to ABT
+Worker kQHsBxtZqW: Finding intersections for tickers ABTX to ACBI
+Worker kQHsBxtZqW: Finding intersections for tickers AAP to ABBV
+Worker kQHsBxtZqW: Finished backtest for tickers ACC to ACGLP in 3 seconds
+Worker kQHsBxtZqW: Finished backtest for tickers ABTX to ACBI in 3 seconds
+Worker kQHsBxtZqW: Finished backtest for tickers AAP to ABBV in 4 seconds
+Worker kQHsBxtZqW: Finished backtest for tickers A to AAON in 6 seconds
+Worker kQHsBxtZqW: Finished backtest for tickers ABC to ABT in 6 seconds
+Worker 1bTVReuxW9: Finding intersections for tickers A to AAON
+Worker 1bTVReuxW9: Finding intersections for tickers ACC to ACGLP
+Worker 1bTVReuxW9: Finding intersections for tickers ABTX to ACBI
+Worker 1bTVReuxW9: Finding intersections for tickers ABC to ABT
+Worker 1bTVReuxW9: Finding intersections for tickers AAP to ABBV
+Worker 1bTVReuxW9: Finished backtest for tickers ACC to ACGLP in 5 seconds
+Worker 1bTVReuxW9: Finished backtest for tickers ABTX to ACBI in 8 seconds
+Worker eCJAAFV4MQ: Finding intersections for tickers AAP to ABBV
+Worker eCJAAFV4MQ: Finding intersections for tickers ABC to ABT
+Worker 1bTVReuxW9: Finished backtest for tickers AAP to ABBV in 7 seconds
+Worker eCJAAFV4MQ: Finding intersections for tickers ACC to ACGLP
+Worker eCJAAFV4MQ: Finding intersections for tickers ABTX to ACBI
+Worker eCJAAFV4MQ: Finding intersections for tickers A to AAON
+Worker 1bTVReuxW9: Finished backtest for tickers A to AAON in 13 seconds
+Worker 1bTVReuxW9: Finished backtest for tickers ABC to ABT in 14 seconds
+Worker eCJAAFV4MQ: Finished backtest for tickers ABTX to ACBI in 5 seconds
+Worker eCJAAFV4MQ: Finished backtest for tickers ACC to ACGLP in 6 seconds
+Worker eCJAAFV4MQ: Finished backtest for tickers AAP to ABBV in 7 seconds
+Worker eCJAAFV4MQ: Finished backtest for tickers A to AAON in 6 seconds
+Worker eCJAAFV4MQ: Finished backtest for tickers ABC to ABT in 8 seconds
+Worker 7sv0n6YnSY: Finding intersections for tickers AAP to ABBV
+Worker 7sv0n6YnSY: Finding intersections for tickers ABC to ABT
+Worker 7sv0n6YnSY: Finding intersections for tickers ACC to ACGLP
+Worker 7sv0n6YnSY: Finding intersections for tickers A to AAON
+Worker 7sv0n6YnSY: Finding intersections for tickers ABTX to ACBI
+Worker 7sv0n6YnSY: Finished backtest for tickers ACC to ACGLP in 3 seconds
+Worker 7sv0n6YnSY: Finished backtest for tickers ABTX to ACBI in 2 seconds
+Worker 7sv0n6YnSY: Finished backtest for tickers AAP to ABBV in 5 seconds
+Worker 7sv0n6YnSY: Finished backtest for tickers A to AAON in 5 seconds
+Worker 7sv0n6YnSY: Finished backtest for tickers ABC to ABT in 6 seconds
