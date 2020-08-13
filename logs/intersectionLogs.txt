@@ -788,3 +788,103 @@ Worker 7sv0n6YnSY: Finished backtest for tickers ABTX to ACBI in 2 seconds
 Worker 7sv0n6YnSY: Finished backtest for tickers AAP to ABBV in 5 seconds
 Worker 7sv0n6YnSY: Finished backtest for tickers A to AAON in 5 seconds
 Worker 7sv0n6YnSY: Finished backtest for tickers ABC to ABT in 6 seconds
+Worker VXaq49Wg7H: Finding intersections for tickers ACC to ACGLP
+Worker VXaq49Wg7H: Finding intersections for tickers AAP to ABBV
+Worker VXaq49Wg7H: Finding intersections for tickers ABTX to ACBI
+Worker VXaq49Wg7H: Finding intersections for tickers ABC to ABT
+Worker VXaq49Wg7H: Finding intersections for tickers A to AAON
+Worker VXaq49Wg7H: Finished backtest for tickers ABTX to ACBI in 2 seconds
+Worker VXaq49Wg7H: Finished backtest for tickers ACC to ACGLP in 3 seconds
+Worker VXaq49Wg7H: Finished backtest for tickers AAP to ABBV in 4 seconds
+Worker VXaq49Wg7H: Finished backtest for tickers ABC to ABT in 4 seconds
+Worker VXaq49Wg7H: Finished backtest for tickers A to AAON in 4 seconds
+Worker 70w3UWyYdz: Finding intersections for tickers GNL to MQT
+Worker 70w3UWyYdz: Finding intersections for tickers SBAC to ZYXI
+Worker 70w3UWyYdz: Finding intersections for tickers CMLS to GNK
+Worker 70w3UWyYdz: Finding intersections for tickers A to CMI
+Worker 70w3UWyYdz: Finding intersections for tickers MQY to SB
+Worker 70w3UWyYdz: Finished backtest for tickers CMLS to GNK in 390 seconds
+Worker 70w3UWyYdz: Finished backtest for tickers MQY to SB in 390 seconds
+Worker 70w3UWyYdz: Finished backtest for tickers A to CMI in 395 seconds
+Worker 70w3UWyYdz: Finished backtest for tickers GNL to MQT in 396 seconds
+Worker 70w3UWyYdz: Finished backtest for tickers SBAC to ZYXI in 397 seconds
+Worker vuDNAceZF0: Finding intersections for tickers A to CMI
+Worker vuDNAceZF0: Finding intersections for tickers SBAC to ZYXI
+Worker vuDNAceZF0: Finding intersections for tickers CMLS to GNK
+Worker vuDNAceZF0: Finding intersections for tickers MQY to SB
+Worker vuDNAceZF0: Finding intersections for tickers GNL to MQT
+Worker vuDNAceZF0: Finished backtest for tickers CMLS to GNK in 472 seconds
+Worker vuDNAceZF0: Finished backtest for tickers MQY to SB in 480 seconds
+Worker vuDNAceZF0: Finished backtest for tickers A to CMI in 480 seconds
+Worker vuDNAceZF0: Finished backtest for tickers SBAC to ZYXI in 484 seconds
+Worker vuDNAceZF0: Finished backtest for tickers GNL to MQT in 485 seconds
+Worker Gs3JUKK6vg: Finding intersections for tickers A to CMI
+Worker Gs3JUKK6vg: Finding intersections for tickers SBAC to ZYXI
+Worker Gs3JUKK6vg: Finding intersections for tickers MQY to SB
+Worker Gs3JUKK6vg: Finding intersections for tickers CMLS to GNK
+Worker Gs3JUKK6vg: Finding intersections for tickers GNL to MQT
+Worker Gs3JUKK6vg: Finished backtest for tickers CMLS to GNK in 371 seconds
+Worker Gs3JUKK6vg: Finished backtest for tickers MQY to SB in 373 seconds
+Worker Gs3JUKK6vg: Finished backtest for tickers A to CMI in 379 seconds
+Worker Gs3JUKK6vg: Finished backtest for tickers SBAC to ZYXI in 385 seconds
+Worker Gs3JUKK6vg: Finished backtest for tickers GNL to MQT in 386 seconds
+Worker zSaWbWI1ts: Finding intersections for tickers A to CMI
+Worker zSaWbWI1ts: Finding intersections for tickers CMLS to GNK
+Worker zSaWbWI1ts: Finding intersections for tickers MQY to SB
+Worker zSaWbWI1ts: Finding intersections for tickers GNL to MQT
+Worker zSaWbWI1ts: Finding intersections for tickers SBAC to ZYXI
+Worker zSaWbWI1ts: Finding intersections for tickers A to CMI
+Worker zSaWbWI1ts: Finding intersections for tickers CMLS to GNK
+Worker zSaWbWI1ts: Finding intersections for tickers GNL to MQT
+Worker zSaWbWI1ts: Finding intersections for tickers MQY to SB
+Worker zSaWbWI1ts: Finding intersections for tickers SBAC to ZYXI
+Worker zSaWbWI1ts: Finding intersections for tickers A to CMI
+Worker zSaWbWI1ts: Finding intersections for tickers CMLS to GNK
+Worker zSaWbWI1ts: Finding intersections for tickers GNL to MQT
+Worker zSaWbWI1ts: Finding intersections for tickers MQY to SB
+Worker zSaWbWI1ts: Finding intersections for tickers SBAC to ZYXI
+Worker zSaWbWI1ts: Finding intersections for tickers A to CMI
+Worker zSaWbWI1ts: Finding intersections for tickers CMLS to GNK
+Worker zSaWbWI1ts: Finding intersections for tickers GNL to MQT
+Worker zSaWbWI1ts: Finding intersections for tickers SBAC to ZYXI
+Worker zSaWbWI1ts: Finding intersections for tickers MQY to SB
+Worker zSaWbWI1ts: Finished backtest for tickers A to CMI in 416 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers CMLS to GNK in 421 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers GNL to MQT in 429 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers MQY to SB in 429 seconds
+Worker zSaWbWI1ts: Finished backtest for tickers SBAC to ZYXI in 432 seconds
+Worker jLR35i6btr: Finding intersections for tickers A to CMI
+Worker jLR35i6btr: Finding intersections for tickers MQY to SB
+Worker jLR35i6btr: Finding intersections for tickers SBAC to ZYXI
+Worker jLR35i6btr: Finding intersections for tickers GNL to MQT
+Worker jLR35i6btr: Finding intersections for tickers CMLS to GNK
+Worker LdykCilKL1: Finding intersections for tickers GNL to MQT
+Worker LdykCilKL1: Finding intersections for tickers SBAC to ZYXI
+Worker LdykCilKL1: Finding intersections for tickers CMLS to GNK
+Worker LdykCilKL1: Finding intersections for tickers MQY to SB
+Worker LdykCilKL1: Finding intersections for tickers A to CMI
+Worker 9Eaxuevz1A: Finding intersections for tickers A to CMI
+Worker 9Eaxuevz1A: Finding intersections for tickers CMLS to GNK
+Worker 9Eaxuevz1A: Finding intersections for tickers SBAC to ZYXI
+Worker 9Eaxuevz1A: Finding intersections for tickers GNL to MQT
+Worker 9Eaxuevz1A: Finding intersections for tickers MQY to SB
+Worker V2a5E35SF3: Finding intersections for tickers SBAC to ZYXI
+Worker V2a5E35SF3: Finding intersections for tickers A to CMI
+Worker V2a5E35SF3: Finding intersections for tickers MQY to SB
+Worker V2a5E35SF3: Finding intersections for tickers GNL to MQT
+Worker V2a5E35SF3: Finding intersections for tickers CMLS to GNK
+Worker YT0NrpUu1m: Finding intersections for tickers SBAC to ZYXI
+Worker YT0NrpUu1m: Finding intersections for tickers A to CMI
+Worker YT0NrpUu1m: Finding intersections for tickers CMLS to GNK
+Worker YT0NrpUu1m: Finding intersections for tickers MQY to SB
+Worker YT0NrpUu1m: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finished backtest for tickers A to CMI in 483 seconds
+Worker Kuda4fStVo: Finished backtest for tickers CMLS to GNK in 486 seconds
+Worker Kuda4fStVo: Finished backtest for tickers GNL to MQT in 494 seconds
+Worker Kuda4fStVo: Finished backtest for tickers MQY to SB in 495 seconds
+Worker Kuda4fStVo: Finished backtest for tickers SBAC to ZYXI in 502 seconds

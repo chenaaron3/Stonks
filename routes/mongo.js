@@ -51,9 +51,8 @@ async function update() {
 	// get all docs from mongo
 	console.log("Retreiving symbols!");
 	let priceCollection = await getCollection("prices");
-	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 });
+	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } });
 	stockInfo = await stockInfo.toArray();
-	// stockInfo = stockInfo.slice(0, 10); // used to test subset of updates
 	console.log(`Retreived ${stockInfo.length} symbols!`);
 
 	// create id to identify the update in logs
@@ -79,9 +78,8 @@ router.get('/pop', async function (req, res) {
 	// get all docs from mongo
 	console.log("Retreiving symbols!");
 	let priceCollection = await getCollection("prices");
-	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 });
+	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 }); //.limit(10);
 	stockInfo = await stockInfo.toArray();
-	// stockInfo = stockInfo.slice(0, 1); // used to test subset of updates
 	console.log(`Retreived ${stockInfo.length} symbols!`);
 
 	// pop from each document

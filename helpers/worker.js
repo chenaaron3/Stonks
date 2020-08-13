@@ -41,8 +41,16 @@ process.on('message', async (msg) => {
         for (let i = 0; i < symbols.length; ++i) {
             let symbol = symbols[i];
 
+            // get info from previous results
+            let previousResults = undefined;
+            let lastUpdated = undefined;
+            if (msg.previousResults != undefined) {
+                previousResults = msg.previousResults["results"]["symbolData"][symbol];
+                lastUpdated = new Date(msg.previousResults["results"]["lastUpdated"]);
+            }
+            
             // find results for the symbol
-            let intersection = await findIntersections(msg.strategyOptions, symbol);
+            let intersection = await findIntersections(msg.strategyOptions, symbol, previousResults, lastUpdated);
             // only record if if has buy/sell events
             if (intersection["events"].length > 0) {
                 intersections[symbol] = intersection;
@@ -61,7 +69,7 @@ process.on('message', async (msg) => {
     else if (msg.type == "startUpdate") {
         // log start information
         let updateDate = new Date();
-        // updateDate.setDate(updateDate.getDate() - 100); // used to test updates
+        // updateDate.setDate(updateDate.getDate() - 1); // used to test updates
         let documents = msg.partition;
         const start = Date.now();
         let startTicker = documents[0]._id;

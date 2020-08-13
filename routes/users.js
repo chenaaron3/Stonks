@@ -6,9 +6,10 @@ var fetch = require('node-fetch');
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
     let symbol = req.query.symbol;
+    let from = new Date("1/1/1900")
     yahooFinance.historical({
         symbol: symbol,
-        from: '1982-01-01',
+        from: from,
         to: new Date(),
         period: 'd'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
     }, function (err, quotes) {

@@ -1,12 +1,12 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewStock } from '../redux';
+import { viewStock, setBacktestResults } from '../redux';
 import './Results.css';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import eye from "../eye.svg";
 import { formatDate, daysBetween } from "../helpers/utils";
-
+import Pusher from 'react-pusher';
 
 class Results extends React.Component {
     constructor(props) {
@@ -19,7 +19,8 @@ class Results extends React.Component {
         this.props.viewStock(symbol)
     }
 
-    componentDidMount() {
+    // statistical analysis
+    analyze() {
         let numWins = 0;
         let numLosses = 0;
         this.props.sortedSymbols.forEach(symbol => {
@@ -35,12 +36,33 @@ class Results extends React.Component {
         this.setState({ numWins, numLosses });
     }
 
-    componentDidUpdate(prevProps) {
-        console.log("PREV", prevProps);
-        if (this.props.id != prevProps.id) {
-            console.log("HIHI");
+    componentDidMount() {
+        this.analyze();
+    }
 
+    componentDidUpdate(prevProps) {
+        if (prevProps.results != this.props.results) {
+            this.analyze();
         }
+    }
+
+    // send request to update a backtest
+    updateBacktest = () => {
+        fetch(`updateBacktest?id=${this.props.id}`);
+    }
+
+    // callback when a backtest is updated
+    onUpdateFinished = (data) => {
+        let id = data["id"];
+
+        // get the data from the server
+        fetch(`/results?id=${id}`, {
+            method: 'GET'
+        }).then(res => res.json())
+            .then(results => {
+                // store results in global state
+                this.props.setBacktestResults(id, results);
+            });
     }
 
     render() {
@@ -49,6 +71,11 @@ class Results extends React.Component {
 
         return (
             <div className="results">
+                <Pusher
+                    channel={this.props.id}
+                    event="onUpdateFinished"
+                    onUpdate={this.onUpdateFinished}
+                />
                 <span className="results-title">Backtest Results</span>
                 <Tabs>
                     <TabList>
@@ -74,7 +101,7 @@ class Results extends React.Component {
                                     <div>Sell Indicators: {Object.keys(this.props.results["strategyOptions"]["sellIndicators"]).join(", ")}</div>
                                     <div>Last Updated: {formatDate(new Date(this.props.results["lastUpdated"]))}</div>
                                     {daysBetween(new Date(this.props.results["lastUpdated"]), new Date()) > 0 && (
-                                        <input type="button" value="Update Results" />
+                                        <input type="button" value="Update Backtest" onClick={this.updateBacktest} />
                                     )}
                                 </>
                             )
@@ -151,8 +178,8 @@ class Result extends React.Component {
 let mapStateToProps = (state) => {
     let results = state.backtestResults;
     let sortedSymbols = Object.keys(results["symbolData"]);
-    sortedSymbols.sort((a, b) => a["percentProfit"] - b["percentProfit"]);
+    sortedSymbols.sort((a, b) => results["symbolData"][b]["profit"] - results["symbolData"][a]["profit"]);
     return { sortedSymbols, results, id: state.id };
 };
 
-export default connect(mapStateToProps, { viewStock })(Results);
+export default connect(mapStateToProps, { viewStock, setBacktestResults })(Results);

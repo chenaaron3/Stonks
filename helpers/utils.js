@@ -59,7 +59,7 @@ function getRSI(dates, prices, period) {
             let rs = avgU["data"][day] / avgD["data"][day];
             res[day] = 100 - (100 / (1 + rs));
         }
-    } 
+    }
     return res;
 
 }
@@ -166,6 +166,12 @@ function formatDate(date) {
     return [year, month, day].join('-');
 }
 
+function hoursBetween(dt1, dt2) {
+    var diff = (dt2.getTime() - dt1.getTime()) / 1000;
+    diff /= (60 * 60);
+    return Math.round(diff);
+}
+
 function daysBetween(date1, date2) {
     // The number of milliseconds in one day
     const ONE_DAY = 1000 * 60 * 60 * 24;
@@ -176,13 +182,13 @@ function daysBetween(date1, date2) {
 }
 
 function makeid(length) {
-   var result = '';
-   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-   var charactersLength = characters.length;
-   for ( var i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-   }
-   return result;
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
 }
 
-module.exports = {isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, formatDate, daysBetween, makeid};
+module.exports = { isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, formatDate, hoursBetween, daysBetween, makeid };

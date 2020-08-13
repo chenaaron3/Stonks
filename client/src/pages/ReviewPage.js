@@ -4,6 +4,7 @@ import './ReviewPage.css';
 import Chart from "../components/Chart";
 import Results from "../components/Results";
 import Indicators from "../components/Indicators";
+import SymbolResults from "../components/SymbolResults";
 
 class ReviewPage extends React.Component {
   render() {
@@ -23,6 +24,7 @@ class ReviewPage extends React.Component {
         </div>
         <div className="review-page-query">
           <div className="review-page-indicators">
+            <SymbolResults />
           </div>
           <div className="review-page-result">
             <Indicators />

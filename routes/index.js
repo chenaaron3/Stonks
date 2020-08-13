@@ -52,12 +52,35 @@ router.post("/priceGraph", async (req, res) => {
             let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices);
             indicatorGraphs[indicatorName] = indicator.getGraph();
         })
-        
+
         res.json({ price: pricesJSON, indicators: indicatorGraphs });
     }
     else {
         res.json({ price: [], indicators: {} });
     }
+});
+
+router.get("/updateBacktest", async (req, res) => {
+    // get backtest id
+    let id = req.query.id;
+    if (!await containsID(id)) {
+        res.send("Backtest ID is not valid!");
+        return;
+    }
+    let doc = await getDocument("results", id);
+    let strategyOptions = doc.results["strategyOptions"];
+    res.send("Updating backtest!");
+
+    // spawn child to do work
+    let child = fork(path.join(__dirname, "../helpers/worker.js"));
+    child.send({ type: "startBacktest", strategyOptions, id });
+    child.on('message', function (message) {
+        console.log(message);
+        if (message.status == "finished") {
+            console.log("Trigger client", id);
+            triggerChannel(id, "onUpdateFinished", `${id}`);
+        }
+    });
 });
 
 // gets the backtest results for all companies
