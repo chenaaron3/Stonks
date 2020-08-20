@@ -10,7 +10,7 @@ function formatDate(date) {
     if (day.length < 2)
         day = '0' + day;
 
-    return [year, month, day].join('-');
+    return [month, day, year].join('-');
 }
 
 function daysBetween(date1, date2) {

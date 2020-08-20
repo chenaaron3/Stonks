@@ -69,7 +69,7 @@ process.on('message', async (msg) => {
     else if (msg.type == "startUpdate") {
         // log start information
         let updateDate = new Date();
-        // updateDate.setDate(updateDate.getDate() - 1); // used to test updates
+        // updateDate.setDate(updateDate.getDate() + 1); // used to test updates
         let documents = msg.partition;
         const start = Date.now();
         let startTicker = documents[0]._id;

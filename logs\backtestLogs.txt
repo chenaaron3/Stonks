@@ -147,3 +147,26 @@ Worker V2a5E35SF3: Starting backtest
 Worker YT0NrpUu1m: Starting backtest
 Worker Kuda4fStVo: Starting backtest
 Worker Kuda4fStVo: Finished backtest in 506 seconds
+Worker uVx3GMm8MN: Starting backtest
+Worker 22tIyxrZj9: Starting backtest
+Worker 22tIyxrZj9: Finished backtest in 524 seconds
+Worker Kuda4fStVo: Starting backtest
+Worker Kuda4fStVo: Starting backtest
+Worker Kuda4fStVo: Starting backtest
+Worker Kuda4fStVo: Starting backtest
+Worker Kuda4fStVo: Starting backtest
+Worker Kuda4fStVo: Starting backtest
+Worker Kuda4fStVo: Finished backtest in 283 seconds
+Worker p9GPvWKBA6: Starting backtest
+Worker p9GPvWKBA6: Finished backtest in 421 seconds
+Worker FbNyyy5QEh: Starting backtest
+Worker FbNyyy5QEh: Finished backtest in 585 seconds
+Worker Su4a0IiihC: Starting backtest
+Worker Su4a0IiihC: Finished backtest in 498 seconds
+Worker FbNyyy5QEh: Starting backtest
+Worker FbNyyy5QEh: Finished backtest in 510 seconds
+Worker vGozmWO2X7: Starting backtest
+Worker xSVSK2YIWe: Starting backtest
+Worker xSVSK2YIWe: Finished backtest in 442 seconds
+Worker xSVSK2YIWe: Starting backtest
+Worker xSVSK2YIWe: Finished backtest in 403 seconds

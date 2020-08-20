@@ -11,7 +11,7 @@ import Pusher from 'react-pusher';
 class Results extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { numWins: 0, numLosses: 0 }
+        this.state = { numWins: 0, numLosses: 0, sortedSymbols: [] }
     }
 
     // when clicking on an item
@@ -21,19 +21,25 @@ class Results extends React.Component {
 
     // statistical analysis
     analyze() {
+        console.log("Analyzing");
         let numWins = 0;
         let numLosses = 0;
-        this.props.sortedSymbols.forEach(symbol => {
-            this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                if (event["profit"] < 0) {
-                    numLosses += 1;
-                }
-                else {
-                    numWins += 1;
-                }
+        // get the sorted symbols
+        let sortedSymbols = Object.keys(this.props.results["symbolData"]);
+        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["percentProfit"] - this.props.results["symbolData"][a]["percentProfit"]);
+        this.setState({ sortedSymbols }, () => {
+            this.state.sortedSymbols.forEach(symbol => {
+                this.props.results["symbolData"][symbol]["events"].forEach(event => {
+                    if (event["profit"] < 0) {
+                        numLosses += 1;
+                    }
+                    else {
+                        numWins += 1;
+                    }
+                })
             })
-        })
-        this.setState({ numWins, numLosses });
+            this.setState({ numWins, numLosses });
+        });
     }
 
     componentDidMount() {
@@ -41,7 +47,7 @@ class Results extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.results != this.props.results) {
+        if (prevProps.id != this.props.id) {
             this.analyze();
         }
     }
@@ -86,11 +92,11 @@ class Results extends React.Component {
                     </TabList>
                     <TabPanel>
                         <div className="results-list">
-                            {this.props.sortedSymbols.length == 0 && (<span>
+                            {this.state.sortedSymbols.length == 0 && (<span>
                                 There are no results...
                             </span>)
                             }
-                            {this.props.sortedSymbols.length != 0 && (
+                            {this.state.sortedSymbols.length != 0 && (
                                 <>
                                     <div>Wins: {this.state.numWins}</div>
                                     <div>Losses: {this.state.numLosses}</div>
@@ -110,12 +116,12 @@ class Results extends React.Component {
                     </TabPanel>
                     <TabPanel>
                         <div className="results-list">
-                            {this.props.sortedSymbols.length == 0 && (<span>
+                            {this.state.sortedSymbols.length == 0 && (<span>
                                 There are no results...
                             </span>)
                             }
-                            {this.props.sortedSymbols.length != 0 && (
-                                this.props.sortedSymbols.map((symbol, index) => {
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
                                     return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
                                 })
                             )
@@ -124,12 +130,12 @@ class Results extends React.Component {
                     </TabPanel>
                     <TabPanel>
                         <div className="results-list">
-                            {this.props.sortedSymbols.length == 0 && (<span>
+                            {this.state.sortedSymbols.length == 0 && (<span>
                                 There are no results...
                             </span>)
                             }
-                            {this.props.sortedSymbols.length != 0 && (
-                                this.props.sortedSymbols.map((symbol, index) => {
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
                                     // only show if there are recent events
                                     let recentEvents = this.props.results["symbolData"][symbol]["recent"];
                                     let numEvents = recentEvents["buy"].length;
@@ -143,12 +149,12 @@ class Results extends React.Component {
                     </TabPanel>
                     <TabPanel>
                         <div className="results-list">
-                            {this.props.sortedSymbols.length == 0 && (<span>
+                            {this.state.sortedSymbols.length == 0 && (<span>
                                 There are no results...
                             </span>)
                             }
-                            {this.props.sortedSymbols.length != 0 && (
-                                this.props.sortedSymbols.map((symbol, index) => {
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
                                     // only show if there are recent events
                                     let recentEvents = this.props.results["symbolData"][symbol]["recent"];
                                     let numEvents = recentEvents["sell"].length;
@@ -177,9 +183,7 @@ class Result extends React.Component {
 
 let mapStateToProps = (state) => {
     let results = state.backtestResults;
-    let sortedSymbols = Object.keys(results["symbolData"]);
-    sortedSymbols.sort((a, b) => results["symbolData"][b]["profit"] - results["symbolData"][a]["profit"]);
-    return { sortedSymbols, results, id: state.id };
+    return { results, id: state.id };
 };
 
 export default connect(mapStateToProps, { viewStock, setBacktestResults })(Results);

@@ -10,15 +10,15 @@ class SMASupport extends Indicator {
 
     calculate() {
         return getSimpleMovingAverage(this.dates, this.prices, this.period);
-    }    
+    }
 
     getGraph() {
-		return this.graph;
-	}
+        return { SMA: this.graph };
+    }
 
     getValue(date) {
-		return this.graph[date];
-	}
+        return this.graph[date];
+    }
 
     getAction(date) {
         let todayPrice = this.prices[date];

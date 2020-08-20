@@ -64,7 +64,7 @@ class CreateBacktest extends React.Component {
             "multipleBuys": true
         };
 
-        // fetch("/fakeBacktest?id=zSaWbWI1ts")
+        // fetch("/fakeBacktest?id=p9GPvWKBA6")
         //     .then(res => res.json())
         //     .then(results => {
         //         let id = results["id"];
@@ -85,6 +85,19 @@ class CreateBacktest extends React.Component {
                 let id = results["id"];
                 console.log(`Getting id ${id} from server!`);
                 this.props.setID(id);
+
+                // cache id immediately
+                let indicatorsUsed = new Set();
+                Object.keys(this.state.buyOptions).forEach(i => indicatorsUsed.add(i));
+                Object.keys(this.state.sellOptions).forEach(i => indicatorsUsed.add(i));
+                indicatorsUsed = [...indicatorsUsed];
+                indicatorsUsed.sort();
+                let displayName = indicatorsUsed.join("/");
+
+                // save the results
+                let newSave = [...this.props.savedResults, { id, display: displayName }];
+                this.props.setSavedResults(newSave);
+                localStorage.setItem("savedResults", JSON.stringify(newSave));
             });
     }
 
@@ -97,8 +110,8 @@ class CreateBacktest extends React.Component {
             }
             this.setState({ buyOptions: this.deriveIndicatorOptions() });
         }
-        else if (this.state.step == 1 || !this.props.activeIndicators.has(this.state.mainSellIndicator)) {
-            if (this.state.mainSellIndicator == "") {
+        else if (this.state.step == 1) {
+            if (this.state.mainSellIndicator == "" || !this.props.activeIndicators.has(this.state.mainSellIndicator)) {
                 alert("Please select a main sell indicator.");
                 return;
             }
@@ -116,21 +129,12 @@ class CreateBacktest extends React.Component {
     // when server signals that the results are ready
     onResultFinished = async (data) => {
         let id = data["id"];
-
         // get the results from database
         let results = await this.fetchBacktestResults(id);
-        // construct display name based on indicators used
-        let indicatorsUsed = new Set();
-        Object.keys(results["strategyOptions"]["buyIndicators"]).forEach(i => indicatorsUsed.add(i));
-        Object.keys(results["strategyOptions"]["sellIndicators"]).forEach(i => indicatorsUsed.add(i));
-        indicatorsUsed = [...indicatorsUsed];
-        indicatorsUsed.sort();
-        let displayName = indicatorsUsed.join("/");
+        // store results in global state
+        this.props.setBacktestResults(id, results);
 
-        // save the results
-        let newSave = [...this.props.savedResults, { id, display: displayName }];
-        this.props.setSavedResults(newSave);
-        localStorage.setItem("savedResults", JSON.stringify(newSave));
+        // TODO tell user that results are ready
     }
 
     fetchBacktestResults = (id) => {
@@ -140,8 +144,6 @@ class CreateBacktest extends React.Component {
                 method: 'GET'
             }).then(res => res.json())
                 .then(results => {
-                    // store results in global state
-                    this.props.setBacktestResults(id, results);
                     resolve(results);
                 });
         })

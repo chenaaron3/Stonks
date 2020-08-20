@@ -1,6 +1,7 @@
 // Actions
 const SET_BACKTEST_RESULTS = "SET_BACKTEST_RESULTS";
 const VIEW_STOCK = "VIEW_STOCK";
+const VIEW_EVENT = "VIEW_EVENT";
 const SET_ID = "SET_ID";
 const SET_INDICATOR_OPTION = "SET_INDICATOR_OPTION";
 const SET_INDICATOR_ON = "SET_INDICATOR_ON";
@@ -13,7 +14,8 @@ const initialState = {
     selectedSymbol: "",
     indicatorOptions: {},
     activeIndicators: new Set(),
-    savedResults: []
+    savedResults: [],
+    eventIndex: -1
 };
 
 // Reducer
@@ -28,7 +30,12 @@ export default function reducer(state = initialState, action) {
         case VIEW_STOCK:
             return Object.assign({}, state, {
                 selectedSymbol: action.symbol,
-                selectedResults: action.results
+                selectedResults: action.results,
+                eventIndex: -1
+            })
+        case VIEW_EVENT:
+            return Object.assign({}, state, {
+                eventIndex: action.eventIndex
             })
         case SET_ID:
             return {
@@ -78,6 +85,10 @@ export function setBacktestResults(id, backtestResults) {
 
 export function viewStock(symbol) {
     return { type: VIEW_STOCK, symbol };
+}
+
+export function viewEvent(eventIndex) {
+    return { type: VIEW_EVENT, eventIndex };
 }
 
 export function setID(id) {

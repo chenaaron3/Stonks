@@ -12,6 +12,7 @@
     height: 100vh;
     display: flex;
     flex-direction: row;
+    overflow: hidden;
 }
 
 .review-page-backtest-results {
@@ -39,7 +40,6 @@
 
 .review-page-details {
     flex: 2;
-    border-style: solid;
 }
 
 /* Right side of page */
@@ -52,10 +52,8 @@
 
 .review-page-result {
     flex: 1;
-    border-style: solid;
 }
 
 .review-page-indicators {
     flex: 1;
-    border-style: solid;
 }

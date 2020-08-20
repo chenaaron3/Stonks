@@ -9,7 +9,7 @@ let { makeid, daysBetween } = require('../helpers/utils');
 let { getSymbols } = require('../helpers/backtest');
 const { json } = require('express');
 
-const NUM_THREADS = 5;
+const NUM_THREADS = 4;
 let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
 
 ensureUpdated();
@@ -51,7 +51,7 @@ async function update() {
 	// get all docs from mongo
 	console.log("Retreiving symbols!");
 	let priceCollection = await getCollection("prices");
-	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } });
+	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } })//.limit(10);
 	stockInfo = await stockInfo.toArray();
 	console.log(`Retreived ${stockInfo.length} symbols!`);
 
@@ -78,7 +78,7 @@ router.get('/pop', async function (req, res) {
 	// get all docs from mongo
 	console.log("Retreiving symbols!");
 	let priceCollection = await getCollection("prices");
-	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 }); //.limit(10);
+	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 })//.limit(10);
 	stockInfo = await stockInfo.toArray();
 	console.log(`Retreived ${stockInfo.length} symbols!`);
 

@@ -13,9 +13,13 @@ let { getIndicator } = require('../helpers/backtest');
 // get backtest results
 router.get("/results", async (req, res) => {
     let id = req.query.id;
-    console.log(`Fetching results for id ${id}`);
     let doc = await getDocument("results", id);
-    res.json(doc["results"]);
+    if (typeof (doc["results"]) == "string") {
+        res.json({ error: "Results are not ready yet!" });
+    }
+    else {
+        res.json(doc["results"]);
+    }
 })
 
 // start fake backtesting for testing

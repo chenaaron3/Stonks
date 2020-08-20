@@ -888,3 +888,118 @@ Worker Kuda4fStVo: Finished backtest for tickers CMLS to GNK in 486 seconds
 Worker Kuda4fStVo: Finished backtest for tickers GNL to MQT in 494 seconds
 Worker Kuda4fStVo: Finished backtest for tickers MQY to SB in 495 seconds
 Worker Kuda4fStVo: Finished backtest for tickers SBAC to ZYXI in 502 seconds
+Worker uVx3GMm8MN: Finding intersections for tickers GNL to MQT
+Worker uVx3GMm8MN: Finding intersections for tickers SBAC to ZYXI
+Worker uVx3GMm8MN: Finding intersections for tickers A to CMI
+Worker uVx3GMm8MN: Finding intersections for tickers CMLS to GNK
+Worker uVx3GMm8MN: Finding intersections for tickers MQY to SB
+Worker 22tIyxrZj9: Finding intersections for tickers A to CMI
+Worker 22tIyxrZj9: Finding intersections for tickers GNL to MQT
+Worker 22tIyxrZj9: Finding intersections for tickers MQY to SB
+Worker 22tIyxrZj9: Finding intersections for tickers CMLS to GNK
+Worker 22tIyxrZj9: Finding intersections for tickers SBAC to ZYXI
+Worker 22tIyxrZj9: Finished backtest for tickers A to CMI in 497 seconds
+Worker 22tIyxrZj9: Finished backtest for tickers GNL to MQT in 506 seconds
+Worker 22tIyxrZj9: Finished backtest for tickers CMLS to GNK in 508 seconds
+Worker 22tIyxrZj9: Finished backtest for tickers MQY to SB in 515 seconds
+Worker 22tIyxrZj9: Finished backtest for tickers SBAC to ZYXI in 520 seconds
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finding intersections for tickers A to CMI
+Worker Kuda4fStVo: Finding intersections for tickers CMLS to GNK
+Worker Kuda4fStVo: Finding intersections for tickers GNL to MQT
+Worker Kuda4fStVo: Finding intersections for tickers MQY to SB
+Worker Kuda4fStVo: Finding intersections for tickers SBAC to ZYXI
+Worker Kuda4fStVo: Finished backtest for tickers A to CMI in 264 seconds
+Worker Kuda4fStVo: Finished backtest for tickers CMLS to GNK in 267 seconds
+Worker Kuda4fStVo: Finished backtest for tickers GNL to MQT in 271 seconds
+Worker Kuda4fStVo: Finished backtest for tickers MQY to SB in 276 seconds
+Worker Kuda4fStVo: Finished backtest for tickers SBAC to ZYXI in 277 seconds
+Worker p9GPvWKBA6: Finding intersections for tickers MQY to SB
+Worker p9GPvWKBA6: Finding intersections for tickers CMLS to GNK
+Worker p9GPvWKBA6: Finding intersections for tickers SBAC to ZYXI
+Worker p9GPvWKBA6: Finding intersections for tickers A to CMI
+Worker p9GPvWKBA6: Finding intersections for tickers GNL to MQT
+Worker p9GPvWKBA6: Finished backtest for tickers CMLS to GNK in 399 seconds
+Worker p9GPvWKBA6: Finished backtest for tickers GNL to MQT in 403 seconds
+Worker p9GPvWKBA6: Finished backtest for tickers A to CMI in 404 seconds
+Worker p9GPvWKBA6: Finished backtest for tickers MQY to SB in 406 seconds
+Worker p9GPvWKBA6: Finished backtest for tickers SBAC to ZYXI in 413 seconds
+Worker FbNyyy5QEh: Finding intersections for tickers A to CMI
+Worker FbNyyy5QEh: Finding intersections for tickers SBAC to ZYXI
+Worker FbNyyy5QEh: Finding intersections for tickers GNL to MQT
+Worker FbNyyy5QEh: Finding intersections for tickers CMLS to GNK
+Worker FbNyyy5QEh: Finding intersections for tickers MQY to SB
+Worker FbNyyy5QEh: Finished backtest for tickers CMLS to GNK in 535 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers A to CMI in 557 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers MQY to SB in 558 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers GNL to MQT in 568 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers SBAC to ZYXI in 575 seconds
+Worker Su4a0IiihC: Finding intersections for tickers GNL to MQT
+Worker Su4a0IiihC: Finding intersections for tickers CMLS to GNK
+Worker Su4a0IiihC: Finding intersections for tickers A to CMI
+Worker Su4a0IiihC: Finding intersections for tickers MQY to SB
+Worker Su4a0IiihC: Finding intersections for tickers SBAC to ZYXI
+Worker Su4a0IiihC: Finished backtest for tickers CMLS to GNK in 488 seconds
+Worker Su4a0IiihC: Finished backtest for tickers A to CMI in 492 seconds
+Worker Su4a0IiihC: Finished backtest for tickers SBAC to ZYXI in 493 seconds
+Worker Su4a0IiihC: Finished backtest for tickers GNL to MQT in 495 seconds
+Worker Su4a0IiihC: Finished backtest for tickers MQY to SB in 494 seconds
+Worker FbNyyy5QEh: Finding intersections for tickers A to CMI
+Worker FbNyyy5QEh: Finding intersections for tickers GNL to MQT
+Worker FbNyyy5QEh: Finding intersections for tickers CMLS to GNK
+Worker FbNyyy5QEh: Finding intersections for tickers MQY to SB
+Worker FbNyyy5QEh: Finding intersections for tickers SBAC to ZYXI
+Worker FbNyyy5QEh: Finished backtest for tickers CMLS to GNK in 488 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers A to CMI in 492 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers MQY to SB in 493 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers GNL to MQT in 495 seconds
+Worker FbNyyy5QEh: Finished backtest for tickers SBAC to ZYXI in 503 seconds
+Worker vGozmWO2X7: Finding intersections for tickers MQY to SB
+Worker vGozmWO2X7: Finding intersections for tickers A to CMI
+Worker vGozmWO2X7: Finding intersections for tickers CMLS to GNK
+Worker vGozmWO2X7: Finding intersections for tickers GNL to MQT
+Worker vGozmWO2X7: Finding intersections for tickers SBAC to ZYXI
+Worker xSVSK2YIWe: Finding intersections for tickers GNL to MQT
+Worker xSVSK2YIWe: Finding intersections for tickers MQY to SB
+Worker xSVSK2YIWe: Finding intersections for tickers CMLS to GNK
+Worker xSVSK2YIWe: Finding intersections for tickers SBAC to ZYXI
+Worker xSVSK2YIWe: Finding intersections for tickers A to CMI
+Worker xSVSK2YIWe: Finished backtest for tickers CMLS to GNK in 420 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers A to CMI in 427 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers MQY to SB in 431 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers GNL to MQT in 434 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers SBAC to ZYXI in 439 seconds
+Worker xSVSK2YIWe: Finding intersections for tickers A to CMI
+Worker xSVSK2YIWe: Finding intersections for tickers CMLS to GNK
+Worker xSVSK2YIWe: Finding intersections for tickers GNL to MQT
+Worker xSVSK2YIWe: Finding intersections for tickers MQY to SB
+Worker xSVSK2YIWe: Finding intersections for tickers SBAC to ZYXI
+Worker xSVSK2YIWe: Finished backtest for tickers CMLS to GNK in 394 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers A to CMI in 396 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers MQY to SB in 396 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers GNL to MQT in 397 seconds
+Worker xSVSK2YIWe: Finished backtest for tickers SBAC to ZYXI in 397 seconds

@@ -26,6 +26,7 @@ class ReviewPage extends React.Component {
           <div className="review-page-indicators">
             <SymbolResults />
           </div>
+          <hr></hr>
           <div className="review-page-result">
             <Indicators />
           </div>

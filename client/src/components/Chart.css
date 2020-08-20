@@ -4,6 +4,8 @@
      max-height: 100vh;
      display: flex;
      flex-direction: column;
+     overflow-y: hidden;
+     justify-content: space-evenly;
  }
 
  .chart-missing {

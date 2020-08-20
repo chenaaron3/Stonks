@@ -5,6 +5,8 @@ var fetch = require('node-fetch');
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+    console.log(req.session);
+
     let symbol = req.query.symbol;
     let from = new Date("1/1/1900")
     yahooFinance.historical({

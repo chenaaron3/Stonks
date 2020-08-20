@@ -9,28 +9,31 @@ class SavedResults extends React.Component {
         super(props);
         // create saved results if it doesnt exist
         if (!localStorage.getItem("savedResults")) {
-            localStorage.setItem("savedResults", "[]")
+            localStorage.setItem("savedResults", `[{"id":"xSVSK2YIWe","display":"Demo"}]`)
         }
 
         this.props.setSavedResults(JSON.parse(localStorage.getItem("savedResults")))
     }
 
     fetchBacktestResults = (id) => {
-        return new Promise(resolve => {
-            // get the data from the server
-            fetch(`/results?id=${id}`, {
-                method: 'GET'
-            }).then(res => res.json())
-                .then(results => {
+        fetch(`/results?id=${id}`, {
+            method: 'GET'
+        }).then(res => res.json())
+            .then(results => {
+                console.log(results["error"]);
+                // if something is wrong with the results
+                if (results["error"]) {
+                    alert(results["error"]);
+                }
+                else {
                     // store results in global state
                     this.props.setBacktestResults(id, results);
                     // preview first stock
                     this.props.viewStock(Object.keys(results["symbolData"])[0]);
                     // go to review page
                     this.props.history.push("/review");
-                    resolve(results);
-                });
-        })
+                }
+            });
     }
 
     // change display name for saved results
@@ -73,7 +76,7 @@ class SavedResults extends React.Component {
                 {this.props.savedResults.length != 0 && (
                     this.props.savedResults.map((save, index) => {
                         return <SavedResult id={save["id"]} display={save["display"]} fetchBacktestResults={this.fetchBacktestResults}
-                            editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} />
+                            editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${index}`} />
                     })
                 )
                 }

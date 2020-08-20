@@ -1,11 +1,11 @@
-let {isCrossed, getSimpleMovingAverage} = require('../utils');
+let { isCrossed, getSimpleMovingAverage } = require('../utils');
 let Indicator = require('./indicator');
 
 class GC extends Indicator {
 	initialize(options) {
 		this.ma1Period = options["ma1Period"];
 		this.ma2Period = options["ma2Period"];
-		this.name = "GC";		
+		this.name = "GC";
 		this.calculate();
 	}
 
@@ -15,7 +15,7 @@ class GC extends Indicator {
 	}
 
 	getGraph() {
-		return {};
+		return { [`GC_MA(${this.ma1Period})`]: this.ma1, [`GC_MA(${this.ma2Period})`]: this.ma2 };
 	}
 
 	getValue(date) {
@@ -31,7 +31,7 @@ class GC extends Indicator {
 		let todayMA2 = this.ma2[date];
 
 		let isCrossedUp = isCrossed(yesterdayMA1, todayMA1, yesterdayMA2, todayMA2, true);
-		let isCrossedDown = isCrossed(yesterdayMA1, todayMA1, yesterdayMA2, todayMA2,  false);
+		let isCrossedDown = isCrossed(yesterdayMA1, todayMA1, yesterdayMA2, todayMA2, false);
 		if (isCrossedUp) {
 			return Indicator.BUY;
 		}

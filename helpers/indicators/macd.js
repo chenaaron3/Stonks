@@ -1,4 +1,4 @@
-let {getMACD, getExponentialMovingAverage, isCrossed} = require('../utils');
+let { getMACD, getExponentialMovingAverage, isCrossed } = require('../utils');
 let Indicator = require('./indicator');
 
 class MACD extends Indicator {
@@ -9,6 +9,7 @@ class MACD extends Indicator {
 		this.name = "MACD";
 		this.graph = this.calculate();
 		this.signalLine = this.signal();
+		this.histogram = this.histogram();
 	}
 
 	calculate() {
@@ -17,13 +18,24 @@ class MACD extends Indicator {
 
 	signal() {
 		let dates = Object.keys(this.graph).sort(function (a, b) {
-	        return new Date(a) - new Date(b);
-	    });
+			return new Date(a) - new Date(b);
+		});
 		return getExponentialMovingAverage(dates, this.graph, this.signalPeriod)["data"];
 	}
 
+	histogram() {
+		let dates = Object.keys(this.graph).sort(function (a, b) {
+			return new Date(a) - new Date(b);
+		});
+		let histogram = {};
+		dates.forEach(date => {
+			histogram[date] = this.graph[date] - this.signalLine[date];
+		})
+		return histogram;
+	}
+
 	getGraph() {
-		return this.graph;
+		return { MACD: this.graph, Signal: this.signalLine, Histogram: this.histogram };
 	}
 
 	getValue(date) {

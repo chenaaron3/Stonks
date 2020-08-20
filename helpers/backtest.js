@@ -268,10 +268,12 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         // load previous hits
                         if (previousResults) {
                             events = previousResults["events"];
+                            // carry over holdings to look for sells
                             previousResults["holdings"].forEach(holding => {
                                 buyDates.push(holding);
                                 buyPrices.push(prices[holding]);
                             })
+                            // check if recents are still valid
                             previousResults["recent"]["buy"].forEach(recentBuy => {
                                 if (daysBetween(new Date(recentBuy), today) < EXPIRATION) {
                                     recent["buy"].push(recentBuy);
@@ -282,6 +284,10 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                     recent["sell"].push(recentSell);
                                 }
                             })
+                            // carry over profits
+                            profit = previousResults["profit"];
+                            count = events.length;
+                            percentProfit = previousResults["percentProfit"] * count;
                         }
                         // start from the date after the last update
                         for(let i = 0; i < dates.length; ++i) {
@@ -290,6 +296,11 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                 startIndex = i;
                                 break;
                             }
+                        }
+                        // if theres no changes since last update
+                        if (startIndex == 0) {
+                            // end the backtest for this symbol
+                            startIndex = dates.length;
                         }
                     }
 

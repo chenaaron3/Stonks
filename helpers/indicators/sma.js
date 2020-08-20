@@ -1,4 +1,4 @@
-let {isCrossed, getSimpleMovingAverage} = require('../utils');
+let { isCrossed, getSimpleMovingAverage } = require('../utils');
 let Indicator = require('./indicator');
 
 class SMA extends Indicator {
@@ -13,7 +13,7 @@ class SMA extends Indicator {
 	}
 
 	getGraph() {
-		return this.graph;
+		return { [`SMA(${this.period})`]: this.graph };
 	}
 
 	getValue(date) {

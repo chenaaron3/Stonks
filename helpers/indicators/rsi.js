@@ -1,4 +1,4 @@
-let {getRSI} = require('../utils');
+let { getRSI } = require('../utils');
 let Indicator = require('./indicator');
 
 class RSI extends Indicator {
@@ -15,7 +15,7 @@ class RSI extends Indicator {
 	}
 
 	getGraph() {
-		return this.graph;
+		return { RSI: this.graph };
 	}
 
 	getValue(date) {
