@@ -95,7 +95,7 @@ class Chart extends React.Component {
         });
         let graphData = { symbol: this.props.symbol, indicators: finalOptions };
 
-        fetch(`/priceGraph`, {
+        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/priceGraph`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

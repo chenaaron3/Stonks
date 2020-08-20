@@ -73,7 +73,7 @@ class CreateBacktest extends React.Component {
         //     });
 
         // fetch results here        
-        fetch("/backtest", {
+        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/backtest`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -140,7 +140,7 @@ class CreateBacktest extends React.Component {
     fetchBacktestResults = (id) => {
         return new Promise(resolve => {
             // get the data from the server
-            fetch(`/results?id=${id}`, {
+            fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
                 method: 'GET'
             }).then(res => res.json())
                 .then(results => {

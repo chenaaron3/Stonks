@@ -54,7 +54,7 @@ class Results extends React.Component {
 
     // send request to update a backtest
     updateBacktest = () => {
-        fetch(`updateBacktest?id=${this.props.id}`);
+        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/updateBacktest?id=${this.props.id}`);
     }
 
     // callback when a backtest is updated
@@ -62,7 +62,7 @@ class Results extends React.Component {
         let id = data["id"];
 
         // get the data from the server
-        fetch(`/results?id=${id}`, {
+        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
             method: 'GET'
         }).then(res => res.json())
             .then(results => {

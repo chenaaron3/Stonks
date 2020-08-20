@@ -16,7 +16,7 @@ class SavedResults extends React.Component {
     }
 
     fetchBacktestResults = (id) => {
-        fetch(`/results?id=${id}`, {
+        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
             method: 'GET'
         }).then(res => res.json())
             .then(results => {

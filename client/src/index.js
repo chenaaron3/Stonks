@@ -25,6 +25,8 @@ const pusherClient = new Pusher("27c0991e4a760dce09df", {
 
 setPusherClient(pusherClient);
 
+console.log("SUBD", process.env.REACT_APP_SUBDIRECTORY);
+
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
