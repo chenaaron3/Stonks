@@ -1,11 +1,21 @@
 const MongoClient = require('mongodb').MongoClient;
-const client = new MongoClient(process.env.MONGO_DATABASE_URL, {
-	useUnifiedTopology: true
-});
 
 let stonks;
 let priceCollection;
 let resultsCollection;
+
+const client = new MongoClient(process.env.MONGO_DATABASE_URL, {
+	useUnifiedTopology: true
+});
+
+client.connect(async function (err) {
+	if (err) console.log(err);
+	console.log("Connected!");
+	// get mongo collection
+	stonks = client.db('stonks');
+	priceCollection = stonks.collection('prices');
+	resultsCollection = stonks.collection('results');
+});
 
 // ensure that there is a valid connection
 function ensureConnected() {
