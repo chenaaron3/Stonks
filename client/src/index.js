@@ -18,17 +18,17 @@ import {
 import { composeWithDevTools } from 'redux-devtools-extension';
 
 const store = createStore(reducer, composeWithDevTools());
- 
+
 const pusherClient = new Pusher("27c0991e4a760dce09df", {
   cluster: "us3"
 });
- 
+
 setPusherClient(pusherClient);
 
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
-      <Router>
+      <Router basename={"/stocks"}>
         <Route exact path="/" component={CreatePage} />
         <Route path="/review" component={ReviewPage} />
       </Router>
