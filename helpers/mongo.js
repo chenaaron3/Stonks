@@ -9,7 +9,7 @@ const client = new MongoClient(process.env.MONGO_DATABASE_URL, {
 });
 
 client.connect(async function (err) {
-	if (err) console.log(err);
+	if (err) { console.log(err); return; }
 	console.log("Connected!");
 	// get mongo collection
 	stonks = client.db('stonks');
@@ -72,8 +72,7 @@ function addDocument(collectionName, document) {
 						else resolve();
 					});
 				}
-				else
-				{
+				else {
 					resolve();
 				}
 			});
