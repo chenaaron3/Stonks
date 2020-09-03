@@ -17,10 +17,13 @@ class CreateBacktest extends React.Component {
             sellOptions: {}
         };
         this.indicators = {
-            "SMA": { "fields": ["period"], "default": [9] },
+            "SMA": { "fields": ["period", "minDuration"], "default": [180, 3] },
+            "EMA": { "fields": ["period", "minDuration"], "default": [5, 3] },
             "RSI": { "fields": ["period", "underbought", "overbought"], "default": [14, 30, 70] },
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
-            "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] }
+            "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
+            "ADX": { "fields": ["period"], "default": [12] },
+            "Solid": { "fields": ["minLength", "maxRatio"], "default": [2, .1] }
         }
 
         // for each indicator
@@ -58,7 +61,8 @@ class CreateBacktest extends React.Component {
             "sellIndicators": this.state.sellOptions,
             "mainBuyIndicator": this.state.mainBuyIndicator,
             "mainSellIndicator": this.state.mainSellIndicator,
-            // "stopLoss": .5,
+            // "stopLossLow": .98,
+            "stopLossHigh": 1.25,
             "minVolume": 1000000,
             "expiration": 7,
             "multipleBuys": true
@@ -118,11 +122,36 @@ class CreateBacktest extends React.Component {
             this.setState({ sellOptions: this.deriveIndicatorOptions() });
         }
         if (this.state.step < 2) {
-            this.setState({ step: this.state.step + 1 });
+            this.setStep(this.state.step + 1);
         }
     }
 
     setStep = (step) => {
+        // prefill previous form data
+        if (step == 0) {
+            // sets options
+            Object.keys(this.state.buyOptions).forEach(indicatorName => {
+                Object.keys(this.state.buyOptions[indicatorName]).forEach(field => {
+                    this.props.setIndicatorOption(indicatorName, field, this.state.buyOptions[indicatorName][field]);
+                })
+            })
+            // sets on/off
+            Object.keys(this.indicators).forEach(indicatorName => {
+                this.props.setIndicatorOn(indicatorName, this.state.buyOptions.hasOwnProperty(indicatorName));
+            })
+        }
+        if (step == 1) {
+            // sets options
+            Object.keys(this.state.sellOptions).forEach(indicatorName => {
+                Object.keys(this.state.sellOptions[indicatorName]).forEach(field => {
+                    this.props.setIndicatorOption(indicatorName, field, this.state.sellOptions[indicatorName][field]);
+                })
+            })
+            // sets on/off
+            Object.keys(this.indicators).forEach(indicatorName => {
+                this.props.setIndicatorOn(indicatorName, this.state.sellOptions.hasOwnProperty(indicatorName));
+            })
+        }
         this.setState({ step });
     }
 
@@ -133,8 +162,6 @@ class CreateBacktest extends React.Component {
         let results = await this.fetchBacktestResults(id);
         // store results in global state
         this.props.setBacktestResults(id, results);
-
-        // TODO tell user that results are ready
     }
 
     fetchBacktestResults = (id) => {
@@ -225,10 +252,10 @@ class CreateBacktest extends React.Component {
                                 <>
                                     <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2>
                                     <h3>Buy Criterias:</h3>
+                                    <pre id="json">{JSON.stringify(this.state.buyOptions, null, 2).replace(/[{},"]/g, "")}</pre>
                                     <p>Main Indicator: {this.state.mainBuyIndicator}</p>
-                                    <p>Indicators: {JSON.stringify(this.state.buyOptions)}</p>
                                     <h3>Sell Criterias:</h3>
-                                    <p>Indicators: {JSON.stringify(this.state.sellOptions)}</p>
+                                    <pre id="json">{JSON.stringify(this.state.sellOptions, null, 2).replace(/[{},"]/g, "")}</pre>
                                     <p>Main Indicator: {this.state.mainSellIndicator}</p>
                                 </>
                             )

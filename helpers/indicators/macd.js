@@ -1,4 +1,4 @@
-let { getMACD, getExponentialMovingAverage, isCrossed } = require('../utils');
+let { getMACD, getExponentialMovingAverage, isCrossed, normalizeRange } = require('../utils');
 let Indicator = require('./indicator');
 
 class MACD extends Indicator {
@@ -42,6 +42,11 @@ class MACD extends Indicator {
 		return this.graph[date];
 	}
 
+	normalize(data) {
+		return data;
+		// return normalizeRange(data);
+	}
+
 	getAction(date) {
 		let yesterday = this.dates[this.dates.indexOf(date) - 1];
 
@@ -50,9 +55,9 @@ class MACD extends Indicator {
 		let yesterdaySignal = this.signalLine[yesterday];
 		let todaySignal = this.signalLine[date];
 
-		let isCrossedUp = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, true);
-		let isCrossedDown = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, false);
-		if (isCrossedUp) {
+		let isCrossedUp = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, true); // green to red
+		let isCrossedDown = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, false); // red to green
+		if (isCrossedUp || this.histogram[date] > 0) {
 			return Indicator.BUY;
 		}
 		else if (isCrossedDown) {

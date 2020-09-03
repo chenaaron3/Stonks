@@ -2,12 +2,13 @@ var fs = require('fs');
 var path = require('path');
 
 let { conductBacktest, findIntersections } = require('../helpers/backtest');
-let { updateStock } = require('../helpers/stock');
+let { updateStock, gatherData } = require('../helpers/stock');
 
 let logDirectory = path.join(__dirname, "../logs");
 let backtestPath = path.join(logDirectory, "backtestLogs.txt");
 let intersectionPath = path.join(logDirectory, "intersectionLogs.txt");
 let updateLogs = path.join(logDirectory, "updateLogs.txt");
+let datasetPath = path.join(logDirectory, "datasetLogs.txt");
 
 process.on('message', async (msg) => {
     // thread to run backtest
@@ -38,6 +39,7 @@ process.on('message', async (msg) => {
 
         // conduct actual intersection finding
         let intersections = {};
+        let updateStep = Math.floor(symbols.length / 100);
         for (let i = 0; i < symbols.length; ++i) {
             let symbol = symbols[i];
 
@@ -48,7 +50,7 @@ process.on('message', async (msg) => {
                 previousResults = msg.previousResults["results"]["symbolData"][symbol];
                 lastUpdated = new Date(msg.previousResults["results"]["lastUpdated"]);
             }
-            
+
             // find results for the symbol
             let intersection = await findIntersections(msg.strategyOptions, symbol, previousResults, lastUpdated);
             // only record if if has buy/sell events
@@ -56,6 +58,11 @@ process.on('message', async (msg) => {
                 intersections[symbol] = intersection;
             }
             console.log(`${symbol} => ${intersection["events"].length}`);
+
+            // update progress
+            if (i != 0 && i % updateStep == 0) {
+                process.send({ status: "progress", progress: updateStep });
+            }
         }
         // notify parent
         process.send({ status: "finished", intersections });
@@ -89,5 +96,25 @@ process.on('message', async (msg) => {
         fs.appendFileSync(updateLogs,
             `Worker ${msg.updateID}: Finished update for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
         process.exit(0);
+    }
+    // thread to create dataset for ML
+    else if (msg.type == "startCreatingDataset") {
+        // log start information
+        let symbols = msg.partition;
+        const start = Date.now();
+        let startTicker = symbols[0];
+        let endTicker = symbols[symbols.length - 1];
+        fs.appendFileSync(datasetPath,
+            `Worker ${msg.id}: Creating dataset for tickers ${startTicker} to ${endTicker}\n`, { encoding: "utf-8" });
+
+        // conduct actual data gathering
+        let data = await gatherData(symbols, msg.result, msg.window);
+        // notify parent
+        process.send({ status: "finished", ...data });
+
+        // log end information
+        let time = Math.floor((Date.now() - start) / 1000);
+        fs.appendFileSync(datasetPath, `Worker ${msg.id}: Finished gathering data for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
+        setTimeout(() => { process.exit(0); }, 1000)
     }
 });

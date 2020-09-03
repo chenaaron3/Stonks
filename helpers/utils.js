@@ -151,6 +151,57 @@ function getExponentialMovingAverage(dates, prices, period) {
     return { valid: start != undefined, start: start, data: res };
 }
 
+function getTrueRange(dates, highs, lows, closes) {
+    let res = {};
+    let start = undefined;
+
+    for (let i = 1; i < dates.length; ++i) {
+        let day = dates[i];
+        let yesterday = dates[i - 1];
+
+        if (i == 1) {
+            start = day;
+        }
+        res[day] = Math.max(highs[day] - lows[day], highs[day] - closes[yesterday], lows[day] - closes[yesterday]);
+    }
+
+    return { valid: start != undefined, start: start, data: res };
+}
+
+function getDirectionalMovement(dates, highs, lows, positive) {
+    let res = {};
+    let start = undefined;
+
+    for (let i = 1; i < dates.length; ++i) {
+        let day = dates[i];
+        let yesterday = dates[i - 1];
+        let moveUp = highs[day] - highs[yesterday];
+        let moveDown = lows[yesterday] - lows[day];
+
+        if (i == 1) {
+            start = day;
+        }
+        if (positive) {
+            if (moveUp > moveDown && moveUp > 0) {
+                res[day] = moveUp;
+            }
+            else {
+                res[day] = 0;
+            }
+        }
+        else {
+            if (moveDown > moveUp && moveDown > 0) {
+                res[day] = moveDown;
+            }
+            else {
+                res[day] = 0;
+            }
+        }
+    }
+
+    return { valid: start != undefined, start: start, data: res };
+}
+
 // format date to api needs
 function formatDate(date) {
     var d = new Date(date),
@@ -191,4 +242,45 @@ function makeid(length) {
     return result;
 }
 
-module.exports = { isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, formatDate, hoursBetween, daysBetween, makeid };
+// used for 0-1
+function clampRange(data) {
+    if (data.length <= 1) {
+        return data;
+    }
+    
+    let min = Math.min(...data);
+    let max = Math.max(...data);
+    let res = [];
+    data.forEach(d => {
+        res.push((d - min) / (max - min));
+    })
+    return res;
+}
+
+// used for pos and neg
+function normalizeRange(data) {
+    let res = [];
+    let sd = getStandardDeviation(data);
+    let mean = getMean(data);
+    data.forEach(d => {
+        res.push((d - mean) / (sd));
+    })
+    return res;
+}
+
+function getStandardDeviation(array) {
+    const n = array.length
+    const mean = array.reduce((a, b) => a + b) / n
+    return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+}
+
+function getMean(array) {
+    const n = array.length;
+    const mean = array.reduce((a, b) => a + b) / n;
+    return mean;
+}
+
+module.exports = {
+    isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement,
+    formatDate, hoursBetween, daysBetween, makeid, normalizeRange, clampRange
+};

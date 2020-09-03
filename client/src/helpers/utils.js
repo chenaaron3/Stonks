@@ -22,4 +22,8 @@ function daysBetween(date1, date2) {
     return Math.round(differenceMs / ONE_DAY);
 }
 
-module.exports = {formatDate, daysBetween};
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+module.exports = {formatDate, daysBetween, numberWithCommas};

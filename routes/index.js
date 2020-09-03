@@ -10,6 +10,59 @@ let { makeid } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { getIndicator } = require('../helpers/backtest');
 
+router.get("/boughtSymbols", (req, res) => {
+    if (!req.session.hasOwnProperty("buys")) {
+        req.session["buys"] = {};
+    }
+    res.json(req.session["buys"]);
+})
+
+// buy
+router.get("/buySymbol", async (req, res) => {
+    let symbol = req.query.symbol;
+    let date = req.query.date;
+
+    console.log(req.session);
+    // if first buy
+    if (!req.session.hasOwnProperty("buys")) {
+        req.session["buys"] = {};
+    }
+
+    // if first buy for symbol
+    if (!req.session["buys"].hasOwnProperty(symbol)) {
+        req.session["buys"][symbol] = [];
+    }
+
+    // add date
+    if (!req.session["buys"][symbol].includes(date)) {
+        req.session["buys"][symbol].push(date);
+    }
+    console.log(req.session);
+    res.json(req.session["buys"]);
+});
+
+// sell
+router.get("/sellSymbol", (req, res) => {
+    let symbol = req.query.symbol;
+
+    // check buys
+    if (!req.session.hasOwnProperty("buys")) {
+        res.json({});
+        return;
+    }
+
+    // check symbol buy
+    if (!req.session["buys"].hasOwnProperty(symbol)) {
+        res.json(req.session["buys"]);
+        return;
+    }
+    else {
+        delete req.session["buys"][symbol];
+        console.log(req.session);
+        res.json(req.session["buys"]);
+    }
+})
+
 // get backtest results
 router.get("/results", async (req, res) => {
     let id = req.query.id;
@@ -27,7 +80,7 @@ router.get("/fakeBacktest", async (req, res) => {
     let id = req.query.id;
     res.json({ "id": id });
     setTimeout(() => {
-        triggerChannel(id, "onResultsFinished", `${id}`);
+        triggerChannel(id, "onResultsFinished", { id: `${id}` });
     }, 1000);
 })
 
@@ -42,9 +95,17 @@ router.post("/priceGraph", async (req, res) => {
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo[0]["prices"];
         let prices = {};
+        let opens = {};
+        let highs = {};
+        let lows = {};
+        let closes = {};
         pricesJSON.forEach(day => {
             let formattedDate = new Date(day["date"]).toISOString();
             prices[formattedDate] = day["adjClose"];
+            opens[formattedDate] = day["open"];
+            highs[formattedDate] = day["high"];
+            lows[formattedDate] = day["low"];
+            closes[formattedDate] = day["close"];
         });
         // get sorted dates
         let dates = Object.keys(prices).sort(function (a, b) {
@@ -53,7 +114,7 @@ router.post("/priceGraph", async (req, res) => {
 
         let indicatorGraphs = {};
         Object.keys(indicators).forEach(indicatorName => {
-            let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices);
+            let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
             indicatorGraphs[indicatorName] = indicator.getGraph();
         })
 
@@ -82,7 +143,7 @@ router.get("/updateBacktest", async (req, res) => {
         console.log(message);
         if (message.status == "finished") {
             console.log("Trigger client", id);
-            triggerChannel(id, "onUpdateFinished", `${id}`);
+            triggerChannel(id, "onUpdateFinished", { id: `${id}` });
         }
     });
 });
@@ -110,7 +171,7 @@ router.post("/backtest", async (req, res) => {
         console.log(message);
         if (message.status == "finished") {
             console.log("Trigger client", id);
-            triggerChannel(id, "onResultsFinished", `${id}`);
+            triggerChannel(id, "onResultsFinished", { id: `${id}` });
         }
     });
 })

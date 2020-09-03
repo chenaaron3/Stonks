@@ -7,7 +7,6 @@ const { fork } = require('child_process');
 let { getCollection, addDocument, getDocument, deleteDocument } = require('../helpers/mongo');
 let { makeid, daysBetween } = require('../helpers/utils');
 let { getSymbols } = require('../helpers/backtest');
-const { json } = require('express');
 
 const NUM_THREADS = 4;
 let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
@@ -33,9 +32,10 @@ function ensureUpdated() {
 router.get("/fill", async function (req, res) {
 	res.send("Filling!");
 	let symbols = await getSymbols();
+	let baseDate = process.env.NODE_ENV == "production" ? "1/1/2018" : "1/1/1500";
 	for (let i = 0; i < symbols.length; ++i) {
 		let symbol = symbols[i];
-		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: "1500-01-01T00:00:00.000Z" });
+		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate});
 	}
 	console.log("Finished Filling!");
 })
@@ -92,7 +92,7 @@ router.get('/pop', async function (req, res) {
 		// get the last date
 		let doc = await priceCollection.findOne({ _id: symbol });
 		let docPrices = doc["prices"];
-		let lastDate = "1/1/1500";
+		let lastDate = process.env.NODE_ENV == "production" ? "1/1/2018" : "1/1/1500";
 		if (docPrices.length > 0) {
 			lastDate = docPrices[docPrices.length - 1]["date"]
 		}

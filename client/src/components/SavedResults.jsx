@@ -21,7 +21,7 @@ class SavedResults extends React.Component {
         }).then(res => res.json())
             .then(results => {
                 console.log(results["error"]);
-                // if something is wrong with the results
+                // if results are not ready
                 if (results["error"]) {
                     alert(results["error"]);
                 }

@@ -1,9 +1,11 @@
-let { isCrossed, getSimpleMovingAverage } = require('../utils');
+let { isCrossed, getSimpleMovingAverage, clampRange } = require('../utils');
 let Indicator = require('./indicator');
 
 class SMA extends Indicator {
 	initialize(options) {
 		this.period = options["period"];
+		this.minDuration = options["minDuration"];
+		this.strict = false;
 		this.name = "SMA";
 		this.graph = this.calculate();
 	}
@@ -20,24 +22,44 @@ class SMA extends Indicator {
 		return this.graph[date];
 	}
 
+	normalize(data) {
+        return clampRange(data);
+    }
+
 	getAction(date) {
-		let yesterday = this.dates[this.dates.indexOf(date) - 1];
+		let todayIndex = this.dates.indexOf(date);
+        let firstDayIndex = Math.max(1, todayIndex - this.minDuration + 1);
+        let buy = true;
 
-		let yesterdayPrice = this.prices[yesterday];
-		let todayPrice = this.prices[date];
-		let yesterdaySMA = this.graph[yesterday];
-		let todaySMA = this.graph[date];
+        let yesterday = this.dates[todayIndex - 1];
+        let yesterdayPrice = this.prices[yesterday];
+        let todayPrice = this.prices[date];
+        let yesterdaySMA = this.graph[yesterday];
+        let todaySMA = this.graph[date];
 
-		let isCrossedUp = isCrossed(yesterdayPrice, todayPrice, yesterdaySMA, todaySMA, true);
-		let isCrossedDown = isCrossed(yesterdayPrice, todayPrice, yesterdaySMA, todaySMA, false);
-		if (isCrossedUp) {
-			return Indicator.BUY;
-		}
-		else if (isCrossedDown) {
-			return Indicator.SELL;
-		}
-		else {
-			return Indicator.NOACTION;
+        // check consecutive days
+        for (let i = firstDayIndex; i <= todayIndex; ++i) {
+            yesterday = this.dates[i - 1];
+            let today = this.dates[i];
+            todayPrice = this.prices[today];
+            yesterdaySMA = this.graph[yesterday];
+            todaySMA = this.graph[today];
+
+            // price < SMA, or SMA slope down violates
+            if (todayPrice < todaySMA || (this.strict && todaySMA < yesterdaySMA)) {
+                buy = false;
+            }
+        }
+
+        let isCrossedDown = isCrossed(yesterdayPrice, todayPrice, yesterdaySMA, todaySMA, false);
+        if (buy) {
+            return Indicator.BUY;
+        }
+        else if (isCrossedDown) {
+            return Indicator.SELL;
+        }
+        else {
+            return Indicator.NOACTION;
 		}
 	}
 }

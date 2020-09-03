@@ -1,8 +1,12 @@
 class Indicator {
-	constructor(symbol, dates, prices) {
+	constructor(symbol, dates, prices, opens, highs, lows, closes) {
 		this.symbol = symbol;
 		this.dates = dates;
 		this.prices = prices;
+		this.opens = opens;
+		this.highs = highs;
+		this.lows = lows;
+		this.closes = closes;
 	}
 
 	// initializes parameters and calculates graph

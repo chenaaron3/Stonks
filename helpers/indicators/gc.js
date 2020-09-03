@@ -1,4 +1,4 @@
-let { isCrossed, getSimpleMovingAverage } = require('../utils');
+let { isCrossed, getSimpleMovingAverage, normalizeRange } = require('../utils');
 let Indicator = require('./indicator');
 
 class GC extends Indicator {
@@ -19,7 +19,11 @@ class GC extends Indicator {
 	}
 
 	getValue(date) {
-		return `MA1: ${this.ma1[date]}, MA2: ${this.ma2[date]}`;
+		return this.ma1[date] - this.ma2[date];
+	}
+
+	normalize(data) {
+		return normalizeRange(data);
 	}
 
 	getAction(date) {

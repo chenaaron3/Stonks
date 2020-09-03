@@ -15,7 +15,8 @@ const initialState = {
     indicatorOptions: {},
     activeIndicators: new Set(),
     savedResults: [],
-    eventIndex: -1
+    eventIndex: -1,
+    boughtSymbols:{}
 };
 
 // Reducer

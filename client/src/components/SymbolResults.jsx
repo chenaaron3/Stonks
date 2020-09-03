@@ -59,7 +59,7 @@ class SymbolResults extends React.Component {
                             {
                                 this.props.results["events"].map((event, index) => {
                                     return (<div>
-                                        <span key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}>{formatDate(event["buyDate"])} to {formatDate(event["sellDate"])}</span>
+                                        <span style={{color: `${event["percentProfit"] > 0 ? "green" : "red"}`}} key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}>{formatDate(event["buyDate"])} to {formatDate(event["sellDate"])}</span>
                                     </div>);
                                 })
                             }

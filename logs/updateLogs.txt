@@ -635,3 +635,135 @@ Worker BhIF1: Finished update for tickers FMAX to SIGI in 319 seconds
 Worker BhIF1: Finished update for tickers SLS to FICO in 333 seconds
 Worker BhIF1: Finished update for tickers GOED to FLL in 345 seconds
 Worker BhIF1: Finished update for tickers SFUN to ZYME in 364 seconds
+Worker P1ynT: Starting update for tickers JDD to PXI
+Worker P1ynT: Starting update for tickers DESP to JD
+Worker P1ynT: Starting update for tickers PXLW to ZYXI
+Worker P1ynT: Starting update for tickers A to DEO
+Worker P1ynT: Finished update for tickers DESP to JD in 3078 seconds
+Worker P1ynT: Finished update for tickers A to DEO in 3198 seconds
+Worker P1ynT: Finished update for tickers PXLW to ZYXI in 3263 seconds
+Worker P1ynT: Finished update for tickers JDD to PXI in 3268 seconds
+Worker un6uQ: Starting update for tickers DESP to JD
+Worker un6uQ: Starting update for tickers JDD to PXI
+Worker un6uQ: Starting update for tickers A to DEO
+Worker un6uQ: Starting update for tickers PXLW to ZYXI
+Worker un6uQ: Finished update for tickers PXLW to ZYXI in 1389 seconds
+Worker un6uQ: Finished update for tickers JDD to PXI in 1396 seconds
+Worker un6uQ: Finished update for tickers DESP to JD in 1397 seconds
+Worker un6uQ: Finished update for tickers A to DEO in 1404 seconds
+Worker aRl3q: Starting update for tickers DESP to JD
+Worker aRl3q: Starting update for tickers A to DEO
+Worker aRl3q: Starting update for tickers PXLW to ZYXI
+Worker aRl3q: Starting update for tickers JDD to PXI
+Worker aRl3q: Finished update for tickers PXLW to ZYXI in 390 seconds
+Worker aRl3q: Finished update for tickers A to DEO in 396 seconds
+Worker aRl3q: Finished update for tickers DESP to JD in 398 seconds
+Worker aRl3q: Finished update for tickers JDD to PXI in 416 seconds
+Worker rJzS4: Starting update for tickers JDD to PXI
+Worker rJzS4: Starting update for tickers DESP to JD
+Worker rJzS4: Starting update for tickers PXLW to ZYXI
+Worker rJzS4: Starting update for tickers A to DEO
+Worker Y0WwC: Starting update for tickers JDD to PXI
+Worker Y0WwC: Starting update for tickers DESP to JD
+Worker Y0WwC: Starting update for tickers PXLW to ZYXI
+Worker Y0WwC: Starting update for tickers A to DEO
+Worker zyj7L: Starting update for tickers A to DEO
+Worker zyj7L: Starting update for tickers JDD to PXI
+Worker zyj7L: Starting update for tickers DESP to JD
+Worker zyj7L: Starting update for tickers PXLW to ZYXI
+Worker zyj7L: Finished update for tickers PXLW to ZYXI in 323 seconds
+Worker zyj7L: Finished update for tickers DESP to JD in 325 seconds
+Worker zyj7L: Finished update for tickers JDD to PXI in 325 seconds
+Worker zyj7L: Finished update for tickers A to DEO in 337 seconds
+Worker Mo6Zb: Starting update for tickers JDD to ZYXI
+Worker Mo6Zb: Starting update for tickers A to JD
+Worker Mo6Zb: Finished update for tickers A to JD in 709 seconds
+Worker Mo6Zb: Finished update for tickers JDD to ZYXI in 747 seconds
+Worker Cw4M5: Starting update for tickers JDD to ZYXI
+Worker Cw4M5: Starting update for tickers A to JD
+Worker Cw4M5: Finished update for tickers JDD to ZYXI in 615 seconds
+Worker Cw4M5: Finished update for tickers A to JD in 638 seconds
+Worker ImP9G: Starting update for tickers JDD to ZYXI
+Worker ImP9G: Starting update for tickers A to JD
+Worker ImP9G: Finished update for tickers A to JD in 99 seconds
+Worker ImP9G: Finished update for tickers JDD to ZYXI in 114 seconds
+Worker ijzxA: Starting update for tickers A to DEO
+Worker ijzxA: Starting update for tickers JDD to PXI
+Worker ijzxA: Starting update for tickers DESP to JD
+Worker ijzxA: Starting update for tickers PXLW to ZYXI
+Worker ijzxA: Finished update for tickers JDD to PXI in 293 seconds
+Worker ijzxA: Finished update for tickers PXLW to ZYXI in 300 seconds
+Worker ijzxA: Finished update for tickers DESP to JD in 323 seconds
+Worker ijzxA: Finished update for tickers A to DEO in 365 seconds
+Worker XOTzw: Starting update for tickers A to DEO
+Worker XOTzw: Starting update for tickers DESP to JD
+Worker XOTzw: Starting update for tickers JDD to PXI
+Worker XOTzw: Starting update for tickers PXLW to ZYXI
+Worker XOTzw: Finished update for tickers PXLW to ZYXI in 373 seconds
+Worker XOTzw: Finished update for tickers DESP to JD in 399 seconds
+Worker XOTzw: Finished update for tickers A to DEO in 401 seconds
+Worker XOTzw: Finished update for tickers JDD to PXI in 405 seconds
+Worker mHGnu: Starting update for tickers JDD to PXI
+Worker mHGnu: Starting update for tickers DESP to JD
+Worker mHGnu: Starting update for tickers PXLW to ZYXI
+Worker mHGnu: Starting update for tickers A to DEO
+Worker mHGnu: Finished update for tickers PXLW to ZYXI in 398 seconds
+Worker mHGnu: Finished update for tickers DESP to JD in 401 seconds
+Worker mHGnu: Finished update for tickers JDD to PXI in 405 seconds
+Worker mHGnu: Finished update for tickers A to DEO in 411 seconds
+Worker 4wTLx: Starting update for tickers PXLW to ZYXI
+Worker 4wTLx: Starting update for tickers DESP to JD
+Worker 4wTLx: Starting update for tickers A to DEO
+Worker 4wTLx: Starting update for tickers JDD to PXI
+Worker 4wTLx: Finished update for tickers JDD to PXI in 382 seconds
+Worker 4wTLx: Finished update for tickers A to DEO in 402 seconds
+Worker 4wTLx: Finished update for tickers DESP to JD in 414 seconds
+Worker 4wTLx: Finished update for tickers PXLW to ZYXI in 416 seconds
+Worker q7ss6: Starting update for tickers DESP to JD
+Worker q7ss6: Starting update for tickers JDD to PXI
+Worker q7ss6: Starting update for tickers PXLW to ZYXI
+Worker q7ss6: Starting update for tickers A to DEO
+Worker q7ss6: Finished update for tickers DESP to JD in 357 seconds
+Worker q7ss6: Finished update for tickers A to DEO in 356 seconds
+Worker q7ss6: Finished update for tickers JDD to PXI in 368 seconds
+Worker q7ss6: Finished update for tickers PXLW to ZYXI in 388 seconds
+Worker 6aHsx: Starting update for tickers DESP to JD
+Worker 6aHsx: Starting update for tickers PXLW to ZYXI
+Worker 6aHsx: Starting update for tickers JDD to PXI
+Worker 6aHsx: Starting update for tickers A to DEO
+Worker 6aHsx: Finished update for tickers PXLW to ZYXI in 344 seconds
+Worker 6aHsx: Finished update for tickers JDD to PXI in 345 seconds
+Worker 6aHsx: Finished update for tickers DESP to JD in 362 seconds
+Worker 6aHsx: Finished update for tickers A to DEO in 369 seconds
+Worker ozReQ: Starting update for tickers PXLW to ZYXI
+Worker ozReQ: Starting update for tickers JDD to PXI
+Worker ozReQ: Starting update for tickers A to DEO
+Worker ozReQ: Starting update for tickers DESP to JD
+Worker ozReQ: Finished update for tickers JDD to PXI in 325 seconds
+Worker ozReQ: Finished update for tickers DESP to JD in 336 seconds
+Worker ozReQ: Finished update for tickers PXLW to ZYXI in 340 seconds
+Worker ozReQ: Finished update for tickers A to DEO in 357 seconds
+Worker 3eg1h: Starting update for tickers JDD to PXI
+Worker 3eg1h: Starting update for tickers PXLW to ZYXI
+Worker 3eg1h: Starting update for tickers A to DEO
+Worker 3eg1h: Starting update for tickers DESP to JD
+Worker 3eg1h: Finished update for tickers JDD to PXI in 319 seconds
+Worker 3eg1h: Finished update for tickers DESP to JD in 323 seconds
+Worker 3eg1h: Finished update for tickers A to DEO in 330 seconds
+Worker 3eg1h: Finished update for tickers PXLW to ZYXI in 331 seconds
+Worker t2wP2: Starting update for tickers DESP to JD
+Worker t2wP2: Starting update for tickers JDD to PXI
+Worker t2wP2: Starting update for tickers PXLW to ZYXI
+Worker t2wP2: Starting update for tickers A to DEO
+Worker t2wP2: Finished update for tickers PXLW to ZYXI in 90 seconds
+Worker t2wP2: Finished update for tickers JDD to PXI in 103 seconds
+Worker t2wP2: Finished update for tickers DESP to JD in 114 seconds
+Worker t2wP2: Finished update for tickers A to DEO in 116 seconds
+Worker HREIx: Starting update for tickers DESP to JD
+Worker HREIx: Starting update for tickers JDD to PXI
+Worker HREIx: Starting update for tickers PXLW to ZYXI
+Worker HREIx: Starting update for tickers A to DEO
+Worker HREIx: Finished update for tickers JDD to PXI in 361 seconds
+Worker HREIx: Finished update for tickers A to DEO in 367 seconds
+Worker HREIx: Finished update for tickers DESP to JD in 372 seconds
+Worker HREIx: Finished update for tickers PXLW to ZYXI in 381 seconds

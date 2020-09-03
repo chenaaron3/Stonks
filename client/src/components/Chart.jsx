@@ -9,6 +9,7 @@ import distinctColors from 'distinct-colors'
 import './Chart.css';
 import RSI from "./indicators/RSI";
 import MACD from "./indicators/MACD";
+import ADX from "./indicators/ADX";
 import { formatDate } from '../helpers/utils';
 
 class Chart extends React.Component {
@@ -16,8 +17,8 @@ class Chart extends React.Component {
         super(props);
 
         // constants
-        this.indicatorCharts = { "RSI": RSI, "MACD": MACD };
-        this.overlayCharts = ["SMA", "GC"];
+        this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
+        this.overlayCharts = ["SMA", "GC", "EMA"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -31,6 +32,7 @@ class Chart extends React.Component {
             priceGraph: [],
             buyDates: new Set(),
             sellDates: new Set(),
+            holdings: new Set(),
             myOverlayCharts: [],
             startBrushIndex: this.chunkSize - Math.floor(this.chunkSize / 4),
             endBrushIndex: this.chunkSize - 1
@@ -81,11 +83,12 @@ class Chart extends React.Component {
         // cache all buy/sell dates for quick access
         let buyDates = new Set();
         let sellDates = new Set();
+        let holdings = new Set(results["holdings"]);
         events.forEach(event => {
             buyDates.add(event["buyDate"]);
             sellDates.add(event["sellDate"]);
         });
-        this.setState({ buyDates, sellDates });
+        this.setState({ buyDates, sellDates, holdings });
     }
 
     fetchData = () => {
@@ -131,6 +134,7 @@ class Chart extends React.Component {
                         this.dates.push(day["date"]);
                     });
 
+                    // set brush range
                     // if large enough to be chunked
                     if (graphs["price"].length > this.chunkSize) {
                         // set brush to end
@@ -155,6 +159,8 @@ class Chart extends React.Component {
 
     goToEvent = () => {
         if (this.props.eventIndex == -1) {
+            // update indicator changes
+            this.loadChunk();
             return;
         }
         let events = this.props.results["events"];
@@ -190,6 +196,7 @@ class Chart extends React.Component {
         }
         this.loadChunk();
 
+        // edge cases
         let startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
         let endBrushIndex = Math.min(max, sellDateIndex - this.startIndex + brushMarginSize);
         this.setState({ startBrushIndex, endBrushIndex });
@@ -258,12 +265,17 @@ class Chart extends React.Component {
         let days = this.graphs["price"];
         days = days.slice(this.startIndex, this.startIndex + this.chunkSize);
 
+        console.log("Loading chunks for", Object.keys(indicatorGraphs));
+
         // fill in graphs
         days.forEach(day => {
             // for price
             let date = day["date"];
             let price = day["adjClose"];
-            let priceEntry = { date, price };
+            let adjScale = day["adjClose"] / day["close"];
+            let low = day["low"] * adjScale;
+            let high = day["high"] * adjScale;
+            let priceEntry = { date, price, candle: [price - low, high - price] };
 
             // for indicators
             Object.keys(indicatorGraphs).forEach(indicatorName => {
@@ -340,7 +352,9 @@ class Chart extends React.Component {
                         <XAxis dataKey="date" minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
                         <YAxis domain={["auto", "auto"]} orientation="left" />
                         {/* Overlay Charts */}
-                        <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />} />
+                        <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />}>
+                            <ErrorBar dataKey="candle" width={1} strokeWidth={1} stroke="green" direction="y" />
+                        </Line>
                         {
                             this.state.myOverlayCharts.length > 0 && this.state.myOverlayCharts.map((overlay, index) => {
                                 let colors = distinctColors({ count: this.state.myOverlayCharts.length, lightMin: 50 });
@@ -397,7 +411,8 @@ class Chart extends React.Component {
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="red" />
             );
         }
-        else if (this.props.results["recent"]["buy"].includes(payload["date"])) {
+        // if holding
+        else if (this.state.holdings.has(payload["date"])) {
             return <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="yellow" />
         }
 
