@@ -1,10 +1,20 @@
+.indicator {
+    min-height: 3vh;
+    margin-bottom: 1vh;
+    margin-right: 1vw;
+    width: 11vw;
+}
 
 .indicator-header {
-    height: 5vh;
     display: flex;
     flex-direction: row;
     align-items: center;
     margin-right: 3vw;
+}
+
+.indicator-box {
+    width: 15px;
+    height: 15px;
 }
 
 .indicator-text {
@@ -26,6 +36,26 @@
     left: 0;
     width: 100%;
     display: none;
+}
+
+.indicator-field {
+    padding-left: 30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 1vh;
+}
+
+.indicator-field-label {
+    text-align: start;
+    display: inline-block;
+    width: 6vw;
+}
+
+.indicator-field-text {
+    width: 3vw;
+    text-align: end;
 }
 
 .indicator-fields.indicator-show {

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import ReviewPage from './pages/ReviewPage';
 import CreatePage from './pages/CreatePage';
+import SummaryPage from './pages/SummaryPage';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'react-redux'
 import { createStore, applyMiddleware } from 'redux'
@@ -33,6 +34,7 @@ ReactDOM.render(
       <Router basename={"/stocks"}>
         <Route exact path="/" component={CreatePage} />
         <Route path="/review" component={ReviewPage} />
+        <Route path="/summary" component={SummaryPage} />
       </Router>
     </Provider>
   </React.StrictMode>,

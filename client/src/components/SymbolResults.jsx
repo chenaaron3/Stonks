@@ -46,7 +46,7 @@ class SymbolResults extends React.Component {
         return (
             <>
                 <div className="symbol-results">
-                    <h1 className="symbol-results-title">Results for <br /> {this.props.symbol}</h1>
+                    <h1 className="symbol-results-title">{this.props.symbol}</h1>
                     <div className="symbol-results-body">
                         <div>Wins: {this.state.numWins}</div>
                         <div>Losses: {this.state.numLosses}</div>

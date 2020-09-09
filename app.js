@@ -11,6 +11,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var mongoRouter = require('./routes/mongo');
 var mlRouter = require('./routes/ml');
+var webhooksRouter = require('./routes/webhooks');
 
 var app = express();
 
@@ -41,6 +42,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/mongo', mongoRouter);
 app.use('/ml', mlRouter);
+app.use('/webhooks', webhooksRouter);
 
 app.get('*', function(req, res) {
   res.sendFile('index.html', {root: path.join(__dirname, 'client/build/')});

@@ -84,6 +84,40 @@ router.get("/fakeBacktest", async (req, res) => {
     }, 1000);
 })
 
+router.post("/indicatorGraph", async (req, res) => {
+    let symbol = req.body["symbol"];
+    let indicatorName = req.body["indicatorName"];
+    let indicatorOptions = req.body["indicatorOptions"];
+
+    let stockInfo = await getStockInfo(symbol);
+    stockInfo = await stockInfo.toArray();
+    if (stockInfo.length != 0) {
+        let pricesJSON = stockInfo[0]["prices"];
+        let prices = {};
+        let opens = {};
+        let highs = {};
+        let lows = {};
+        let closes = {};
+        pricesJSON.forEach(day => {
+            let adjScale = day["adjClose"] / day["close"];
+            let formattedDate = new Date(day["date"]).toISOString();
+            prices[formattedDate] = day["adjClose"];
+            opens[formattedDate] = day["open"] * adjScale;
+            highs[formattedDate] = day["high"] * adjScale;
+            lows[formattedDate] = day["low"] * adjScale;
+            closes[formattedDate] = day["close"] * adjScale;
+        });
+        // get sorted dates
+        let dates = Object.keys(prices).sort(function (a, b) {
+            return new Date(a) - new Date(b);
+        });
+
+        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
+
+        res.json(indicator.getGraph());
+    }
+})
+
 // get price data for a company
 router.post("/priceGraph", async (req, res) => {
     let symbol = req.body["symbol"];
@@ -100,12 +134,13 @@ router.post("/priceGraph", async (req, res) => {
         let lows = {};
         let closes = {};
         pricesJSON.forEach(day => {
+            let adjScale = day["adjClose"] / day["close"];
             let formattedDate = new Date(day["date"]).toISOString();
             prices[formattedDate] = day["adjClose"];
-            opens[formattedDate] = day["open"];
-            highs[formattedDate] = day["high"];
-            lows[formattedDate] = day["low"];
-            closes[formattedDate] = day["close"];
+            opens[formattedDate] = day["open"] * adjScale;
+            highs[formattedDate] = day["high"] * adjScale;
+            lows[formattedDate] = day["low"] * adjScale;
+            closes[formattedDate] = day["close"] * adjScale;
         });
         // get sorted dates
         let dates = Object.keys(prices).sort(function (a, b) {

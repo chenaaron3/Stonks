@@ -6,7 +6,7 @@
     height: 100%;
     text-align: center;
     max-height: 50vh;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .indicators-title {
@@ -23,52 +23,4 @@
 
 .indicators-start-text {
     color: #62a583;
-}
-
-.indicator-header {
-    height: 5vh;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-.indicator-text {
-    margin-left: 15px;
-    margin-right: 10px;
-}
-
-.indicator-caret {
-    transition: transform .25s;
-    transform: rotate(0);
-}
-
-.indicator-caret.indicator-show {
-    transform: rotate(90deg);
-}
-
-.indicator-fields {
-    top: 100%;
-    left: 0;
-    width: 100%;
-    display: none;
-}
-
-.indicator-fields.indicator-show {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    animation: growDown 300ms ease-in-out forwards;
-    transform-origin: top center;
-}
-
-@keyframes growDown {
-    0% {
-        transform: rotateX(-90deg)
-    }
-    70% {
-        transform: rotateX(20deg)
-    }
-    100% {
-        transform: rotateX(0deg)
-    }
 }

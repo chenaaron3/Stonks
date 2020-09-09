@@ -16,11 +16,20 @@ ensureUpdated();
 function ensureUpdated() {
 	console.log("Retreiving metadata...");
 	let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA));
+	let date = new Date();
+	let pstHour = date.getUTCHours() - 7;
 	if (daysBetween(new Date(metadata["lastUpdated"]), new Date()) > 0) {
-		console.log("Update required!");
-		update();
-		metadata["lastUpdated"] = new Date().toString();
-		fs.writeFileSync(PATH_TO_METADATA, JSON.stringify(metadata));
+		if (pstHour > 13)
+		{
+			console.log("Update required!");
+			update();
+			metadata["lastUpdated"] = new Date().toString();
+			fs.writeFileSync(PATH_TO_METADATA, JSON.stringify(metadata));
+		}
+		else 
+		{
+			console.log("Waiting for market to close to update!");
+		}
 	}
 	else {
 		console.log("Already updated!");
@@ -35,7 +44,7 @@ router.get("/fill", async function (req, res) {
 	let baseDate = process.env.NODE_ENV == "production" ? "1/1/2018" : "1/1/1500";
 	for (let i = 0; i < symbols.length; ++i) {
 		let symbol = symbols[i];
-		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate});
+		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
 	}
 	console.log("Finished Filling!");
 })

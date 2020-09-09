@@ -22,7 +22,7 @@
 .results-list {
     text-align: left;
     flex: 5;
-    overflow: scroll;
+    overflow: auto;
     overflow-x: hidden;
     max-height: 80vh;
 }

@@ -2,32 +2,32 @@ let { isCrossed, getSimpleMovingAverage, clampRange } = require('../utils');
 let Indicator = require('./indicator');
 
 class SMA extends Indicator {
-	initialize(options) {
-		this.period = options["period"];
-		this.minDuration = options["minDuration"];
-		this.strict = false;
-		this.name = "SMA";
-		this.graph = this.calculate();
-	}
+    initialize(options) {
+        this.period = options["period"];
+        this.minDuration = options["minDuration"];
+        this.strict = false;
+        this.name = "SMA";
+        this.graph = this.calculate();
+    }
 
-	calculate() {
-		return getSimpleMovingAverage(this.dates, this.prices, this.period);
-	}
+    calculate() {
+        return getSimpleMovingAverage(this.dates, this.prices, this.period);
+    }
 
-	getGraph() {
-		return { [`SMA(${this.period})`]: this.graph };
-	}
+    getGraph() {
+        return { [`SMA(${this.period})`]: this.graph };
+    }
 
-	getValue(date) {
-		return this.graph[date];
-	}
+    getValue(date) {
+        return this.graph[date];
+    }
 
-	normalize(data) {
+    normalize(data) {
         return clampRange(data);
     }
 
-	getAction(date) {
-		let todayIndex = this.dates.indexOf(date);
+    getAction(date) {
+        let todayIndex = this.dates.indexOf(date);
         let firstDayIndex = Math.max(1, todayIndex - this.minDuration + 1);
         let buy = true;
 
@@ -60,8 +60,37 @@ class SMA extends Indicator {
         }
         else {
             return Indicator.NOACTION;
-		}
-	}
+        }
+    }
+
+    shouldStop(date) {
+        let todayIndex = this.dates.indexOf(date);
+        let firstDayIndex = Math.max(1, todayIndex - this.minDuration + 1);
+        let stop = true;
+
+        // check consecutive days
+        for (let i = firstDayIndex; i <= todayIndex; ++i) {
+            let yesterday = this.dates[i - 1];
+            let today = this.dates[i];
+
+            let yesterdayPrice = this.prices[yesterday];
+            let todayPrice = this.prices[today];
+            let todaySMA = this.graph[today];
+            let todayHigh = this.highs[today];
+
+            // 3 day in a row where high < SMA and price descending
+            if (!(todaySMA > todayHigh && todayPrice < yesterdayPrice)) {
+                stop = false;
+            }
+        }
+
+        if (stop) {
+            return Indicator.STOP;
+        }
+        else {
+            return Indicator.NOACTION;
+        }
+    }
 }
 
 module.exports = SMA;

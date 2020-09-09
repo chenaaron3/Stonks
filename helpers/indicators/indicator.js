@@ -27,5 +27,6 @@ class Indicator {
 Indicator.BUY = "BUY";
 Indicator.SELL = "SELL";
 Indicator.NOACTION = "NO ACTION";
+Indicator.STOP = "STOP";
 
 module.exports = Indicator;

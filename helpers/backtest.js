@@ -200,12 +200,13 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                     json.forEach(day => {
                         let formattedDate = new Date(day["date"]).toISOString();
+                        let adjScale = day["adjClose"] / day["close"];
                         prices[formattedDate] = day["adjClose"];
                         volumes[formattedDate] = day["volume"];
-                        opens[formattedDate] = day["open"];
-                        highs[formattedDate] = day["high"];
-                        lows[formattedDate] = day["low"];
-                        closes[formattedDate] = day["close"];
+                        opens[formattedDate] = day["open"] * adjScale;
+                        highs[formattedDate] = day["high"] * adjScale;
+                        lows[formattedDate] = day["low"] * adjScale;
+                        closes[formattedDate] = day["close"] * adjScale;
                     });
 
                     // get sorted dates
@@ -224,6 +225,8 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     let supportingSellIndicators = [];
                     let buyMap = {};
                     let sellMap = {};
+                    let stopLossIndicator = getIndicator("SMA", { period: 180, minDuration: 3 }, symbol, dates, prices, opens, highs, lows, closes);
+                    stopLossIndicator = undefined;
 
                     // set main/support buy indicators
                     Object.keys(strategyOptions["buyIndicators"]).forEach(indicatorName => {
@@ -353,6 +356,10 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                         if (strategyOptions["stopLossHigh"]) {
                             stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossHigh"] < prices[day]))
+                        }
+                        // if stoploss indicator goes off, sell all
+                        if (stopLossIndicator && stopLossIndicator.shouldStop(day) == Indicator.STOP) {
+                            stopLossTrades = buyPrices;
                         }
 
                         // if stoploss triggered or main seller indicator goes off and has stocks to sell

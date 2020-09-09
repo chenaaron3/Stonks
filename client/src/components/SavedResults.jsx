@@ -9,7 +9,7 @@ class SavedResults extends React.Component {
         super(props);
         // create saved results if it doesnt exist
         if (!localStorage.getItem("savedResults")) {
-            localStorage.setItem("savedResults", `[{"id":"xSVSK2YIWe","display":"Demo"}]`)
+            localStorage.setItem("savedResults", `[{"id":"2O7OFqqI9Z","display":"Demo"}]`)
         }
 
         this.props.setSavedResults(JSON.parse(localStorage.getItem("savedResults")))
@@ -30,8 +30,8 @@ class SavedResults extends React.Component {
                     this.props.setBacktestResults(id, results);
                     // preview first stock
                     this.props.viewStock(Object.keys(results["symbolData"])[0]);
-                    // go to review page
-                    this.props.history.push("/review");
+                    // go to next page
+                    this.props.history.push("/summary");
                 }
             });
     }

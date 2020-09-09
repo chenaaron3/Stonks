@@ -5,6 +5,9 @@ import { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedRes
 import Stepper from 'react-stepper-horizontal';
 import Indicator from './Indicator';
 import Pusher from 'react-pusher';
+import stock from '../stock.svg';
+import money from '../money.svg';
+import start from '../start.svg';
 
 class CreateBacktest extends React.Component {
     constructor(props) {
@@ -14,7 +17,8 @@ class CreateBacktest extends React.Component {
             mainBuyIndicator: "",
             mainSelIndicator: "",
             buyOptions: {},
-            sellOptions: {}
+            sellOptions: {},
+            stopLossHigh: 1,
         };
         this.indicators = {
             "SMA": { "fields": ["period", "minDuration"], "default": [180, 3] },
@@ -62,7 +66,7 @@ class CreateBacktest extends React.Component {
             "mainBuyIndicator": this.state.mainBuyIndicator,
             "mainSellIndicator": this.state.mainSellIndicator,
             // "stopLossLow": .98,
-            "stopLossHigh": 1.25,
+            "stopLossHigh": this.state.stopLossHigh == 1 ? undefined : this.state.stopLossHigh,
             "minVolume": 1000000,
             "expiration": 7,
             "multipleBuys": true
@@ -103,6 +107,10 @@ class CreateBacktest extends React.Component {
                 this.props.setSavedResults(newSave);
                 localStorage.setItem("savedResults", JSON.stringify(newSave));
             });
+    }
+
+    previousStep = () => {
+        this.setStep(this.state.step - 1);
     }
 
     // error checking
@@ -191,79 +199,105 @@ class CreateBacktest extends React.Component {
 
                 <div className="create-backtest-form">
                     <div className="create-backtest-stepper">
-                        <Stepper defaultTitleColor="#ecf0f1" activeTitleColor="#ecf0f1" completeTitleColor="#ecf0f1"
-                            steps={[{ title: 'Set Buy Criterias', onClick: (e) => { e.preventDefault(); this.setStep(0) } },
-                            { title: "Set Sell Criterias", onClick: (e) => { e.preventDefault(); this.setStep(1) } },
-                            { title: "Start Backtest!", onClick: (e) => { e.preventDefault(); this.setStep(2) } }]} activeStep={this.state.step} />
+                        <Stepper defaultTitleColor="#ecf0f1" activeTitleColor="#ecf0f1" completeTitleColor="#ecf0f1" completeColor="#90EE90" activeColor="#90EE90"
+                            steps={[{ title: 'Buy Criterias', icon: stock, onClick: (e) => { e.preventDefault(); this.setStep(0) } },
+                            { title: "Sell Criterias", icon: money, onClick: (e) => { e.preventDefault(); this.setStep(1) } },
+                            { title: "Start Backtest", icon: start, onClick: (e) => { e.preventDefault(); this.setStep(2) } }]} activeStep={this.state.step} />
                     </div>
 
                     <div className="create-backtest-form-body">
-                        {
-                            this.state.step == 0 && (
-                                <>
-                                    <h2 className="create-backtest-form-body-title">Customize your buy criterias.</h2>
-                                    <h3>Select buy indicators to identify entry signals.</h3>
-                                    <div className="create-backtest-indicator-list">
-                                        {Object.keys(this.indicators).map((indicatorName, index) => {
-                                            return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
-                                                setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
-                                                options={this.props.indicatorOptions[indicatorName]} />
-                                        })}
-                                    </div>
-                                    <h3>Select a main buy indicator to initiate buy events.</h3>
-                                    <div className="create-backtest-main-indicator-list">
-                                        {activeIndicators.length == 0 && (
-                                            <p className="create-backtest-error">No indicators selected...</p>
-                                        )}
-                                        {activeIndicators.map((indicatorName, index) => {
-                                            return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainBuyIndicator == indicatorName} key={index}
-                                                setMainIndicator={this.setMainIndicator} isBuy={true} />
-                                        })}
-                                    </div>
-                                </>
-                            )}
-                        {
-                            this.state.step == 1 && (
-                                <>
-                                    <h2 className="create-backtest-form-body-title">Customize your sell criterias.</h2>
-                                    <h3>Select sell indicators to identify exit signals.</h3>
-                                    <div className="create-backtest-indicator-list">
-                                        {Object.keys(this.indicators).map((indicatorName, index) => {
-                                            return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
-                                                setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
-                                                options={this.props.indicatorOptions[indicatorName]} />
-                                        })}
-                                    </div>
-                                    <h3>Select a main sell indicator to initiate a sell events.</h3>
-                                    <div className="create-backtest-main-indicator-list">
-                                        {activeIndicators.length == 0 && (
-                                            <p className="create-backtest-error">No indicators selected...</p>
-                                        )}
-                                        {activeIndicators.map((indicatorName, index) => {
-                                            return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainSellIndicator == indicatorName} key={index}
-                                                setMainIndicator={this.setMainIndicator} isBuy={false} />
-                                        })}
-                                    </div>
-                                </>
-                            )
-                        }
-                        {
-                            this.state.step == 2 && (
-                                <>
-                                    <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2>
-                                    <h3>Buy Criterias:</h3>
-                                    <pre id="json">{JSON.stringify(this.state.buyOptions, null, 2).replace(/[{},"]/g, "")}</pre>
-                                    <p>Main Indicator: {this.state.mainBuyIndicator}</p>
-                                    <h3>Sell Criterias:</h3>
-                                    <pre id="json">{JSON.stringify(this.state.sellOptions, null, 2).replace(/[{},"]/g, "")}</pre>
-                                    <p>Main Indicator: {this.state.mainSellIndicator}</p>
-                                </>
-                            )
-                        }
-
-                        <button className="create-backtest-start-button" onClick={this.state.step < 2 ? this.nextStep : this.getResults}>
-                            <span className="create-backtest-start-text">{this.state.step < 2 ? "Next" : "Get Results"}</span>
-                        </button>
+                        <div className="create-backtest-form-body-content">
+                            {
+                                this.state.step == 0 && (
+                                    <>
+                                        {/* <h2 className="create-backtest-form-body-title">Customize your buy criterias.</h2> */}
+                                        <h3 className="create-backtest-subtitle">Select buy indicators to identify entry signals.</h3>
+                                        <div className="create-backtest-indicator-list">
+                                            {Object.keys(this.indicators).map((indicatorName, index) => {
+                                                return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
+                                                    setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
+                                                    options={this.props.indicatorOptions[indicatorName]} />
+                                            })}
+                                        </div>
+                                        <h3 className="create-backtest-subtitle">Select a main indicator to initiate buy events.</h3>
+                                        <div className="create-backtest-main-indicator-list">
+                                            {activeIndicators.length == 0 && (
+                                                <p className="create-backtest-error">No indicators selected...</p>
+                                            )}
+                                            {activeIndicators.map((indicatorName, index) => {
+                                                return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainBuyIndicator == indicatorName} key={index}
+                                                    setMainIndicator={this.setMainIndicator} isBuy={true} />
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+                            {
+                                this.state.step == 1 && (
+                                    <>
+                                        {/* <h2 className="create-backtest-form-body-title">Customize your sell criterias.</h2> */}
+                                        <h3 className="create-backtest-subtitle">Select sell indicators to identify exit signals.</h3>
+                                        <div className="create-backtest-indicator-list">
+                                            {Object.keys(this.indicators).map((indicatorName, index) => {
+                                                return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
+                                                    setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
+                                                    options={this.props.indicatorOptions[indicatorName]} />
+                                            })}
+                                        </div>
+                                        <h3 className="create-backtest-subtitle">Select a main indicator to initiate a sell events.</h3>
+                                        <div className="create-backtest-main-indicator-list">
+                                            {activeIndicators.length == 0 && (
+                                                <p className="create-backtest-error">No indicators selected...</p>
+                                            )}
+                                            {activeIndicators.map((indicatorName, index) => {
+                                                return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainSellIndicator == indicatorName} key={index}
+                                                    setMainIndicator={this.setMainIndicator} isBuy={false} />
+                                            })}
+                                        </div>
+                                    </>
+                                )
+                            }
+                            {
+                                this.state.step == 2 && (
+                                    <>
+                                        {/* <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2> */}
+                                        <div className="create-backtest-form-body-split">
+                                            <div className="create-backtest-additional-options">
+                                                <h3 className="create-backtest-subtitle">Additional Options</h3>
+                                                <div>
+                                                    <span>Take profit (20 to sell at 20% profit. 0 to disable.)</span><br />
+                                                    <input type="number" onChange={(e) => {
+                                                        this.setState({ stopLossHigh: 1 + parseFloat(e.target.value) / 100 })
+                                                    }}></input>
+                                                </div>
+                                            </div>
+                                            <div className="create-backtest-review-criterias">
+                                                <h3 className="create-backtest-subtitle">Buy Criterias:</h3>
+                                                <p>Main Indicator: {this.state.mainBuyIndicator}</p>
+                                                <pre id="json">{JSON.stringify(this.state.buyOptions, null, 2).replace(/[{},"]/g, "")}</pre>
+                                            </div>
+                                            <div className="create-backtest-review-criterias">
+                                                <h3 className="create-backtest-subtitle">Sell Criterias:</h3>
+                                                <p>Main Indicator: {this.state.mainSellIndicator}</p>
+                                                <pre id="json">{JSON.stringify(this.state.sellOptions, null, 2).replace(/[{},"]/g, "")}</pre>
+                                            </div>
+                                        </div>
+                                    </>
+                                )
+                            }
+                        </div>
+                        <div className="create-backtest-actions">
+                            {this.state.step != 0 && (
+                                <button className="create-backtest-previous-button" onClick={this.previousStep}>
+                                    <span className="create-backtest-start-text">Previous</span>
+                                </button>)
+                            }
+                            {
+                                this.state.step == 0 && <span></span>
+                            }
+                            <button className="create-backtest-start-button" onClick={this.state.step < 2 ? this.nextStep : this.getResults}>
+                                <span className="create-backtest-start-text">{this.state.step < 2 ? "Next" : "Get Results"}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -20,6 +20,6 @@
 
 .symbol-results-events {
     max-height: 20vh;
-    overflow: scroll;
+    overflow: auto;
     overflow-x: hidden;
 }
