@@ -5,8 +5,9 @@ var fs = require('fs');
 const { fork } = require('child_process');
 
 let { getCollection, addDocument, getDocument, deleteDocument } = require('../helpers/mongo');
-let { makeid, daysBetween } = require('../helpers/utils');
+let { makeid, daysBetween, shallowEqual, hoursBetween } = require('../helpers/utils');
 let { getSymbols } = require('../helpers/backtest');
+let { getUpdatedPrices } = require('../helpers/stock');
 
 const NUM_THREADS = 4;
 let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
@@ -18,24 +19,26 @@ function ensureUpdated() {
 	let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA));
 	let date = new Date();
 	let pstHour = date.getUTCHours() - 7;
+	if (pstHour < 0) pstHour += 24;
+	// check for new day
 	if (daysBetween(new Date(metadata["lastUpdated"]), new Date()) > 0) {
-		if (pstHour > 13)
-		{
+		// market closed
+		if (pstHour > 13) {
 			console.log("Update required!");
 			update();
 			metadata["lastUpdated"] = new Date().toString();
 			fs.writeFileSync(PATH_TO_METADATA, JSON.stringify(metadata));
 		}
-		else 
-		{
+		// market not closed
+		else {
 			console.log("Waiting for market to close to update!");
 		}
 	}
 	else {
 		console.log("Already updated!");
 	}
-	// checks for updates every 12 hours
-	setTimeout(() => { ensureUpdated() }, 1000 * 60 * 60 * 12);
+	// checks for updates every hour
+	setTimeout(() => { ensureUpdated() }, 1000 * 60 * 60 * 1);
 }
 
 router.get("/fill", async function (req, res) {
@@ -133,6 +136,52 @@ router.get('/trim', async function (req, res) {
 	}
 	console.log("Total Empty", numEmpty);
 
+});
+
+// check if any symbols needs an update because of a split
+router.get("/checkSplits", async function (req, res) {
+	let priceCollection = await getCollection("prices");
+	// check all stocks for their beginning price
+	let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
+
+	stockInfo = await stockInfo.toArray();
+	for (let i = 0; i < stockInfo.length; ++i) {
+		// get symbol and first entry
+		let symbol = stockInfo[i]["_id"];
+		let entry = stockInfo[i]["prices"][0];
+
+		// empty stock
+		if (!entry) {
+			continue;
+		}
+
+		// get the date to search up API
+		let recordedDate = new Date(entry["date"]);
+		recordedDate.setDate(recordedDate.getDate() + 1);
+		let previousDate = new Date(recordedDate);
+		previousDate.setDate(previousDate.getDate() - 2);
+
+		// search up api
+		let updatedEntry = await getUpdatedPrices(symbol, previousDate, recordedDate);
+		updatedEntry = updatedEntry[0];
+		if (!updatedEntry) {
+			continue;
+		}
+
+		// check if valid
+		let valid = entry["date"].getTime() == updatedEntry["date"].getTime();
+		if (!valid) {
+			continue;
+		}
+
+		delete entry["date"];
+		delete updatedEntry["date"];
+		valid = valid && shallowEqual(entry, updatedEntry);
+		if (!valid) {
+			// update mongo document
+			console.log(symbol);
+		}
+	}
 });
 
 module.exports = router;

@@ -328,3 +328,17 @@ Worker YLHj0Y79hS: Starting backtest
 Worker YLHj0Y79hS: Finished backtest in 349 seconds
 Worker YLHj0Y79hS: Starting backtest
 Worker YLHj0Y79hS: Finished backtest in 337 seconds
+Worker YLHj0Y79hS: Starting backtest
+Worker YLHj0Y79hS: Finished backtest in 417 seconds
+Worker YrviCqQ36e: Starting backtest
+Worker YrviCqQ36e: Finished backtest in 386 seconds
+Worker J2gZu3oSFC: Starting backtest
+Worker J2gZu3oSFC: Finished backtest in 373 seconds
+Worker J2gZu3oSFC: Starting backtest
+Worker J2gZu3oSFC: Finished backtest in 260 seconds
+Worker 949hWY0rEu: Starting backtest
+Worker 949hWY0rEu: Finished backtest in 306 seconds
+Worker w00x59UBPi: Starting backtest
+Worker w00x59UBPi: Finished backtest in 277 seconds
+Worker QOYyCuXD1E: Starting backtest
+Worker I7hGDIlgvU: Starting backtest

@@ -9,7 +9,16 @@ let { getStockInfo, containsID, addID, getDocument } = require('../helpers/mongo
 let { makeid } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { getIndicator } = require('../helpers/backtest');
+let { getLatestPrice } = require('../helpers/stock');
 
+// gets the most updated price for a stock
+router.get("/latestPrice", async (req, res) => {
+    let symbol = req.query.symbol;
+    let entry = await getLatestPrice(symbol);
+    res.json(entry);
+})
+
+// gets a user's bought symbol list
 router.get("/boughtSymbols", (req, res) => {
     if (!req.session.hasOwnProperty("buys")) {
         req.session["buys"] = {};
@@ -20,9 +29,10 @@ router.get("/boughtSymbols", (req, res) => {
 // buy
 router.get("/buySymbol", async (req, res) => {
     let symbol = req.query.symbol;
-    let date = req.query.date;
+    let entry = await getLatestPrice(symbol);
+    let date = entry["date"];
+    let price = entry["adjClose"]
 
-    console.log(req.session);
     // if first buy
     if (!req.session.hasOwnProperty("buys")) {
         req.session["buys"] = {};
@@ -35,7 +45,7 @@ router.get("/buySymbol", async (req, res) => {
 
     // add date
     if (!req.session["buys"][symbol].includes(date)) {
-        req.session["buys"][symbol].push(date);
+        req.session["buys"][symbol].push({date, price});
     }
     console.log(req.session);
     res.json(req.session["buys"]);

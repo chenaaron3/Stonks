@@ -1647,3 +1647,59 @@ Worker YLHj0Y79hS: Finished backtest for tickers DESP to JDD in 297 seconds
 Worker YLHj0Y79hS: Finished backtest for tickers PY to ZYXI in 324 seconds
 Worker YLHj0Y79hS: Finished backtest for tickers JE to PXS in 331 seconds
 Worker YLHj0Y79hS: Finished backtest for tickers A to DEO in 334 seconds
+Worker YLHj0Y79hS: Finding intersections for tickers A to DEO
+Worker YLHj0Y79hS: Finding intersections for tickers DESP to JDD
+Worker YLHj0Y79hS: Finding intersections for tickers JE to PXS
+Worker YLHj0Y79hS: Finding intersections for tickers PY to ZYXI
+Worker YLHj0Y79hS: Finished backtest for tickers DESP to JDD in 376 seconds
+Worker YLHj0Y79hS: Finished backtest for tickers A to DEO in 390 seconds
+Worker YLHj0Y79hS: Finished backtest for tickers PY to ZYXI in 393 seconds
+Worker YLHj0Y79hS: Finished backtest for tickers JE to PXS in 413 seconds
+Worker YrviCqQ36e: Finding intersections for tickers A to DEO
+Worker YrviCqQ36e: Finding intersections for tickers DESP to JDD
+Worker YrviCqQ36e: Finding intersections for tickers JE to PXS
+Worker YrviCqQ36e: Finding intersections for tickers PY to ZYXI
+Worker YrviCqQ36e: Finished backtest for tickers DESP to JDD in 355 seconds
+Worker YrviCqQ36e: Finished backtest for tickers PY to ZYXI in 359 seconds
+Worker YrviCqQ36e: Finished backtest for tickers A to DEO in 375 seconds
+Worker YrviCqQ36e: Finished backtest for tickers JE to PXS in 382 seconds
+Worker J2gZu3oSFC: Finding intersections for tickers A to DEO
+Worker J2gZu3oSFC: Finding intersections for tickers DESP to JDD
+Worker J2gZu3oSFC: Finding intersections for tickers JE to PXS
+Worker J2gZu3oSFC: Finding intersections for tickers PY to ZYXI
+Worker J2gZu3oSFC: Finished backtest for tickers DESP to JDD in 341 seconds
+Worker J2gZu3oSFC: Finished backtest for tickers PY to ZYXI in 356 seconds
+Worker J2gZu3oSFC: Finished backtest for tickers A to DEO in 361 seconds
+Worker J2gZu3oSFC: Finished backtest for tickers JE to PXS in 369 seconds
+Worker J2gZu3oSFC: Finding intersections for tickers A to DEO
+Worker J2gZu3oSFC: Finding intersections for tickers DESP to JDD
+Worker J2gZu3oSFC: Finding intersections for tickers JE to PXS
+Worker J2gZu3oSFC: Finding intersections for tickers PY to ZYXI
+Worker J2gZu3oSFC: Finished backtest for tickers DESP to JDD in 236 seconds
+Worker J2gZu3oSFC: Finished backtest for tickers A to DEO in 250 seconds
+Worker J2gZu3oSFC: Finished backtest for tickers PY to ZYXI in 254 seconds
+Worker J2gZu3oSFC: Finished backtest for tickers JE to PXS in 257 seconds
+Worker 949hWY0rEu: Finding intersections for tickers A to DEO
+Worker 949hWY0rEu: Finding intersections for tickers DESP to JDD
+Worker 949hWY0rEu: Finding intersections for tickers JE to PXS
+Worker 949hWY0rEu: Finding intersections for tickers PY to ZYXI
+Worker 949hWY0rEu: Finished backtest for tickers DESP to JDD in 279 seconds
+Worker 949hWY0rEu: Finished backtest for tickers A to DEO in 294 seconds
+Worker 949hWY0rEu: Finished backtest for tickers PY to ZYXI in 299 seconds
+Worker 949hWY0rEu: Finished backtest for tickers JE to PXS in 301 seconds
+Worker w00x59UBPi: Finding intersections for tickers A to DEO
+Worker w00x59UBPi: Finding intersections for tickers DESP to JDD
+Worker w00x59UBPi: Finding intersections for tickers JE to PXS
+Worker w00x59UBPi: Finding intersections for tickers PY to ZYXI
+Worker w00x59UBPi: Finished backtest for tickers DESP to JDD in 254 seconds
+Worker w00x59UBPi: Finished backtest for tickers A to DEO in 263 seconds
+Worker w00x59UBPi: Finished backtest for tickers PY to ZYXI in 268 seconds
+Worker w00x59UBPi: Finished backtest for tickers JE to PXS in 272 seconds
+Worker QOYyCuXD1E: Finding intersections for tickers A to DEO
+Worker QOYyCuXD1E: Finding intersections for tickers DESP to JDD
+Worker QOYyCuXD1E: Finding intersections for tickers JE to PXS
+Worker QOYyCuXD1E: Finding intersections for tickers PY to ZYXI
+Worker I7hGDIlgvU: Finding intersections for tickers DESP to JDD
+Worker I7hGDIlgvU: Finding intersections for tickers JE to PXS
+Worker I7hGDIlgvU: Finding intersections for tickers PY to ZYXI
+Worker I7hGDIlgvU: Finding intersections for tickers A to DEO

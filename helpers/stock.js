@@ -1,5 +1,5 @@
 var yahooFinance = require('yahoo-finance');
-var { updateStockInfo, getDocument } = require("./mongo");
+var { updateStockInfo, getDocument, getCollection } = require("./mongo");
 let { formatDate, daysBetween, hoursBetween, clampRange } = require('./utils');
 let { getIndicator } = require('./backtest');
 
@@ -95,6 +95,18 @@ function getUpdatedPrices(symbol, startDate, endDate) {
     });
 }
 
+async function getLatestPrice(symbol) {
+    let priceCollection = await getCollection("prices");
+    let stockInfo = await priceCollection.find({ _id: symbol }).project({ prices: { $slice: -1 } });
+    stockInfo = await stockInfo.toArray();
+    if (stockInfo.length > 0) {
+        return stockInfo[0]["prices"][0];
+    }
+    else {
+        return {};
+    }
+}
+
 // Get price from own database
 function getPrices(symbol) {
     return new Promise(async (resolve, reject) => {
@@ -106,6 +118,8 @@ function getPrices(symbol) {
     });
 }
 
+
+// used for ml dataset
 async function gatherData(symbols, result, window) {
     let backtestData = result["results"]["symbolData"];
     let features = [];
@@ -197,4 +211,4 @@ async function gatherData(symbols, result, window) {
     return { features, labels };
 }
 
-module.exports = { updateStock, getPrices, gatherData }
+module.exports = { updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice }
