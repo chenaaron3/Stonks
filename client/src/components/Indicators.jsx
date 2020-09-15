@@ -45,7 +45,7 @@ class Indicators extends React.Component {
         let activeIndicators = [...this.props.activeIndicators];
         return (
             <div className="indicators">
-                <h1>Indicators</h1>
+                <h2 className="indicators-title">Indicators</h2>
                 <div className="indicators-list">
                     {Object.keys(this.indicators).map((indicatorName, index) => {
                         return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}

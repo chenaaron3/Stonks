@@ -1,6 +1,7 @@
 import React, { createRef } from 'react';
 import caret from "../arrow.svg";
 import "./Indicator.css";
+import TextField from '@material-ui/core/TextField';
 
 class Indicator extends React.Component {
     state = { showFields: false };
@@ -27,8 +28,13 @@ class Indicator extends React.Component {
                         // use options if exists, else use default
                         let value = (this.props.options && this.props.options.hasOwnProperty(field)) ? this.props.options[field] : this.props.default[index];
                         return (<div className="indicator-field" key={index}>
-                            <span className="indicator-field-label">{field}</span>
-                            <input className="indicator-field-text" type="number" name={field} value={value} onChange={(e) => { this.props.setIndicatorOption(this.props.name, field, parseFloat(e.target.value)) }} />
+                            <TextField label={field} value={value} onChange={(e) => {
+                                let newValue = parseFloat(e.target.value);
+                                if (!newValue) {
+                                    newValue = 0;
+                                }
+                                this.props.setIndicatorOption(this.props.name, field, newValue);
+                            }} />
                         </div>);
                     })
                 }

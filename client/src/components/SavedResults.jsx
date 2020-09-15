@@ -2,7 +2,7 @@ import React, { createRef } from 'react';
 import "./SavedResults.css";
 import SavedResult from './SavedResult';
 import { connect } from 'react-redux';
-import { setBacktestResults, setSavedResults, viewStock } from '../redux';
+import { setBacktestResults, setSavedResults, viewStock, setPageIndex } from '../redux';
 
 class SavedResults extends React.Component {
     constructor(props) {
@@ -16,7 +16,7 @@ class SavedResults extends React.Component {
     }
 
     fetchBacktestResults = (id) => {
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/results?id=${id}`, {
             method: 'GET'
         }).then(res => res.json())
             .then(results => {
@@ -30,6 +30,8 @@ class SavedResults extends React.Component {
                     this.props.setBacktestResults(id, results);
                     // preview first stock
                     this.props.viewStock(Object.keys(results["symbolData"])[0]);
+                    // set active page to summary
+                    this.props.setPageIndex(1);
                     // go to next page
                     this.props.history.push("/summary");
                 }
@@ -89,4 +91,4 @@ let mapStateToProps = (state) => {
     return { savedResults: state.savedResults };
 };
 
-export default connect(mapStateToProps, { setBacktestResults, setSavedResults, viewStock })(SavedResults);
+export default connect(mapStateToProps, { setBacktestResults, setSavedResults, viewStock, setPageIndex })(SavedResults);

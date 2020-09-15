@@ -1,8 +1,7 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewStock, setBacktestResults } from '../redux';
+import { viewStock, setBacktestResults, setChartSettings } from '../redux';
 import './Results.css';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import eye from "../eye.svg";
 import buy from "../buy.svg";
@@ -11,12 +10,30 @@ import sell from "../sell.svg";
 import { formatDate, daysBetween } from "../helpers/utils";
 import Pusher from 'react-pusher';
 
+import TextField from '@material-ui/core/TextField';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import SearchOutlinedIcon from '@material-ui/icons/SearchOutlined';
+import Slider from '@material-ui/core/Slider';
+import Box from '@material-ui/core/Box';
+import Paper from '@material-ui/core/Paper';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import IconButton from '@material-ui/core/IconButton';
+import SettingsIcon from '@material-ui/icons/Settings';
+
 class Results extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
-            sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1
+            sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
+            chartSettings: {}
         }
     }
 
@@ -27,50 +44,10 @@ class Results extends React.Component {
 
     // statistical analysis (win/loss)
     analyze() {
-        console.log("Analyzing");
-        let winSpan = 0;
-        let lossSpan = 0;
-        let winProfit = 0;
-        let lossProfit = 0;
-        let winPercentProfit = 0;
-        let lossPercentProfit = 0;
-        let numWins = 0;
-        let numLosses = 0;
         // get the sorted symbols
         let sortedSymbols = Object.keys(this.props.results["symbolData"]);
         sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["percentProfit"] - this.props.results["symbolData"][a]["percentProfit"]);
-        this.setState({ sortedSymbols }, () => {
-            this.state.sortedSymbols.forEach(symbol => {
-                this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                    if (event["profit"] < 0) {
-                        numLosses += 1;
-                        lossSpan += event["span"];
-                        lossProfit += event["profit"];
-                        lossPercentProfit += event["percentProfit"];
-                    }
-                    else {
-                        numWins += 1;
-                        winSpan += event["span"];
-                        winProfit += event["profit"];
-                        winPercentProfit += event["percentProfit"];
-                    }
-                })
-            })
-            // span adjustments
-            winSpan /= numWins;
-            winSpan = Math.floor(winSpan);
-            lossSpan /= numLosses;
-            lossSpan = Math.floor(lossSpan);
-
-            // percent profit adjustments
-            winPercentProfit /= numWins;
-            winPercentProfit = (100 * winPercentProfit);
-            lossPercentProfit /= numLosses;
-            lossPercentProfit = (100 * lossPercentProfit);
-
-            // assign to state
-            this.setState({ numWins, numLosses, winSpan, lossSpan, winProfit, lossProfit, winPercentProfit, lossPercentProfit });
-        });
+        this.setState({ sortedSymbols });
     }
 
     componentDidMount() {
@@ -88,12 +65,12 @@ class Results extends React.Component {
     // send request to update a backtest
     updateBacktest = () => {
         this.setState({ updateProgress: 0 });
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/updateBacktest?id=${this.props.id}`);
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/updateBacktest?id=${this.props.id}`);
     }
 
     // load initial bought list
     getBoughtSymbols = () => {
-        fetch("/boughtSymbols")
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/boughtSymbols`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 this.setState({ boughtSymbols });
@@ -101,8 +78,8 @@ class Results extends React.Component {
     }
 
     // mark as bought
-    buySymbol = (symbol, date) => {
-        fetch(`/buySymbol?symbol=${symbol}&date=${date}`)
+    buySymbol = (symbol) => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/buySymbol?symbol=${symbol}`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 this.setState({ boughtSymbols });
@@ -111,195 +88,172 @@ class Results extends React.Component {
 
     // sell
     sellSymbol = (symbol) => {
-        fetch(`/sellSymbol?symbol=${symbol}`)
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/sellSymbol?symbol=${symbol}`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 this.setState({ boughtSymbols });
             })
     }
 
-    // reload the page when update is complete
-    fetchBacktestResults = (id) => {
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
-            method: 'GET'
-        }).then(res => res.json())
-            .then(results => {
-                // store results in global state
-                this.props.setBacktestResults(id, results);
+    setTab = (event, newValue) => {
+        this.setState({ tabIndex: newValue })
+    };
+
+    onSettingChanged = (setting, state) => {
+        this.setState({ chartSettings: { ...this.state.chartSettings, [setting]: state } },
+            () => {
+                this.props.setChartSettings(this.state.chartSettings);
             });
     }
 
     render() {
-        let netProfit = (this.state.winProfit + this.state.lossProfit).toFixed(4);
-        let annualWinPercentProfit = this.state.winPercentProfit * 360 / this.state.winSpan;
-        let annualLossPercentProfit = this.state.lossPercentProfit * 360 / this.state.lossSpan;
-        let annualPercentProfit = (annualWinPercentProfit + annualLossPercentProfit).toFixed(4);
         let lastRecentDate = new Date()
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
 
         let search = this.state.search.toLowerCase().trim();
         let searchResults = this.state.sortedSymbols.filter(s => s.toLowerCase().includes(search));
         let searchBar = <input className="results-search" value={this.state.search} onChange={e => { this.setState({ search: e.target.value }) }} />;
+        let dayFilter = <input className="results-search" value={this.state.recentThreshold} type="number" onChange={e => { this.setState({ recentThreshold: parseFloat(e.target.value) }) }}></input>
+
+        searchBar = <Box mb="1vh"><TextField
+            id="input-with-icon-textfield"
+            value={this.state.search}
+            onChange={e => { this.setState({ search: e.target.value }) }}
+            InputProps={{
+                startAdornment: (
+                    <InputAdornment position="start">
+                        <SearchOutlinedIcon />
+                    </InputAdornment>
+                ),
+            }}
+        /></Box>
+
+        dayFilter = <div>
+            <p className="results-dayfilter">
+                Show events within {this.state.recentThreshold} days
+            </p>
+            <Box mx="1vw" mt="1vh"><Slider
+                defaultValue={7}
+                aria-labelledby="discrete-slider"
+                valueLabelDisplay="auto"
+                value={this.state.recentThreshold}
+                onChange={(e, v) => { this.setState({ recentThreshold: v }) }}
+                step={1}
+                marks
+                min={1}
+                max={30}
+            /></Box>
+        </div>
 
         return (
             <div className="results">
-                <Pusher
-                    channel={this.props.id}
-                    event="onProgressUpdate"
-                    onUpdate={(data) => { this.setState({ updateProgress: data["progress"] }) }}
-                />
-                <Pusher
-                    channel={this.props.id}
-                    event="onUpdateFinished"
-                    onUpdate={(data) => { this.fetchBacktestResults(data["id"]) }}
-                />
-                <span className="results-title">Backtest Results</span>
-                <Tabs>
-                    <TabList>
-                        <Tab>Summary</Tab>
-                        <Tab>All</Tab>
-                        <Tab>Buys</Tab>
-                        <Tab>Sells</Tab>
-                    </TabList>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                <>
-                                    <h2>General Stats</h2>
-                                    <div>Trades: {this.state.numWins + this.state.numLosses}</div>
-                                    <div>Win Rate: {(this.state.numWins / (this.state.numLosses + this.state.numWins) * 100).toFixed(2)}%</div>
-                                    <div>Net Profit: ${netProfit}</div>
-                                    <div>Average Span: {Math.floor((this.state.winSpan * this.state.numWins + this.state.lossSpan * this.state.numLosses) / (this.state.numWins + this.state.numLosses))} days</div>
-                                    <div>Annual Percent Profit: {annualPercentProfit}%</div>
-                                    <div>Last Updated: {formatDate(new Date(this.props.results["lastUpdated"]))}</div>
-                                    {daysBetween(new Date(this.props.results["lastUpdated"]), new Date()) > 0 && (
-                                        <>
-                                            {
-                                                this.state.updateProgress < 0 && <input type="button" value="Update Backtest" onClick={this.updateBacktest} />
-                                            }
-                                            {
-                                                this.state.updateProgress >= 0 && (
-                                                    <>
-                                                        <hr />
-                                                        <div style={{
-                                                            backgroundImage: `linear-gradient(to right, #2ecc71 ${this.state.updateProgress}%, rgb(0, 0, 0, 0) ${this.state.updateProgress}%)`,
-                                                            textAlign: "center"
-                                                        }}>
-                                                            Updating...
-                                                    </div>
-                                                    </>
-                                                )
-                                            }
-                                        </>
-                                    )}
-                                    <hr />
-
-                                    <h2>Win Stats</h2>
-                                    <div>Win Trades: {this.state.numWins}</div>
-                                    <div>Win Profit: ${this.state.winProfit.toFixed(4)}</div>
-                                    <div>Win Percent Profit: {this.state.winPercentProfit.toFixed(4)}%</div>
-                                    <div>Win Span: {this.state.winSpan} days</div>
-                                    <hr />
-
-                                    <h2>Loss Stats</h2>
-                                    <div>Loss Trades: {this.state.numLosses}</div>
-                                    <div>Loss Profit: ${this.state.lossProfit.toFixed(4)}</div>
-                                    <div>Loss Percent Profit: {this.state.lossPercentProfit.toFixed(4)}%</div>
-                                    <div>Loss Span: {this.state.lossSpan} days</div>
-                                    <hr />
-
-                                    <h2>Indicators Used</h2>
-                                    <div>
-                                        <div>Buy Indicators:</div>
-                                        <pre id="json" className="results-indicators">{JSON.stringify(this.props.results["strategyOptions"]["buyIndicators"], null, 2).replace(/[{},"]/g, "")}</pre>
-                                        <div>Sell Indicators:</div>
-                                        <pre id="json" className="results-indicators">{JSON.stringify(this.props.results["strategyOptions"]["sellIndicators"], null, 2).replace(/[{},"]/g, "")}</pre>
-                                    </div>
-                                </>
-                            )
-                            }
-                        </div>
-                    </TabPanel>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                <>
-                                    {searchBar}
-                                    {
-                                        this.state.sortedSymbols.map((symbol, index) => {
-                                            if (searchResults.includes(symbol)) {
-                                                return <Result key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
-                                                    handleGetResult={this.handleGetResult} />
-                                            }
-                                        })
-                                    }
-                                </>
-                            )
-                            }
-                        </div>
-                    </TabPanel>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                <>
-                                    {searchBar}
-                                    {
-                                        this.state.sortedSymbols.map((symbol, index) => {
-                                            // only show if there are recent events
-                                            let numEvents = this.props.results["symbolData"][symbol]["holdings"].filter(d => new Date(d) > lastRecentDate).length;
-                                            if (numEvents > 0) {
-                                                if (searchResults.includes(symbol)) {
-                                                    return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
-                                                        handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
-                                                        boughtSymbols={this.state.boughtSymbols} />
-                                                }
-                                            }
-                                        })
-                                    }
-                                </>
-                            )
-                            }
-                        </div>
-                    </TabPanel>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
+                <h2 className="results-title">
+                    Results {<SimpleMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
+                </h2>
+                <div>{searchBar}</div>
+                {/* <Paper square> */}
+                <Tabs value={this.state.tabIndex} onChange={this.setTab} indicatorColor="primary" centered aria-label="simple tabs example">
+                    <Tab style={{ minWidth: "3vw" }} label="All" {...a11yProps(0)} />
+                    <Tab style={{ minWidth: "3vw" }} label="Buys" {...a11yProps(1)} />
+                    <Tab style={{ minWidth: "3vw" }} label="Sells" {...a11yProps(2)} />
+                    <Tab style={{ minWidth: "3vw" }} label="Watch" {...a11yProps(3)} />
+                </Tabs>
+                {/* </Paper> */}
+                <TabPanel value={this.state.tabIndex} index={0}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        {this.state.sortedSymbols.length != 0 && (
                             <>
-                                {searchBar}
-                                {this.state.sortedSymbols.length != 0 && (
+                                {
+                                    this.state.sortedSymbols.map((symbol, index) => {
+                                        if (searchResults.includes(symbol)) {
+                                            return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                boughtSymbols={this.state.boughtSymbols} />
+                                        }
+                                    })
+                                }
+                            </>
+                        )
+                        }
+                    </div>
+                </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={1}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        {this.state.sortedSymbols.length != 0 && (
+                            <>
+                                {dayFilter}
+                                {
                                     this.state.sortedSymbols.map((symbol, index) => {
                                         // only show if there are recent events
-                                        let events = this.props.results["symbolData"][symbol]["events"];
-                                        let numEvents = events.filter(e => new Date(e["sellDate"]) > lastRecentDate).length;
+                                        let numEvents = this.props.results["symbolData"][symbol]["holdings"].filter(d => new Date(d) > lastRecentDate).length;
                                         if (numEvents > 0) {
                                             if (searchResults.includes(symbol)) {
-                                                return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
                                                     handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
                                                     boughtSymbols={this.state.boughtSymbols} />
                                             }
                                         }
                                     })
-                                )
                                 }
                             </>
-                        </div>
-                    </TabPanel>
-                </Tabs>
+                        )
+                        }
+                    </div>
+                </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={2}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        <>
+                            {dayFilter}
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
+                                    // only show if there are recent events
+                                    let events = this.props.results["symbolData"][symbol]["events"];
+                                    let numEvents = events.filter(e => new Date(e["sellDate"]) > lastRecentDate).length;
+                                    if (numEvents > 0) {
+                                        if (searchResults.includes(symbol)) {
+                                            return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                boughtSymbols={this.state.boughtSymbols} />
+                                        }
+                                    }
+                                })
+                            )
+                            }
+                        </>
+                    </div>
+                </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={3}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        <>
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
+                                    if (this.state.boughtSymbols.hasOwnProperty(symbol)) {
+                                        return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                            handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                            boughtSymbols={this.state.boughtSymbols} />
+                                    }
+                                })
+                            )
+                            }
+                        </>
+                    </div>
+                </TabPanel>
             </div>
         );
     }
@@ -309,7 +263,7 @@ class Result extends React.Component {
     state = { hovered: false }
 
     buySymbol = () => {
-        this.props.buySymbol(this.props.symbol, new Date().toISOString());
+        this.props.buySymbol(this.props.symbol);
     }
 
     sellSymbol = () => {
@@ -345,9 +299,87 @@ class Result extends React.Component {
     }
 }
 
+function a11yProps(index) {
+    return {
+        id: `simple-tab-${index}`,
+        'aria-controls': `simple-tabpanel-${index}`,
+    };
+}
+
+function TabPanel(props) {
+    const { children, value, index, ...other } = props;
+
+    return (
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`simple-tabpanel-${index}`}
+            aria-labelledby={`simple-tab-${index}`}
+            {...other}
+        >
+            {value === index && (
+                <Box>
+                    <Typography>{children}</Typography>
+                </Box>
+            )}
+        </div>
+    );
+}
+
+function SimpleMenu(props) {
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    return (
+        <>
+            <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={handleClick}
+                style={{ position: "absolute", top: 0, right: 0 }}
+            >
+                <SettingsIcon />
+            </IconButton>
+            <Menu
+                id="simple-menu"
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+            >
+                {
+                    props.items.map((item, index) => {
+                        return <MenuItem key={`results-settings-${index}`}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={props.options[item] ? true : false}
+                                        onChange={(e) => { props.onChange(item, e.target.checked) }}
+                                        color="primary"
+                                    />
+                                }
+                                label={`${item}`}
+                            />
+                        </MenuItem>
+                    })
+                }
+            </Menu>
+        </>
+    );
+}
+
+
 let mapStateToProps = (state) => {
     let results = state.backtestResults;
     return { results, id: state.id };
 };
 
-export default connect(mapStateToProps, { viewStock, setBacktestResults })(Results);
+export default connect(mapStateToProps, { viewStock, setBacktestResults, setChartSettings })(Results);

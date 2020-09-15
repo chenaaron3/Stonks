@@ -1,13 +1,16 @@
 import React, { createRef } from 'react';
+import { connect } from 'react-redux';
+import { setPageIndex } from '../redux';
 import "./Sidebar.css";
+import HomeIcon from '@material-ui/icons/Home';
+import EqualizerIcon from '@material-ui/icons/Equalizer';
+import SearchIcon from '@material-ui/icons/Search';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import WatchLaterOutlinedIcon from '@material-ui/icons/WatchLaterOutlined';
 
-import summaryIcon from "../summary.svg";
-import reviewIcon from "../review.svg";
-import simulateIcon from "../simulate.svg";
-import watchlistIcon from "../watchlist.svg";
-
-let pageName = ["/summary", "/review", "/simulate", "/watchlist"];
-let icons = [summaryIcon, reviewIcon, simulateIcon, watchlistIcon];
+let pageName = ["/", "/summary", "/review", "/simulate", "/watchlist"];
+let icons = [HomeIcon, EqualizerIcon, SearchIcon, PlayArrowIcon, WatchLaterOutlinedIcon];
+let label = ["Home", "Summary", "Review", "Simulate", "Watchlist"]
 
 class Sidebar extends React.Component {
     render() {
@@ -15,10 +18,15 @@ class Sidebar extends React.Component {
             <div className="sidebar-icon-list">
                 {
                     icons.map((icon, index) => {
-                        return <div className="sidebar-icon-wrapper">
-                            <img className={`sidebar-icon`} key={`sidebar-${index}`} width="25px" height="25px" src={icon} onClick={() => {
-                                this.props.history.push(pageName[index]);
-                            }} />
+                        let color = index == this.props.pageIndex ? "#2ecc71" : "";
+                        let IconClass = icon;
+                        let iconComponent = <IconClass fontSize="large" style={{ color: color }} />;
+                        return <div className="sidebar-icon-wrapper" onClick={() => {
+                            this.props.setPageIndex(index);
+                            this.props.history.push(pageName[index]);
+                        }} >
+                            {iconComponent}
+                            <span style={{ color: color }}>{label[index]}</span>
                         </div>
                     })
                 }
@@ -27,4 +35,9 @@ class Sidebar extends React.Component {
     }
 }
 
-export default Sidebar;
+let mapStateToProps = (state) => {
+    return { pageIndex: state.pageIndex };
+};
+
+
+export default connect(mapStateToProps, { setPageIndex })(Sidebar);

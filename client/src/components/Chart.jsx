@@ -54,6 +54,7 @@ class Chart extends React.Component {
 
     componentDidUpdate(prevProps) {
         console.log("updating chart");
+        console.log(this.props);
         // if symbol, indicator, or event index changed
         if (this.props.symbol != "" &&
             (this.props.symbol !== prevProps.symbol || this.props.activeIndicators.length != prevProps.activeIndicators.length || this.props.eventIndex != prevProps.eventIndex)) {
@@ -101,7 +102,7 @@ class Chart extends React.Component {
         });
         let graphData = { symbol: this.props.symbol, indicators: finalOptions };
 
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/priceGraph`, {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/priceGraph`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -180,6 +181,7 @@ class Chart extends React.Component {
         let max = 0;
         let min = 0;
 
+        // set full view
         // If chunkable
         if (this.graphs["price"].length > this.chunkSize) {
             // place event in the center of the chunk
@@ -202,9 +204,19 @@ class Chart extends React.Component {
         }
         this.loadChunk();
 
-        // edge cases
-        let startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
-        let endBrushIndex = Math.min(max, sellDateIndex - this.startIndex + brushMarginSize);
+        // set brush view
+        let startBrushIndex;
+        let endBrushIndex;
+        if (this.props.chartSettings["Test Mode"]) {
+            // place buy at the end
+            startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
+            endBrushIndex = Math.min(max, buyDateIndex - this.startIndex);
+        }
+        else {
+            // place brush around buy/sell events
+            startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
+            endBrushIndex = Math.min(max, sellDateIndex - this.startIndex + brushMarginSize);
+        }
         this.setState({ startBrushIndex, endBrushIndex });
     }
 
@@ -358,7 +370,7 @@ class Chart extends React.Component {
         return new Promise((resolve, reject) => {
             let graphData = { indicatorName: "EMA", indicatorOptions: { "period": 5 }, symbol: this.props.symbol };
 
-            fetch(`${process.env.REACT_APP_SUBDIRECTORY}/indicatorGraph`, {
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -510,6 +522,7 @@ class Chart extends React.Component {
         let sideChartHeight = 15;
         let mainChartHeight = 100 - (this.props.activeIndicators.filter(i => !this.overlayCharts.includes(i)).length + 1) * sideChartHeight;
 
+        // Brushes
         let mainBrush = <Brush gap={1} height={65} dataKey="date" startIndex={this.state.startBrushIndex} endIndex={this.state.endBrushIndex} onChange={this.onBrushChange} tickFormatter={this.brushFormatter}>
             <AreaChart>
                 <CartesianGrid horizontal={false} />
@@ -529,6 +542,24 @@ class Chart extends React.Component {
             labelFormatter={label => getFormattedDate(label)}
         />;
 
+        // Main Line
+        let mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />}>
+            <ErrorBar dataKey="greenCandleBody" width={0} strokeWidth={5} stroke="green" direction="y" />
+            <ErrorBar dataKey="redCandleBody" width={0} strokeWidth={5} stroke="red" direction="y" />
+            <ErrorBar dataKey="candleWick" width={1} strokeWidth={1} stroke="black" direction="y" />
+        </Line>;
+        if (!this.props.chartSettings["Candles"]) {
+            mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />} />;
+        }
+
+        // Support Resistance Lines
+        let supportResistanceLines = this.state.supportResistanceLevels.map(sr => <ReferenceLine y={sr} stroke="black" strokeDasharray="3 3" />);
+        if (!this.props.chartSettings["Support Lines"]) {
+            supportResistanceLines = <></>;
+        }
+
+        console.log("CHART SETTINGS", this.props.chartSettings);
+
         return (
             <div className="chart-container" onWheel={this.wheelHandler}>
                 {/* Main Chart */}
@@ -537,27 +568,23 @@ class Chart extends React.Component {
                         <CartesianGrid vertical={false} horizontal={false} />
                         <XAxis dataKey="date" minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
                         <YAxis domain={["auto", "auto"]} orientation="left" />
+                        {/* Main Line */}
+                        {mainLine}
                         {/* Overlay Charts */}
-                        <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />}>
-                            <ErrorBar dataKey="greenCandleBody" width={0} strokeWidth={5} stroke="green" direction="y" />
-                            <ErrorBar dataKey="redCandleBody" width={0} strokeWidth={5} stroke="red" direction="y" />
-                            <ErrorBar dataKey="candleWick" width={1} strokeWidth={1} stroke="black" direction="y" />
-                        </Line>
                         {
                             this.state.myOverlayCharts.length > 0 && this.state.myOverlayCharts.map((overlay, index) => {
                                 let colors = distinctColors({ count: this.state.myOverlayCharts.length, lightMin: 50 });
                                 return <Line key={overlay} dataKey={overlay} strokeWidth={3} stroke={`${colors[index].hex()}`} dot={false} />
                             })
                         }
+                        {/* Support and Resistance Lines */}
+                        {supportResistanceLines}
                         {/* {
                             this.state.supportLevels.map(support => <ReferenceLine y={support} stroke="green" strokeDasharray="3 3" />)
                         }
                         {
                             this.state.resistanceLevels.map(resistance => <ReferenceLine y={resistance} stroke="red" strokeDasharray="3 3" />)
                         } */}
-                        {
-                            this.state.supportResistanceLevels.map(sr => <ReferenceLine y={sr} stroke="black" strokeDasharray="3 3" />)
-                        }
                         {hiddenBrush}
                         {tooltip}
                     </LineChart>
@@ -639,7 +666,7 @@ let mapStateToProps = (state) => {
     return {
         symbol: state.selectedSymbol, results: state.backtestResults["symbolData"][state.selectedSymbol],
         activeIndicators: [...state.activeIndicators], indicatorOptions: state.indicatorOptions,
-        eventIndex: state.eventIndex
+        eventIndex: state.eventIndex, chartSettings: state.chartSettings
     }
 };
 

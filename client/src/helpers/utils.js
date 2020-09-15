@@ -22,8 +22,14 @@ function daysBetween(date1, date2) {
     return Math.round(differenceMs / ONE_DAY);
 }
 
+function hoursBetween(dt1, dt2) {
+    var diff = (dt2.getTime() - dt1.getTime()) / 1000;
+    diff /= (60 * 60);
+    return Math.round(diff);
+}
+
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-module.exports = {formatDate, daysBetween, numberWithCommas};
+module.exports = {formatDate, daysBetween, hoursBetween, numberWithCommas};

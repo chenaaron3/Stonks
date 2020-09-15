@@ -4,6 +4,7 @@ import { viewEvent } from '../redux';
 import './SymbolResults.css';
 import 'react-tabs/style/react-tabs.css';
 import { formatDate, daysBetween } from "../helpers/utils";
+import ArrowForwardSharpIcon from '@material-ui/icons/ArrowForwardSharp';
 
 class SymbolResults extends React.Component {
     constructor(props) {
@@ -46,7 +47,7 @@ class SymbolResults extends React.Component {
         return (
             <>
                 <div className="symbol-results">
-                    <h1 className="symbol-results-title">{this.props.symbol}</h1>
+                    <h2 className="symbol-results-title">{this.props.symbol}</h2>
                     <div className="symbol-results-body">
                         <div>Wins: {this.state.numWins}</div>
                         <div>Losses: {this.state.numLosses}</div>
@@ -54,12 +55,15 @@ class SymbolResults extends React.Component {
                         <div>Profit: ${profit}</div>
                         <div>Percent Profit: {percentProfit}%</div>
                         <div>Average Span: {averageSpan} days</div>
-                        <h3>All Buy/Sell Events</h3>
+                        <h3>Events</h3>
                         <div className="symbol-results-events">
                             {
                                 this.props.results["events"].map((event, index) => {
-                                    return (<div>
-                                        <span style={{color: `${event["percentProfit"] > 0 ? "green" : "red"}`}} key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}>{formatDate(event["buyDate"])} to {formatDate(event["sellDate"])}</span>
+                                    return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}
+                                        style={{ color: `${event["percentProfit"] > 0 ? "green" : "red"}` }}>
+                                        <span>{formatDate(event["buyDate"])}</span>
+                                        <ArrowForwardSharpIcon />
+                                        <span>{formatDate(event["sellDate"])}</span>
                                     </div>);
                                 })
                             }

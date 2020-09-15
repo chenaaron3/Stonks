@@ -4,37 +4,112 @@
     background-color: #dee4ec;
     padding-top: 7vh;
     padding-left: 5vw;
+    padding-right: 5vw;
 }
 
-.dashboard-pie-cards {
-    display: inline-block;
+.dashboard-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.dashboard-title {
+    font-weight: bold;
+    font-size: 2em;
+}
+
+.dashboard-update {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.dashboard-progress {
+    width: 5vw;
+}
+
+.dashboard-pie-cards, .dashboard-graph-cards {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 .dashboard-card {
+    display: inline-flex;
+    justify-content: space-between;
+    flex-direction: column;
     margin: 2vh;
     margin-left: 0;
-    margin-right: 2vw;
-    display: inline-block;
+    margin-right: 0;
     padding: 3vh;
     background-color: #ecf0f1;
     box-shadow: 10px 10px 5px 0px rgba(0, 0, 0, 0.07);
+    transition: all 200ms;
 }
 
-.dashboard-pie {
-    width: 20vw;
-    height: 40vh;
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 20px 20px 10px 0px rgba(0, 0, 0, 0.07);
 }
 
-.dashboard-graph {
-    width: 42vw;
-    height: 40vh;
+.dashboard-card-title {
+    font-size: 1.3em;
+}
+
+.dashboard-card-subtitle {
+    font-size: .9em;
+    margin-top: 1vh;
 }
 
 .dashboard-pie-label {
     font-weight: 900;
-    font-size: 1.5em;
+    font-size: 1.5vw;
 }
 
 .dashboard-card-caption {
     text-align: center;
+}
+
+.dashboard-body {
+    display: grid;
+    grid-template-columns: repeat(5, 16vw);
+    grid-template-rows: repeat(2, 40vh);
+    grid-template-areas: 
+    "profitPie percentProfitPie profitGraph profitGraph indicators" 
+    "tradeGraph tradeGraph tradePie spanPie indicators";
+    column-gap: 2vw;
+    row-gap: 2vh;
+}
+
+#dashboard-profit-pie {
+    grid-area: profitPie;
+}
+
+#dashboard-percent-profit-pie {
+    grid-area: percentProfitPie;
+}
+
+#dashboard-profit-graph {
+    grid-area: profitGraph;
+}
+
+#dashboard-trade-graph {
+    grid-area: tradeGraph;
+}
+
+#dashboard-trade-pie {
+    grid-area: tradePie;
+}
+
+#dashboard-span-pie {
+    grid-area: spanPie;
+}
+
+#dashboard-indicators {
+    grid-area: indicators;
+    justify-content: start;
+}
+
+.dashboard-indicator {
+    font-size: 1em;
 }
