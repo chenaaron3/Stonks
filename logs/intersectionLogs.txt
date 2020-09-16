@@ -1703,3 +1703,15 @@ Worker I7hGDIlgvU: Finding intersections for tickers DESP to JDD
 Worker I7hGDIlgvU: Finding intersections for tickers JE to PXS
 Worker I7hGDIlgvU: Finding intersections for tickers PY to ZYXI
 Worker I7hGDIlgvU: Finding intersections for tickers A to DEO
+Worker J2gZu3oSFC: Finding intersections for tickers A to DEO
+Worker J2gZu3oSFC: Finding intersections for tickers DESP to JDD
+Worker J2gZu3oSFC: Finding intersections for tickers JE to PXS
+Worker J2gZu3oSFC: Finding intersections for tickers PY to ZYXI
+Worker J2gZu3oSFC: Finding intersections for tickers PY to ZYXI
+Worker J2gZu3oSFC: Finding intersections for tickers A to DEO
+Worker J2gZu3oSFC: Finding intersections for tickers JE to PXS
+Worker J2gZu3oSFC: Finding intersections for tickers DESP to JDD
+Worker J2gZu3oSFC: Finding intersections for tickers DESP to JDD
+Worker J2gZu3oSFC: Finding intersections for tickers A to DEO
+Worker J2gZu3oSFC: Finding intersections for tickers PY to ZYXI
+Worker J2gZu3oSFC: Finding intersections for tickers JE to PXS

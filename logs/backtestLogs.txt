@@ -342,3 +342,6 @@ Worker w00x59UBPi: Starting backtest
 Worker w00x59UBPi: Finished backtest in 277 seconds
 Worker QOYyCuXD1E: Starting backtest
 Worker I7hGDIlgvU: Starting backtest
+Worker J2gZu3oSFC: Starting backtest
+Worker J2gZu3oSFC: Starting backtest
+Worker J2gZu3oSFC: Starting backtest

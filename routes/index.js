@@ -5,7 +5,7 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { getStockInfo, containsID, addID, getDocument } = require('../helpers/mongo');
+let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
 let { makeid } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { getIndicator } = require('../helpers/backtest');
@@ -178,8 +178,14 @@ router.get("/updateBacktest", async (req, res) => {
         return;
     }
     let doc = await getDocument("results", id);
+    if (doc["status"] == "updating") {
+        res.send("Already Updating!");
+    }
+    else {
+        res.send("Updating backtest!");
+        setDocumentField(id, "status", "updating");
+    }
     let strategyOptions = doc.results["strategyOptions"];
-    res.send("Updating backtest!");
 
     // spawn child to do work
     let child = fork(path.join(__dirname, "../helpers/worker.js"));
@@ -187,6 +193,7 @@ router.get("/updateBacktest", async (req, res) => {
     child.on('message', function (message) {
         console.log(message);
         if (message.status == "finished") {
+            setDocumentField(id, "status", "ready");
             console.log("Trigger client", id);
             triggerChannel(id, "onUpdateFinished", { id: `${id}` });
         }

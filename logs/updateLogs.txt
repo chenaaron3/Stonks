@@ -843,3 +843,11 @@ Worker rPHJw: Finished update for tickers JDD to PXI in 370 seconds
 Worker rPHJw: Finished update for tickers A to DEO in 393 seconds
 Worker rPHJw: Finished update for tickers PXLW to ZYXI in 397 seconds
 Worker rPHJw: Finished update for tickers DESP to JD in 420 seconds
+Worker 3iFtH: Starting update for tickers A to DEO
+Worker 3iFtH: Starting update for tickers PXLW to ZYXI
+Worker 3iFtH: Starting update for tickers JDD to PXI
+Worker 3iFtH: Starting update for tickers DESP to JD
+Worker 3iFtH: Finished update for tickers PXLW to ZYXI in 380 seconds
+Worker 3iFtH: Finished update for tickers A to DEO in 409 seconds
+Worker 3iFtH: Finished update for tickers JDD to PXI in 424 seconds
+Worker 3iFtH: Finished update for tickers DESP to JD in 440 seconds

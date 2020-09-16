@@ -154,6 +154,21 @@ function addID(id) {
 	});
 }
 
+function setDocumentField(id, fieldName, value) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		await resultsCollection.updateOne({
+			"_id": id
+		},
+			{
+				$set: { [fieldName]: value }
+			}, (err, res) => {
+				if (err) console.log(err);
+				resolve();
+			});
+	});
+}
+
 // adds a document to result collection
 function addResult(id, result) {
 	return new Promise(async (resolve, reject) => {
@@ -224,6 +239,7 @@ module.exports = {
 	addDocument,
 	getDocument,
 	deleteDocument,
+	setDocumentField,
 	getStockInfo,
 	addStockInfo,
 	containsID,
