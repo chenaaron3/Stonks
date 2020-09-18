@@ -31,7 +31,8 @@ class CreateBacktest extends React.Component {
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
-            "Solid": { "fields": ["minLength", "maxRatio"], "default": [2, .1] }
+            "Solid": { "fields": ["minLength", "maxRatio"], "default": [2, .1] },
+            "Structure": {"fields": ["period", "volatility", "minCount"], "default": [12, .05, 5]}
         }
 
         // for each indicator

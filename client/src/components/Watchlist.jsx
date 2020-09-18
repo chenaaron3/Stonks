@@ -271,15 +271,17 @@ class Watchlist extends React.Component {
                     let recentPrice = latestPrice["adjClose"];
                     console.log(buyEntry);
                     let buyPrice = buyEntry["price"]
-                    let profit = buyPrice - recentPrice;
+                    let profit = recentPrice - buyPrice;
                     let profitDisplay = (profit < 0 ? "-" : "") + "$" + Math.abs(profit).toFixed(2);
                     let buyDate = buyEntry["date"];
                     let action = "Hold";
-                    this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                        if (buyDate < event["sellDate"]) {
-                            action = "Sell";
-                        }
-                    })
+                    if(this.props.results["symbolData"].hasOwnProperty(symbol)) {
+                        this.props.results["symbolData"][symbol]["events"].forEach(event => {
+                            if (buyDate < event["sellDate"]) {
+                                action = "Sell";
+                            }
+                        })
+                    }
                     rows.push({ symbol, buyDate: formatDate(buyEntry["date"]), buyPrice: "$" + buyPrice.toFixed(2), profit: profitDisplay, action });
                 });
                 this.setState({ rows });

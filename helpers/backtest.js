@@ -19,6 +19,7 @@ let MACDPos = require('../helpers/indicators/macdPos');
 let GC = require('../helpers/indicators/gc');
 let ADX = require('../helpers/indicators/adx');
 let Solid = require('../helpers/indicators/solid');
+let Structure = require('../helpers/indicators/structure');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -27,7 +28,8 @@ let INDICATOR_OBJECTS = {
     "MACD": MACDPos,
     "GC": GC,
     "ADX": ADX,
-    "Solid": Solid
+    "Solid": Solid,
+    "Structure": Structure
 }
 
 // paths to resources
@@ -198,8 +200,23 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     let lows = {};
                     let closes = {};
 
-                    json.forEach(day => {
-                        let formattedDate = new Date(day["date"]).toISOString();
+                    let cutoffIndex = 0;
+                    if (lastUpdated) {
+                        // find first index where date is greater than last updated
+                        for(let i = json.length - 1; i >= 0; --i) {
+                            if (json[i]["date"] < lastUpdated) {
+                                cutoffIndex = i;
+                                break;
+                            }
+                        }
+                        cutoffIndex = Math.max(cutoffIndex, cutoffIndex - 200);
+                    }
+
+                    for(; cutoffIndex < json.length; ++cutoffIndex){
+                        let day = json[cutoffIndex];
+                        let date = new Date(day["date"]);
+                    
+                        let formattedDate = date.toISOString();
                         let adjScale = day["adjClose"] / day["close"];
                         prices[formattedDate] = day["adjClose"];
                         volumes[formattedDate] = day["volume"];
@@ -207,7 +224,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         highs[formattedDate] = day["high"] * adjScale;
                         lows[formattedDate] = day["low"] * adjScale;
                         closes[formattedDate] = day["close"] * adjScale;
-                    });
+                    };
 
                     // get sorted dates
                     let dates = Object.keys(prices).sort(function (a, b) {
@@ -270,7 +287,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     // store buy/sell events for debugging
                     let events = [];
                     let event = {};
-                    let today = new Date();
                     let startIndex = 0;
 
                     // load data from previous results
@@ -278,28 +294,17 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         // load previous hits
                         if (previousResults) {
                             events = previousResults["events"];
+
                             // carry over holdings to look for sells
                             previousResults["holdings"].forEach(holding => {
                                 buyDates.push(holding);
                                 buyPrices.push(prices[holding]);
                             })
+
                             // carry over profits
                             profit = previousResults["profit"];
                             count = events.length;
                             percentProfit = previousResults["percentProfit"] * count;
-                        }
-                        // start from the date after the last update
-                        for (let i = 0; i < dates.length; ++i) {
-                            let day = new Date(dates[i]);
-                            if (day > lastUpdated) {
-                                startIndex = i;
-                                break;
-                            }
-                        }
-                        // if theres no changes since last update
-                        if (startIndex == 0) {
-                            // end the backtest for this symbol
-                            startIndex = dates.length;
                         }
                     }
 

@@ -18,7 +18,7 @@ class Chart extends React.Component {
 
         // constants
         this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
-        this.overlayCharts = ["SMA", "GC", "EMA"];
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -228,7 +228,15 @@ class Chart extends React.Component {
         if (name == "price") {
             return [value.toFixed(4), this.props.symbol];
         }
-        return value.toFixed(4);
+        if (value) {
+            try {
+                return value.toFixed(4);
+            }
+            catch {
+                console.log(value, typeof(value));
+                return value;
+            }
+        }
     }
 
     brushFormatter = (value) => {
@@ -309,8 +317,9 @@ class Chart extends React.Component {
             Object.keys(this.supportResistanceLevels).forEach(groupAvg => {
                 let end = new Date(this.supportResistanceLevels[groupAvg]["end"]);
                 let start = new Date(this.supportResistanceLevels[groupAvg]["start"]);
+                let count = this.supportResistanceLevels[groupAvg]["count"]
                 if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
-                    supportResistanceLevels.push(groupAvg);
+                    supportResistanceLevels.push({ price: groupAvg, count });
                 }
             });
             this.setState({ supportLevels, resistanceLevels, supportResistanceLevels });
@@ -553,7 +562,7 @@ class Chart extends React.Component {
         }
 
         // Support Resistance Lines
-        let supportResistanceLines = this.state.supportResistanceLevels.map(sr => <ReferenceLine y={sr} stroke="black" strokeDasharray="3 3" />);
+        let supportResistanceLines = this.state.supportResistanceLevels.map(sr => <ReferenceLine y={sr["price"]} stroke="black" strokeDasharray="3 3" />);
         if (!this.props.chartSettings["Support Lines"]) {
             supportResistanceLines = <></>;
         }

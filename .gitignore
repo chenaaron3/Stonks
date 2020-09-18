@@ -1,6 +1,8 @@
 # Custom
 res/priceCache.json
 res/supported_tickers.csv
+res/metadata.json
+logs/
 
 # OS X
 .DS_Store*
