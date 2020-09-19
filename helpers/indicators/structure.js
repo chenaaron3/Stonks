@@ -142,25 +142,23 @@ class Structure extends Indicator {
         }
         let bodyCrossUp = levels.find(level => isCrossed(this.opens[yesterday], this.closes[yesterday], level, level, true) && this.graph[date][level]["count"] > this.minCount);
         let bodyCrossDown = levels.find(level => isCrossed(this.opens[yesterday], this.closes[yesterday], level, level, false));
-        let greenCandle = this.opens[date] < this.closes[date];
 
         // find an upper level in case there is no upper limit
         let upperLevel = levels.find(level => level > this.prices[date]);
         let lowerLevel = levels.find(level => level < this.prices[date]);
         let limitReached = false;
-        let limitLevel = undefined;
-        if (lowerLevel) {
-            limitLevel = this.prices[date] + ( this.prices[date] - lowerLevel);
-        }
-        if (!upperLevel && limitLevel) {
-            limitReached = isCrossed(this.prices[yesterday], this.prices[date], limitLevel, limitLevel, true)
+        if (!upperLevel && this.limitLevel) {
+            limitReached = isCrossed(this.prices[yesterday], this.prices[date], this.limitLevel, this.limitLevel, true)
         }
         
         // buy if crossed a previous structure level
-        if (bodyCrossUp && greenCandle) {
+        if (bodyCrossUp && this.prices[yesterday] < this.prices[date]) {
+            if (lowerLevel) {
+                this.limitLevel = this.prices[date] + ( this.prices[date] - lowerLevel);
+            }
             return Indicator.BUY;
         }
-        else if (bodyCrossDown || limitReached) {
+        else if ((bodyCrossDown && this.prices[yesterday] > this.prices[date]) || limitReached) {
             return Indicator.SELL;
         }
         else {

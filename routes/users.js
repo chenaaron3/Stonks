@@ -4,6 +4,7 @@ var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
 let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
 let { getIndicator } = require('../helpers/backtest');
+let { addToWatchlist } = require('../helpers/stockstracker');
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
@@ -21,6 +22,17 @@ router.get('/', async function (req, res, next) {
         if (err) console.log(err);
     });
 });
+
+router.post('/watchlist', async function (req, res) {
+    let symbols = req.body.symbols;
+    try {
+        addToWatchlist(symbols);
+        res.send("ok");
+    }
+    catch {
+        res.send("failed");
+    }
+})
 
 router.get('/indicator', async function (req, res) {
     let symbol = req.query["symbol"];

@@ -26,6 +26,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import IconButton from '@material-ui/core/IconButton';
 import SettingsIcon from '@material-ui/icons/Settings';
+import ImportExportIcon from '@material-ui/icons/ImportExport';
 
 class Results extends React.Component {
     constructor(props) {
@@ -103,6 +104,28 @@ class Results extends React.Component {
         this.setState({ chartSettings: { ...this.state.chartSettings, [setting]: state } },
             () => {
                 this.props.setChartSettings(this.state.chartSettings);
+            });
+    }
+
+    // export buys
+    onExportClicked = () => {
+        let lastRecentDate = new Date()
+        lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
+        let symbolsToExport = [];
+        this.state.sortedSymbols.filter(symbol => {
+            let count = this.props.results["symbolData"][symbol]["holdings"].filter(d => new Date(d) > lastRecentDate).length;
+            if (count) {
+                symbolsToExport.push(symbol);
+            }
+        })
+        let data = { symbols: symbolsToExport };
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/watchlist`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
             });
     }
 
@@ -189,6 +212,9 @@ class Results extends React.Component {
                         }
                         {this.state.sortedSymbols.length != 0 && (
                             <>
+                                <IconButton color="primary" style={{ position: "absolute", top: 0, right: 0 }} onClick={this.onExportClicked}>
+                                    <ImportExportIcon />
+                                </IconButton>
                                 {dayFilter}
                                 {
                                     this.state.sortedSymbols.map((symbol, index) => {

@@ -23,7 +23,7 @@ function ensureUpdated() {
 	// check for new day
 	if (daysBetween(new Date(metadata["lastUpdated"]), new Date()) > 0) {
 		// market closed
-		if (pstHour > 13) {
+		if (pstHour >= 13) {
 			console.log("Update required!");
 			update();
 			metadata["lastUpdated"] = new Date().toString();

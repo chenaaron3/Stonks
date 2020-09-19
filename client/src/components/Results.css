@@ -21,6 +21,7 @@
 }
 
 .results-list {
+    position: relative;
     text-align: left;
     flex: 5;
     overflow: auto;

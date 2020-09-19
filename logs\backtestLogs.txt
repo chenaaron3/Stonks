@@ -374,3 +374,11 @@ Worker 1bejG5rs52: Finished backtest in 68 seconds
 Worker 90ePM6THLV: Starting backtest
 Worker 90ePM6THLV: Finished backtest in 1939 seconds
 Worker buRACkPesO: Starting backtest
+Worker buRACkPesO: Finished backtest in 1273 seconds
+Worker jXX8yX3HT6: Starting backtest
+Worker jXX8yX3HT6: Finished backtest in 1341 seconds
+Worker pJlcHQEQVA: Starting backtest
+Worker 6MPRPEWwNk: Starting backtest
+Worker 6MPRPEWwNk: Finished backtest in 1309 seconds
+Worker 6UTvnp8NUE: Starting backtest
+Worker 6UTvnp8NUE: Finished backtest in 1259 seconds

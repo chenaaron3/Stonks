@@ -306,6 +306,20 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             count = events.length;
                             percentProfit = previousResults["percentProfit"] * count;
                         }
+
+                        // start from the date after the last update
+                        for (let i = 0; i < dates.length; ++i) {
+                            let day = new Date(dates[i]);
+                            if (day > lastUpdated) {
+                                startIndex = i;
+                                break;
+                            }
+                        }
+                        // if theres no changes since last update
+                        if (startIndex == 0) {
+                            // end the backtest for this symbol
+                            startIndex = dates.length;
+                        }
                     }
 
                     // loops over dates and checks for buy signal
