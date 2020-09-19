@@ -25,8 +25,10 @@ router.get('/', async function (req, res, next) {
 
 router.post('/watchlist', async function (req, res) {
     let symbols = req.body.symbols;
+    let login = req.body.login;
+    let watchlist = req.body.watchlist;
     try {
-        addToWatchlist(symbols);
+        addToWatchlist(symbols, login, watchlist);
         res.send("ok");
     }
     catch {

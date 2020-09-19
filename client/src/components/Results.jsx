@@ -109,6 +109,27 @@ class Results extends React.Component {
 
     // export buys
     onExportClicked = () => {
+        // store locally
+        if (!localStorage.getItem("stocksTracker")) {
+            localStorage.setItem("stocksTracker", `{}`)
+        }
+
+        // get login if not stored
+        let login = JSON.parse(localStorage.getItem("stocksTracker"));
+        if (!login["username"]) {
+            login["username"] = prompt("Enter your StocksTracker username.");
+        }
+        if (!login["password"]) {
+            login["password"] = prompt("Enter your StocksTracker password.");
+        }
+        localStorage.setItem("stocksTracker", JSON.stringify(login));
+        if (!login["username"] || !login["password"]) {
+            return;
+        }
+
+        // get watchist
+        let watchlist = prompt("Enter the watchlist name.");
+
         let lastRecentDate = new Date()
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
         let symbolsToExport = [];
@@ -118,7 +139,7 @@ class Results extends React.Component {
                 symbolsToExport.push(symbol);
             }
         })
-        let data = { symbols: symbolsToExport };
+        let data = { symbols: symbolsToExport, login, watchlist };
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/watchlist`,
             {
                 method: 'POST',

@@ -1,12 +1,11 @@
 require('chromedriver');
 let webdriver = require('selenium-webdriver');
-let chrome    = require('selenium-webdriver/chrome');
+let chrome = require('selenium-webdriver/chrome');
 
-const login = { username: process.env.ST_USER, password: process.env.ST_PASS };
 const STOCKSTRACKER_URL = "https://www.stockstracker.com/";
 const XPATHS = { "watchlists": "/html/body/div[2]/table/tbody/tr/td[1]/div[2]/div[1]/div[2]/a" }
 
-async function addToWatchlist(symbols) {
+async function addToWatchlist(symbols, login, watchlist) {
     let options = new chrome.Options();
     options.addArguments('headless');
     let driver = new webdriver.Builder()
@@ -14,22 +13,27 @@ async function addToWatchlist(symbols) {
         .setChromeOptions(options)
         .build();
 
-    // login
-    await loginStocksTracker(driver);
+    try {
+        // login
+        await loginStocksTracker(driver, login);
 
-    // go to watchlist
-    await selectWatchlist(driver, "aaron");
+        // go to watchlist
+        await selectWatchlist(driver, watchlist);
 
-    // add symbols
-    for(let i = 0; i < symbols.length; ++i) {
-        let symbol = symbols[i];
-        await addSymbol(driver, symbol);
+        // add symbols
+        for (let i = 0; i < symbols.length; ++i) {
+            let symbol = symbols[i];
+            await addSymbol(driver, symbol);
+        }
+
+        console.log("DONE");
     }
-
-    driver.quit();
+    catch {
+        driver.quit();
+    }
 }
 
-async function loginStocksTracker(driver) {
+async function loginStocksTracker(driver, login) {
     // load page
     driver.get(STOCKSTRACKER_URL);
 
