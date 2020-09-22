@@ -32,7 +32,7 @@ class CreateBacktest extends React.Component {
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
             "Solid": { "fields": ["minLength", "maxRatio"], "default": [2, .1] },
-            "Structure": {"fields": ["period", "volatility", "minCount"], "default": [12, .05, 5]}
+            "Structure": { "fields": ["period", "volatility", "minCount"], "default": [12, .05, 5] }
         }
 
         // for each indicator
@@ -65,7 +65,7 @@ class CreateBacktest extends React.Component {
 
     // get results from api
     getResults = () => {
-        if (process.env.NODE_ENV == "production"){
+        if (process.env.NODE_ENV == "production") {
             let pass = prompt('Enter the secret code.');
             if (pass != "stonks") {
                 return;
@@ -105,6 +105,9 @@ class CreateBacktest extends React.Component {
         })
             .then(res => res.json())
             .then(results => {
+                console.log("STATUS:", results["status"]);
+                setTimeout(() => { alert(results["status"]); }, 1000);
+
                 let id = results["id"];
                 console.log(`Getting id ${id} from server!`);
                 this.props.setID(id);

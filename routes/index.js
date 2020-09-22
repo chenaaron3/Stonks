@@ -6,10 +6,11 @@ const { fork } = require('child_process');
 // own helpers
 const csv = require('csv');
 let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
-let { makeid } = require('../helpers/utils');
+let { makeid, daysBetween } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { getIndicator } = require('../helpers/backtest');
 let { getLatestPrice } = require('../helpers/stock');
+let { addJob } = require('../helpers/queue');
 
 // gets the most updated price for a stock
 router.get("/latestPrice", async (req, res) => {
@@ -45,7 +46,7 @@ router.get("/buySymbol", async (req, res) => {
 
     // add date
     if (!req.session["buys"][symbol].includes(date)) {
-        req.session["buys"][symbol].push({date, price});
+        req.session["buys"][symbol].push({ date, price });
     }
     console.log(req.session);
     res.json(req.session["buys"]);
@@ -177,27 +178,46 @@ router.get("/updateBacktest", async (req, res) => {
         res.send("Backtest ID is not valid!");
         return;
     }
-    let doc = await getDocument("results", id);
-    if (doc["status"] == "updating") {
-        res.send("Already Updating!");
+
+    let position = addJob(() => {
+        return new Promise(async resolveJob => {
+            let doc = await getDocument("results", id);
+            // same day needs no update
+            if (daysBetween(new Date(doc["lastUpdated"]), new Date()) < 1) {
+                resolveJob();
+                return;
+            }
+            // already updating
+            else if (doc["status"] == "updating") {
+                resolveJob();
+                return;
+            }
+            else {
+                setDocumentField(id, "status", "updating");
+            }
+            let strategyOptions = doc.results["strategyOptions"];
+
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "../helpers/worker.js"));
+            child.send({ type: "startBacktest", strategyOptions, id });
+            child.on('message', function (message) {
+                console.log(message);
+                if (message.status == "finished") {
+                    setDocumentField(id, "status", "ready");
+                    console.log("Trigger client", id);
+                    triggerChannel(id, "onUpdateFinished", { id: `${id}` });
+                    resolveJob();
+                }
+            });
+        });
+    });
+
+    if (position == 0) {
+        res.json({ status: "Updating your backtest!" });
     }
     else {
-        res.send("Updating backtest!");
-        setDocumentField(id, "status", "updating");
+        res.json({ status: `Backtest update will start within ${30 * position} minutes!` });
     }
-    let strategyOptions = doc.results["strategyOptions"];
-
-    // spawn child to do work
-    let child = fork(path.join(__dirname, "../helpers/worker.js"));
-    child.send({ type: "startBacktest", strategyOptions, id });
-    child.on('message', function (message) {
-        console.log(message);
-        if (message.status == "finished") {
-            setDocumentField(id, "status", "ready");
-            console.log("Trigger client", id);
-            triggerChannel(id, "onUpdateFinished", { id: `${id}` });
-        }
-    });
 });
 
 // gets the backtest results for all companies
@@ -213,19 +233,30 @@ router.post("/backtest", async (req, res) => {
 
     // add id to the database
     addID(id);
-    // send response so doesn't hang and gets the unique id
-    res.json({ "id": id });
 
-    // spawn child to do work
-    let child = fork(path.join(__dirname, "../helpers/worker.js"));
-    child.send({ type: "startBacktest", strategyOptions, id });
-    child.on('message', function (message) {
-        console.log(message);
-        if (message.status == "finished") {
-            console.log("Trigger client", id);
-            triggerChannel(id, "onResultsFinished", { id: `${id}` });
-        }
+    let position = addJob(() => {
+        return new Promise(async resolveJob => {
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "../helpers/worker.js"));
+            child.send({ type: "startBacktest", strategyOptions, id });
+            child.on('message', function (message) {
+                console.log(message);
+                if (message.status == "finished") {
+                    console.log("Trigger client", id);
+                    triggerChannel(id, "onResultsFinished", { id: `${id}` });
+                    resolveJob();
+                }
+            });
+        });
     });
+
+    // send response so doesn't hang and gets the unique id
+    if (position == 0) {
+        res.json({ id, status: "Starting your backtest!" });
+    }
+    else {
+        res.json({ id, status: `Backtest will start within ${30 * position} minutes!` });
+    }
 })
 
 module.exports = router;

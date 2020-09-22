@@ -382,3 +382,46 @@ Worker 6MPRPEWwNk: Starting backtest
 Worker 6MPRPEWwNk: Finished backtest in 1309 seconds
 Worker 6UTvnp8NUE: Starting backtest
 Worker 6UTvnp8NUE: Finished backtest in 1259 seconds
+Worker JJshdFRuru: Starting backtest
+Worker JJshdFRuru: Finished backtest in 1932 seconds
+Worker O2GoXsRCKA: Starting backtest
+Worker 5ePZNU9ldn: Starting backtest
+Worker F1fSrTX5zb: Starting backtest
+Worker 1kEUzaeyrG: Starting backtest
+Worker 1kEUzaeyrG: Finished backtest in 1738 seconds
+Worker nVw0EBbyTR: Starting backtest
+Worker nVw0EBbyTR: Finished backtest in 99 seconds
+Worker YI9Aagwat3: Starting backtest
+Worker YI9Aagwat3: Finished backtest in 494 seconds
+Worker 949hWY0rEu: Starting backtest
+Worker 949hWY0rEu: Starting backtest
+Worker 949hWY0rEu: Starting backtest
+Worker 949hWY0rEu: Finished backtest in 101 seconds
+Worker YLHj0Y79hS: Starting backtest
+Worker YLHj0Y79hS: Finished backtest in 106 seconds
+Worker rF4uousRCR: Starting backtest
+Worker rF4uousRCR: Finished backtest in 119 seconds
+Worker p4o47B6jej: Starting backtest
+Worker p4o47B6jej: Finished backtest in 140 seconds
+Worker J2gZu3oSFC: Starting backtest
+Worker J2gZu3oSFC: Finished backtest in 78 seconds
+Worker JJshdFRuru: Starting backtest
+Worker JJshdFRuru: Finished backtest in 80 seconds
+Worker hmK1NIy1gZ: Starting backtest
+Worker hmK1NIy1gZ: Finished backtest in 75 seconds
+Worker J2gZu3oSFC: Starting backtest
+Worker J2gZu3oSFC: Finished backtest in 72 seconds
+Worker zBDnLeEiXM: Starting backtest
+Worker zBDnLeEiXM: Finished backtest in 101 seconds
+Worker 8Yqofte2B6: Starting backtest
+Worker 8Yqofte2B6: Finished backtest in 90 seconds
+Worker UYXLvRNhcT: Starting backtest
+Worker UYXLvRNhcT: Finished backtest in 94 seconds
+Worker buRACkPesO: Starting backtest
+Worker buRACkPesO: Finished backtest in 115 seconds
+Worker 90ePM6THLV: Starting backtest
+Worker 90ePM6THLV: Finished backtest in 117 seconds
+Worker 6hqpZkcDv8: Starting backtest
+Worker PYWe0zxEaq: Starting backtest
+Worker kvEvBwRMqB: Starting backtest
+Worker 963xRSpT0I: Starting backtest

@@ -233,7 +233,7 @@ class Chart extends React.Component {
                 return value.toFixed(4);
             }
             catch {
-                console.log(value, typeof(value));
+                console.log(value, typeof (value));
                 return value;
             }
         }
@@ -377,6 +377,24 @@ class Chart extends React.Component {
 
     getSupportResistance = () => {
         return new Promise((resolve, reject) => {
+            let data = { indicatorName: "Structure", indicatorOptions: { "period": 75, "volatility": .05 }, symbol: this.props.symbol };
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(pivots => {
+                    try {
+                        this.pivots = Object.keys(pivots["pivots"]);
+                    }
+                    catch {
+
+                    }
+                })
+
             let graphData = { indicatorName: "EMA", indicatorOptions: { "period": 5 }, symbol: this.props.symbol };
 
             fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
@@ -631,6 +649,13 @@ class Chart extends React.Component {
         } = props;
 
         let dotRadius = props.size;
+
+        // debug pivots
+        if (this.pivots && this.pivots.includes(payload["date"])) {
+            return (
+                <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="blue" />
+            );
+        }
 
         // if is a buy date
         if (this.state.buyDates.has(payload["date"])) {

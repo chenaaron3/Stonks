@@ -90,12 +90,14 @@ process.on('message', async (msg) => {
             // update the stock
             await updateStock(document, updateDate);
         }
+        // notify parent
+        process.send({ status: "finished" });
 
         // log end information
         let time = Math.floor((Date.now() - start) / 1000);
         fs.appendFileSync(updateLogs,
             `Worker ${msg.updateID}: Finished update for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
-        process.exit(0);
+        setTimeout(() => { process.exit(0); }, 1000)
     }
     // thread to create dataset for ML
     else if (msg.type == "startCreatingDataset") {

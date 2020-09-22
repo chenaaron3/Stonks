@@ -1,4 +1,4 @@
-let { isCrossed, getExponentialMovingAverage, clampRange } = require('../utils');
+let { isCrossed, getExponentialMovingAverage, daysBetween } = require('../utils');
 let Indicator = require('./indicator');
 
 class Structure extends Indicator {
@@ -7,6 +7,7 @@ class Structure extends Indicator {
         this.volatility = options["volatility"];
         this.minCount = options["minCount"];
         this.name = "Structure";
+        this.pivots = {};
         this.graph = this.calculate();
     }
 
@@ -16,41 +17,50 @@ class Structure extends Indicator {
         let previousPrice = smoothedGraph[this.dates[0]];
         let previousSlope = "P";
         let merged = {};
+        let minIndex = 0;
+        let maxIndex = 0;
+        let sleep = 0;
         for (let i = 1; i < this.dates.length; ++i) {
+            sleep -= 1;
             // console.log(i, "/", this.dates.length);
             let date = this.dates[i];
+            let price = this.prices[date];
             let difference = smoothedGraph[date] - previousPrice;
+
+            // keep track of min/max
+            if (this.prices[this.dates[minIndex]] > price) {
+                minIndex = i;
+            }
+            if (this.prices[this.dates[maxIndex]] < price) {
+                maxIndex = i;
+            }
+
             // if has a direction, check for possible reversal
             if (difference != 0) {
                 let slope = difference > 0 ? "P" : "N";
                 let level = undefined;
                 // different slope
                 if (previousSlope != slope) {
-                    // if slope up, is support
-                    if (slope == "P") {
-                        // look for local min
-                        let minIndex = i;
-                        while (minIndex > 1) {
-                            if (this.prices[this.dates[minIndex - 1]] > this.prices[this.dates[minIndex]]) break;
-                            minIndex--;
+                    if (sleep <= 0) {
+                        sleep = 7;
+                        // if slope up, is support
+                        if (slope == "P") {
+                            level = { price: this.prices[this.dates[minIndex]], date: new Date(this.dates[minIndex]) };
                         }
-                        level = { price: this.prices[this.dates[minIndex]], date: new Date(this.dates[minIndex]) };
-                    }
-                    // if slope down, is support
-                    else if (slope == "N") {
-                        // look for local max
-                        let maxIndex = i;
-                        while (maxIndex > 1) {
-                            if (this.prices[this.dates[maxIndex - 1]] < this.prices[this.dates[maxIndex]]) break;
-                            maxIndex--;
+                        // if slope down, is support
+                        else if (slope == "N") {
+                            level = { price: this.prices[this.dates[maxIndex]], date: new Date(this.dates[maxIndex]) };
                         }
-                        level = { price: this.prices[this.dates[maxIndex]], date: new Date(this.dates[maxIndex]) };
+                        this.pivots[level["date"].toISOString()] = level["price"];
+                        minIndex = i;
+                        maxIndex = i;
                     }
                 }
 
                 if (level) {
                     let groupMatch = undefined;
                     let groupAverages = Object.keys(merged);
+
                     // look for a group that is close to this level
                     for (let i = 0; i < groupAverages.length; ++i) {
                         let groupAverage = groupAverages[i];
@@ -59,21 +69,33 @@ class Structure extends Indicator {
                             break;
                         }
                     }
+
                     // if found a group, add to group
                     if (groupMatch) {
                         let oldStart = merged[groupMatch]["start"];
                         let oldCount = merged[groupMatch]["count"];
                         let newCount = oldCount + 1;
                         let newAverage = (groupMatch * oldCount + level["price"]) / newCount;
+                        // newAverage = groupMatch;
+                        let newSupport = merged[groupMatch]["support"] || slope == "P";
+                        let newResistance = merged[groupMatch]["resistance"] || slope == "N";
                         delete merged[groupMatch];
-                        merged[newAverage] = { count: newCount, end: level["date"], start: oldStart };
+                        merged[newAverage] = {
+                            count: newCount, end: level["date"], start: oldStart,
+                            support: newSupport, resistance: newResistance
+                        };
                     }
+
                     // if not found, create a group
                     else {
-                        merged[level["price"]] = { count: 1, end: level["date"], start: level["date"] };
+                        merged[level["price"]] = {
+                            count: 1, end: level["date"], start: level["date"],
+                            support: slope == "P", resistance: slope == "N"
+                        };
                     }
                 }
 
+                // each date has a copy of lines
                 graph[date] = { ...merged };
                 previousSlope = slope;
             }
@@ -83,6 +105,8 @@ class Structure extends Indicator {
     }
 
     getGraph() {
+        // return { pivots: this.pivots };
+
         // greatest level below price
         let support = {};
         // smallest level above price 
@@ -92,7 +116,16 @@ class Structure extends Indicator {
             let price = this.prices[date];
             let min = undefined;
             let max = undefined;
-            Object.keys(this.graph[date]).forEach(level => {
+            let relevantDate = new Date(date);
+            relevantDate.setDate(relevantDate.getDate() - 360 * 2)
+            Object.keys(this.graph[date])
+                .filter(level => this.graph[date][level]["end"] >= relevantDate)
+                .forEach(level => {
+                let { count, start, end, support, resistance } = this.graph[date][level];
+                // count <= 20 || daysBetween(start, end) < 30
+                if (!(support && resistance)) {
+                    // return;
+                }
                 // potential max
                 if (level < price) {
                     if (max) {
@@ -116,7 +149,7 @@ class Structure extends Indicator {
             resistance[date] = min;
         })
 
-        return { support, resistance };
+        return { support, resistance, pivots: this.pivots };
     }
 
     getValue(date) {
@@ -129,36 +162,52 @@ class Structure extends Indicator {
 
     getAction(date) {
         let todayIndex = this.dates.indexOf(date);
-        let yesterdayIndex = todayIndex - 1;
-        let yesterday = this.dates[yesterdayIndex];
+        let yesterday = this.dates[todayIndex - 1];
+        let beforeYesterday = this.dates[todayIndex - 2];
 
         // Buy if candle crossed any major structure yesterday and close above today
-        let levels;//.filter(level => this.graph[date][level]["start"] <= date && this.graph[date][level]["end"] >= date);
+        let levels;
         if (this.graph.hasOwnProperty(date)) {
-            levels = Object.keys(this.graph[date]);
+            let relevantDate = new Date(date);
+            relevantDate.setDate(relevantDate.getDate() - 720)
+            levels = Object.keys(this.graph[date]).filter(level => this.graph[date][level]["end"] >= relevantDate);
         }
         else {
             return Indicator.NOACTION
         }
-        let bodyCrossUp = levels.find(level => isCrossed(this.opens[yesterday], this.closes[yesterday], level, level, true) && this.graph[date][level]["count"] > this.minCount);
-        let bodyCrossDown = levels.find(level => isCrossed(this.opens[yesterday], this.closes[yesterday], level, level, false));
+
+        // price crosses
+        let yesterdayBodyCrossUp = levels.find(level => isCrossed(this.prices[beforeYesterday], this.prices[yesterday], level, level, true)); // && this.graph[date][level]["count"] > this.minCount
+        let yetserdayBodyCrossDown = levels.find(level => isCrossed(this.prices[beforeYesterday], this.prices[yesterday], level, level, false));
+        let todayBodyCrossUp = levels.find(level => isCrossed(this.prices[yesterday], this.prices[date], level, level, true));
+        let todayBodyCrossDown = levels.find(level => isCrossed(this.prices[yesterday], this.prices[date], level, level, false));
 
         // find an upper level in case there is no upper limit
-        let upperLevel = levels.find(level => level > this.prices[date]);
-        let lowerLevel = levels.find(level => level < this.prices[date]);
+        let upperLevel = Math.min(...levels.filter(level => level > this.prices[date]));
+        let lowerLevel = Math.max(...levels.filter(level => level < this.prices[date]));
         let limitReached = false;
         if (!upperLevel && this.limitLevel) {
             limitReached = isCrossed(this.prices[yesterday], this.prices[date], this.limitLevel, this.limitLevel, true)
         }
-        
-        // buy if crossed a previous structure level
-        if (bodyCrossUp && this.prices[yesterday] < this.prices[date]) {
+
+        // if today cross new level, sell
+        if (todayBodyCrossUp) {
+            return Indicator.SELL;
+        }
+
+        // if yesterday cross and today still above level
+        if (yesterdayBodyCrossUp && this.prices[date] > yesterdayBodyCrossUp) {
+            // make sure not already too high
+            if (upperLevel && this.prices[date] > (upperLevel + lowerLevel) / 2) {
+                return Indicator.NOACTION;
+            }
+            // track limit
             if (lowerLevel) {
-                this.limitLevel = this.prices[date] + ( this.prices[date] - lowerLevel);
+                this.limitLevel = this.prices[date] + (this.prices[date] - lowerLevel);
             }
             return Indicator.BUY;
         }
-        else if ((bodyCrossDown && this.prices[yesterday] > this.prices[date]) || limitReached) {
+        else if ((yetserdayBodyCrossDown && this.prices[yesterday] > this.prices[date]) || limitReached) {
             return Indicator.SELL;
         }
         else {

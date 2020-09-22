@@ -20,7 +20,6 @@ class SavedResults extends React.Component {
             method: 'GET'
         }).then(res => res.json())
             .then(results => {
-                console.log(results["error"]);
                 // if results are not ready
                 if (results["error"]) {
                     alert(results["error"]);
@@ -78,7 +77,7 @@ class SavedResults extends React.Component {
                 {this.props.savedResults.length != 0 && (
                     this.props.savedResults.map((save, index) => {
                         return <SavedResult id={save["id"]} display={save["display"]} fetchBacktestResults={this.fetchBacktestResults}
-                            editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${index}`} />
+                            editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${save["id"]}`} />
                     })
                 )
                 }

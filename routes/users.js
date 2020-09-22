@@ -5,6 +5,7 @@ var fetch = require('node-fetch');
 let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
 let { getIndicator } = require('../helpers/backtest');
 let { addToWatchlist } = require('../helpers/stockstracker');
+let { addJob } = require('../helpers/queue');
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
@@ -23,16 +24,33 @@ router.get('/', async function (req, res, next) {
     });
 });
 
+router.get('/job', async function (req, res) {
+    addJob(() => {
+        return new Promise(async res => {
+            await new Promise(r => setTimeout(r, 5000));
+            console.log(req.query);
+            res();
+        })
+    });
+
+    res.send("ok");
+})
+
 router.post('/watchlist', async function (req, res) {
     let symbols = req.body.symbols;
     let login = req.body.login;
     let watchlist = req.body.watchlist;
-    try {
-        addToWatchlist(symbols, login, watchlist);
-        res.send("ok");
+    let position = addJob(() => {
+        return new Promise(async resolveJob => {
+            await addToWatchlist(symbols, login, watchlist);
+            resolveJob();
+        })
+    }, true)
+    if (position == 0) {
+        res.json({ status: "Adding to your watchlist!" });
     }
-    catch {
-        res.send("failed");
+    else {
+        res.json({ status: `Will add to your watchlist within ${30 * position} minutes!` });
     }
 })
 

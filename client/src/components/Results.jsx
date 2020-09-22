@@ -63,12 +63,6 @@ class Results extends React.Component {
         }
     }
 
-    // send request to update a backtest
-    updateBacktest = () => {
-        this.setState({ updateProgress: 0 });
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/updateBacktest?id=${this.props.id}`);
-    }
-
     // load initial bought list
     getBoughtSymbols = () => {
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/boughtSymbols`)
@@ -129,6 +123,9 @@ class Results extends React.Component {
 
         // get watchist
         let watchlist = prompt("Enter the watchlist name.");
+        if (!watchlist) {
+            return;
+        }
 
         let lastRecentDate = new Date()
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
@@ -147,7 +144,9 @@ class Results extends React.Component {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data),
-            });
+            })
+            .then(res => res.json())
+            .then(json => alert(json["status"]));
     }
 
     render() {

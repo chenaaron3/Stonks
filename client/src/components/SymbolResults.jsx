@@ -1,10 +1,12 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewEvent } from '../redux';
+import { viewEvent, viewStock } from '../redux';
 import './SymbolResults.css';
 import 'react-tabs/style/react-tabs.css';
 import { formatDate, daysBetween } from "../helpers/utils";
 import ArrowForwardSharpIcon from '@material-ui/icons/ArrowForwardSharp';
+import CasinoIcon from '@material-ui/icons/Casino';
+import IconButton from '@material-ui/core/IconButton';
 
 class SymbolResults extends React.Component {
     constructor(props) {
@@ -39,6 +41,11 @@ class SymbolResults extends React.Component {
         }
     }
 
+    onDiceRoll = () => {
+        let randomIndex = Math.floor(Math.random() * this.props.results["events"].length);
+        this.props.viewEvent(randomIndex);
+    }
+
     render() {
         let profit = this.props.results["profit"].toFixed(2);
         let percentProfit = (100 * this.props.results["percentProfit"]).toFixed(4);
@@ -47,6 +54,9 @@ class SymbolResults extends React.Component {
         return (
             <>
                 <div className="symbol-results">
+                    <IconButton className="symbol-results-random" style={{ position: "absolute" }} onClick={this.onDiceRoll}>
+                        <CasinoIcon />
+                    </IconButton>
                     <h2 className="symbol-results-title">{this.props.symbol}</h2>
                     <div className="symbol-results-body">
                         <div>Wins: {this.state.numWins}</div>
@@ -79,4 +89,4 @@ let mapStateToProps = (state) => {
     return { results: state["backtestResults"]["symbolData"][state.selectedSymbol], symbol: state.selectedSymbol };
 };
 
-export default connect(mapStateToProps, { viewEvent })(SymbolResults);
+export default connect(mapStateToProps, { viewEvent, viewStock })(SymbolResults);

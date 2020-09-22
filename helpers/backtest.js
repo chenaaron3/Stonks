@@ -165,10 +165,6 @@ function getPrices(symbol) {
 
 // given symbol, find intersections
 function findIntersections(strategyOptions, symbol, previousResults, lastUpdated) {
-    //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
-    // "SMA":{"period":9},
-    // "SMASupport":{"period":180},
-
     // let strategyOptions = {
     //     "indicators": {
     //         "SMA": { "period": 9 },
@@ -209,7 +205,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                 break;
                             }
                         }
-                        cutoffIndex = Math.max(cutoffIndex, cutoffIndex - 200);
+                        cutoffIndex = Math.max(0, cutoffIndex - 200);
                     }
 
                     for(; cutoffIndex < json.length; ++cutoffIndex){

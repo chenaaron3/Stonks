@@ -6,6 +6,12 @@
     height: 100%;
     text-align: center;
     max-height: 50vh;
+    position: relative;
+}
+
+.symbol-results-random {
+    top: 0;
+    right: 0;
 }
 
 .symbol-results-title {

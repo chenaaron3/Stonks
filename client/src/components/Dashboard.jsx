@@ -150,7 +150,9 @@ class Dashboard extends React.Component {
     // send request to update a backtest
     updateBacktest = () => {
         this.setState({ updateProgress: 0 });
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/updateBacktest?id=${this.props.id}`);
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/updateBacktest?id=${this.props.id}`)
+            .then(res => res.json())
+            .then(json => alert(json["status"]));
     }
 
     // reload the page when update is complete
@@ -182,7 +184,7 @@ class Dashboard extends React.Component {
         buyIndicators = buyIndicators.split("\n").filter(x => x.trim().length > 0).join("\n");
         let sellIndicators = JSON.stringify(this.props.results["strategyOptions"]["sellIndicators"], null, 2).replace(/[{},"]/g, "");
         sellIndicators = sellIndicators.split("\n").filter(x => x.trim().length > 0).join("\n");
-        
+
         let innerRadius = "70%";
         let outerRadius = "90%";
 
