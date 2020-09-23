@@ -425,3 +425,49 @@ Worker 6hqpZkcDv8: Starting backtest
 Worker PYWe0zxEaq: Starting backtest
 Worker kvEvBwRMqB: Starting backtest
 Worker 963xRSpT0I: Starting backtest
+Worker ZmNo6OKC67: Starting backtest
+Worker edt2fsuPsy: Starting backtest
+Worker edt2fsuPsy: Finished backtest in 577 seconds
+Worker HGS5x8jjiA: Starting backtest
+Worker HGS5x8jjiA: Finished backtest in 579 seconds
+Worker JRJWqSpPsN: Starting backtest
+Worker JRJWqSpPsN: Finished backtest in 789 seconds
+Worker wUpsjnA6RE: Starting backtest
+Worker wUpsjnA6RE: Finished backtest in 723 seconds
+Worker CRTZikc57p: Starting backtest
+Worker CRTZikc57p: Finished backtest in 828 seconds
+Worker ixdC1Kv6sD: Starting backtest
+Worker 59PvAmOVgt: Starting backtest
+Worker 59PvAmOVgt: Finished backtest in 409 seconds
+Worker nreanl3W8m: Starting backtest
+Worker nreanl3W8m: Finished backtest in 382 seconds
+Worker ugZJAKno58: Starting backtest
+Worker ugZJAKno58: Finished backtest in 543 seconds
+Worker GUCtoDgV8I: Starting backtest
+Worker GUCtoDgV8I: Finished backtest in 532 seconds
+Worker fXm8ltk8FN: Starting backtest
+Worker fXm8ltk8FN: Finished backtest in 579 seconds
+Worker CQjNlPauC1: Starting backtest
+Worker CQjNlPauC1: Finished backtest in 583 seconds
+Worker z3HqTxNH7p: Starting backtest
+Worker z3HqTxNH7p: Finished backtest in 1604 seconds
+Worker mCxjvTLdsj: Starting backtest
+Worker cl6JVC2sJS: Starting backtest
+Worker 6cLmRfeXHn: Starting backtest
+Worker 6cLmRfeXHn: Finished backtest in 1390 seconds
+Worker ojDrJnySKz: Starting backtest
+Worker ojDrJnySKz: Finished backtest in 1464 seconds
+Worker nhRh7sEz1Z: Starting backtest
+Worker EkMNujX8A1: Starting backtest
+Worker prdbQh4elL: Starting backtest
+Worker prdbQh4elL: Finished backtest in 1397 seconds
+Worker P8T38TGMMp: Starting backtest
+Worker P8T38TGMMp: Finished backtest in 1284 seconds
+Worker ZRaxNdZ48A: Starting backtest
+Worker ZRaxNdZ48A: Finished backtest in 28315 seconds
+Worker IlE9oAbzVm: Starting backtest
+Worker IlE9oAbzVm: Finished backtest in 1573 seconds
+Worker jVbKqRS9Rq: Starting backtest
+Worker jVbKqRS9Rq: Finished backtest in 1526 seconds
+Worker cV6c5OAyhq: Starting backtest
+Worker cV6c5OAyhq: Finished backtest in 545 seconds

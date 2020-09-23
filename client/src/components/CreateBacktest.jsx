@@ -23,16 +23,17 @@ class CreateBacktest extends React.Component {
             buyOptions: {},
             sellOptions: {},
             stopLossHigh: 0,
+            minVolume: 1000000,
         };
         this.indicators = {
-            "SMA": { "fields": ["period", "minDuration"], "default": [180, 3] },
-            "EMA": { "fields": ["period", "minDuration"], "default": [5, 3] },
+            "SMA": { "fields": ["period", "minDuration"], "default": [180, 1] },
+            "EMA": { "fields": ["period", "minDuration"], "default": [5, 1] },
             "RSI": { "fields": ["period", "underbought", "overbought"], "default": [14, 30, 70] },
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
-            "Solid": { "fields": ["minLength", "maxRatio"], "default": [2, .1] },
-            "Structure": { "fields": ["period", "volatility", "minCount"], "default": [12, .05, 5] }
+            "Hammer": { "fields": ["headRatio", "legRatio", "expiration"], "default": [1, 2, 0] },
+            "Structure": { "fields": ["period", "volatility", "minCount"], "default": [75, .05, 1] }
         }
 
         // for each indicator
@@ -82,7 +83,7 @@ class CreateBacktest extends React.Component {
             "mainSellIndicator": this.state.mainSellIndicator,
             // "stopLossLow": .98,
             "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
-            "minVolume": 1000000,
+            "minVolume": this.state.minVolume,
             "expiration": 7,
             "multipleBuys": true
         };
@@ -294,11 +295,20 @@ class CreateBacktest extends React.Component {
                                             <div className="create-backtest-additional-options">
                                                 <h3 className="create-backtest-subtitle">Additional Options</h3>
                                                 <div>
-                                                    <TextField label="Take profit" value={this.state.stopLossHigh} onChange={(e) => {
-                                                        let newValue = parseFloat(e.target.value);
-                                                        if (!newValue) newValue = 0;
-                                                        this.setState({ stopLossHigh: newValue })
-                                                    }} helperText="20 to sell at 20% profit. 0 to disable." />
+                                                    <TextField label="Take profit" value={this.state.stopLossHigh}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ stopLossHigh: newValue })
+                                                        }} helperText="20 to sell at 20% profit. 0 to disable." />
+                                                </div>
+                                                <div>
+                                                    <TextField label="Minimum Volume" value={this.state.minVolume}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ minVolume: newValue })
+                                                        }} helperText="Will only execute buy if above volume." />
                                                 </div>
                                             </div>
                                             <div className="create-backtest-review-criterias">

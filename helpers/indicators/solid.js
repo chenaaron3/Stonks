@@ -17,8 +17,8 @@ class Solid extends Indicator {
 	}
 
 	normalize(data) {
-        return clampRange(data);
-    }
+		return clampRange(data);
+	}
 
 	getAction(date) {
 		let todayIndex = this.dates.indexOf(date);
@@ -28,7 +28,8 @@ class Solid extends Indicator {
 		for (let i = firstDayIndex; i <= todayIndex; ++i) {
 			let day = this.dates[i];
 			let candle = this.closes[day] - this.opens[day];
-			if ( candle > 0 && candle * (1 + this.maxRatio) >= this.highs[day]) {
+			let head = this.highs[day] - this.closes[day];
+			if (candle < 0 || head / candle > this.headRatio) {
 				buy = false;
 				break;
 			}

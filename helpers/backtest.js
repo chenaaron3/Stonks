@@ -19,6 +19,7 @@ let MACDPos = require('../helpers/indicators/macdPos');
 let GC = require('../helpers/indicators/gc');
 let ADX = require('../helpers/indicators/adx');
 let Solid = require('../helpers/indicators/solid');
+let Hammer = require('../helpers/indicators/hammer');
 let Structure = require('../helpers/indicators/structure');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
@@ -29,6 +30,7 @@ let INDICATOR_OBJECTS = {
     "GC": GC,
     "ADX": ADX,
     "Solid": Solid,
+    "Hammer": Hammer,
     "Structure": Structure
 }
 

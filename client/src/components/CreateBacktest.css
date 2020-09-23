@@ -73,7 +73,14 @@
     align-items: flex-start;
 }
 
-.create-backtest-additional-options {}
+.create-backtest-additional-options {
+    display: flex;
+    flex-direction: column;
+}
+
+.create-backtest-additional-options > * {
+    margin-bottom: 1vh;
+}
 
 .create-backtest-review-criterias {}
 

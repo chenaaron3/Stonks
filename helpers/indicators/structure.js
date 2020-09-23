@@ -113,40 +113,11 @@ class Structure extends Indicator {
         let resistance = {};
 
         Object.keys(this.graph).forEach(date => {
-            let price = this.prices[date];
-            let min = undefined;
-            let max = undefined;
             let relevantDate = new Date(date);
             relevantDate.setDate(relevantDate.getDate() - 360 * 2)
-            Object.keys(this.graph[date])
-                .filter(level => this.graph[date][level]["end"] >= relevantDate)
-                .forEach(level => {
-                let { count, start, end, support, resistance } = this.graph[date][level];
-                // count <= 20 || daysBetween(start, end) < 30
-                if (!(support && resistance)) {
-                    // return;
-                }
-                // potential max
-                if (level < price) {
-                    if (max) {
-                        max = Math.max(max, level);
-                    }
-                    else {
-                        max = level;
-                    }
-                }
-                // potential min
-                else if (level > price) {
-                    if (min) {
-                        min = Math.min(min, level);
-                    }
-                    else {
-                        min = level;
-                    }
-                }
-            });
-            support[date] = max;
-            resistance[date] = min;
+            let levels = Object.keys(this.graph[date]).filter(level => this.graph[date][level]["end"] >= relevantDate);            
+            support[date] = Math.max(...levels.filter(level => level < this.prices[date]));
+            resistance[date] = Math.min(...levels.filter(level => level > this.prices[date]));
         })
 
         return { support, resistance, pivots: this.pivots };

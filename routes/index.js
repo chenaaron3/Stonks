@@ -162,6 +162,11 @@ router.post("/priceGraph", async (req, res) => {
         Object.keys(indicators).forEach(indicatorName => {
             let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
             indicatorGraphs[indicatorName] = indicator.getGraph();
+            if (indicatorName == "Structure" || indicatorName == "SMA") {
+                dates.forEach(day => {
+                    indicator.getAction(day);
+                })
+            }
         })
 
         res.json({ price: pricesJSON, indicators: indicatorGraphs });
