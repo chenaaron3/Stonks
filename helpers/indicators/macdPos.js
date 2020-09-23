@@ -6,12 +6,11 @@ class MACDPos extends Indicator {
 		this.ema1 = options["ema1"];
 		this.ema2 = options["ema2"];
 		this.signalPeriod = options["signalPeriod"];
-		this.name = "MACD";
+		this.buyThreshold = options["buyThreshold"];
+		this.name = "MACD2";
 		this.graph = this.calculate();
 		this.signalLine = this.signal();
 		this.histogram = this.histogram();
-        this.buyThreshold = -0.01;
-        this.sellThreshold = 1;
 	}
 
 	calculate() {
@@ -53,13 +52,8 @@ class MACDPos extends Indicator {
 
 		let yesterdayMACD = this.graph[yesterday];
 		let todayMACD = this.graph[date];
-		let yesterdaySignal = this.signalLine[yesterday];
-		let todaySignal = this.signalLine[date];
 
-		let isCrossedUp = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, true); // green to red
         let isCrossedBuyThreshold = isCrossed(yesterdayMACD, todayMACD, this.buyThreshold, this.buyThreshold, true);
-        let isCrossedSellThreshold = isCrossed(yesterdayMACD, todayMACD, this.sellThreshold, this.sellThreshold, true)
-		let green = this.histogram[date] > 0;
 		let red = this.histogram[date] < 0;
 
         if (isCrossedBuyThreshold) {

@@ -30,6 +30,7 @@ class CreateBacktest extends React.Component {
             "EMA": { "fields": ["period", "minDuration"], "default": [5, 1] },
             "RSI": { "fields": ["period", "underbought", "overbought"], "default": [14, 30, 70] },
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
+            "MACD2": { "fields": ["ema1", "ema2", "signalPeriod", "buyThreshold"], "default": [12, 26, 9, -.01] },
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
             "Hammer": { "fields": ["headRatio", "legRatio", "expiration"], "default": [1, 2, 0] },
