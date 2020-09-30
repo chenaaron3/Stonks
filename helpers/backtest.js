@@ -401,7 +401,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             });
 
                             // if all supports agree or stoploss triggered, sell the stock
-                            if (allIndicatorsSell || stopLossTriggered) {
+                            if (allIndicatorsSell || stopLossTrades.length > 0) {
                                 let newBuyPrices = [];
                                 let newBuyDates = [];
 

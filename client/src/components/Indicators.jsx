@@ -16,7 +16,7 @@ class Indicators extends React.Component {
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
-            "Structure": {"fields": ["period", "volatility"], "default": [12, .05]}
+            "Structure": {"fields": ["period", "volatility"], "default": [75, .05]}
         }
     }
 

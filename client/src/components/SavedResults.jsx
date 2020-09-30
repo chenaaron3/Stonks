@@ -7,12 +7,20 @@ import { setBacktestResults, setSavedResults, viewStock, setPageIndex } from '..
 class SavedResults extends React.Component {
     constructor(props) {
         super(props);
+
+        let demoID = "GUpzkgGRrS"
+
         // create saved results if it doesnt exist
         if (!localStorage.getItem("savedResults")) {
-            localStorage.setItem("savedResults", `[{"id":"2O7OFqqI9Z","display":"Demo"}]`)
+            localStorage.setItem("savedResults", `[{"id":"${demoID}","display":"Demo"}]`)
+        }
+        // check if demo exists
+        let savedResults = JSON.parse(localStorage.getItem("savedResults"));
+        if (!savedResults.some(e => e["id"] == demoID)) {
+            savedResults.unshift({ id: demoID, display: "Demo" });
         }
 
-        this.props.setSavedResults(JSON.parse(localStorage.getItem("savedResults")))
+        this.props.setSavedResults(savedResults)
     }
 
     fetchBacktestResults = (id) => {

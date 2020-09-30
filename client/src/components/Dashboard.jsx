@@ -61,6 +61,10 @@ class Dashboard extends React.Component {
                         yearlyData[buyYear] = { winTrades: 0, lossTrades: 0, profit: 0 };
                     }
 
+                    if (Math.abs(event["profit"]) > 100000) {
+                        return;
+                    }
+
                     if (event["profit"] < 0) {
                         numLosses += 1;
                         lossSpan += event["span"];
@@ -75,9 +79,11 @@ class Dashboard extends React.Component {
                         winPercentProfit += event["percentProfit"];
                         yearlyData[buyYear]["winTrades"]++;
                     }
+
                     yearlyData[buyYear]["profit"] += event["profit"];
                 })
             })
+
             // span adjustments
             winSpan /= numWins;
             winSpan = Math.floor(winSpan);

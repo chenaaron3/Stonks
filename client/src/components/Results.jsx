@@ -45,9 +45,10 @@ class Results extends React.Component {
 
     // statistical analysis (win/loss)
     analyze() {
+        let sortBy = "percentProfit";
         // get the sorted symbols
         let sortedSymbols = Object.keys(this.props.results["symbolData"]);
-        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["percentProfit"] - this.props.results["symbolData"][a]["percentProfit"]);
+        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b][sortBy] - this.props.results["symbolData"][a][sortBy]);
         this.setState({ sortedSymbols });
     }
 
