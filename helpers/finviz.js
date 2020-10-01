@@ -19,6 +19,8 @@ const XPATHS = {
 async function addToFinvizWatchlist(symbols, login, watchlist) {
     let options = new chrome.Options();
     options.addArguments('headless');
+    options.addArguments('no-sandbox');
+    options.addArguments('disable-gpu');
     let driver = new webdriver.Builder()
         .withCapabilities(webdriver.Capabilities.chrome())
         .setChromeOptions(options)
@@ -71,17 +73,20 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         let mainWindow = driver.getWindowHandle();
 
         // calculate the shares
-        removeAds(driver);
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
         await calculateShares.click();
+
         // wait for alert
         await new Promise(r => setTimeout(r, 1000));
-        await driver.switchTo().alert().accept();
+        try {
+            await driver.switchTo().alert().accept();
+        }
+        catch { }
+        await new Promise(r => setTimeout(r, 1000));
 
         // switch to main frame
         await driver.switchTo().window(mainWindow);
         // save
-        removeAds(driver);
         await saveWatchlist(driver);
 
         console.log("DONE");
