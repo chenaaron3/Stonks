@@ -36,6 +36,7 @@ class Results extends React.Component {
             sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
             chartSettings: {}
         }
+        this.supportedExports = ["StocksTracker", "Finviz"];
     }
 
     // when clicking on an item
@@ -103,22 +104,27 @@ class Results extends React.Component {
     }
 
     // export buys
-    onExportClicked = () => {
-        // store locally
-        if (!localStorage.getItem("stocksTracker")) {
-            localStorage.setItem("stocksTracker", `{}`)
+    onExportClicked = (destination) => {
+        // store passwords locally
+        if (!localStorage.getItem("exportInfo")) {
+            localStorage.setItem("exportInfo", `{}`)
         }
 
         // get login if not stored
-        let login = JSON.parse(localStorage.getItem("stocksTracker"));
-        if (!login["username"]) {
-            login["username"] = prompt("Enter your StocksTracker username.");
+        let login = JSON.parse(localStorage.getItem("exportInfo"));
+        if (!login[destination]) {
+            login[destination] = {};
         }
-        if (!login["password"]) {
-            login["password"] = prompt("Enter your StocksTracker password.");
+        if (!login[destination]["username"]) {
+            login[destination]["username"] = prompt(`Enter your ${destination} username.`);
         }
-        localStorage.setItem("stocksTracker", JSON.stringify(login));
-        if (!login["username"] || !login["password"]) {
+        if (!login[destination]["password"]) {
+            login[destination]["password"] = prompt(`Enter your ${destination} password.`);
+        }
+        // store info back into local storage
+        localStorage.setItem("exportInfo", JSON.stringify(login));
+        // if cancel
+        if (!login[destination]["username"] || !login[destination]["password"]) {
             return;
         }
 
@@ -128,16 +134,19 @@ class Results extends React.Component {
             return;
         }
 
+        // get symbols to export
         let lastRecentDate = new Date()
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
         let symbolsToExport = [];
         this.state.sortedSymbols.filter(symbol => {
-            let count = this.props.results["symbolData"][symbol]["holdings"].filter(d => new Date(d) > lastRecentDate).length;
+            let count = this.props.results["symbolData"][symbol]["holdings"].filter(d => daysBetween(lastRecentDate, new Date(d)) < 1).length;
             if (count) {
                 symbolsToExport.push(symbol);
             }
         })
-        let data = { symbols: symbolsToExport, login, watchlist };
+
+        // make automation api request
+        let data = { destination, symbols: symbolsToExport, login: login[destination], watchlist };
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/watchlist`,
             {
                 method: 'POST',
@@ -155,7 +164,7 @@ class Results extends React.Component {
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
 
         let search = this.state.search.toLowerCase().trim();
-        let searchResults = this.state.sortedSymbols.filter(s => s.toLowerCase().includes(search));
+        let searchResults = this.state.sortedSymbols.filter(s => s.toLowerCase().startsWith(search));
         let searchBar = <input className="results-search" value={this.state.search} onChange={e => { this.setState({ search: e.target.value }) }} />;
         let dayFilter = <input className="results-search" value={this.state.recentThreshold} type="number" onChange={e => { this.setState({ recentThreshold: parseFloat(e.target.value) }) }}></input>
 
@@ -174,7 +183,7 @@ class Results extends React.Component {
 
         dayFilter = <div>
             <p className="results-dayfilter">
-                Show events within {this.state.recentThreshold} days
+                Show events {this.state.recentThreshold} days ago
             </p>
             <Box mx="1vw" mt="1vh"><Slider
                 defaultValue={7}
@@ -192,7 +201,7 @@ class Results extends React.Component {
         return (
             <div className="results">
                 <h2 className="results-title">
-                    Results {<SimpleMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
+                    Results {<SettingsMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
                 </h2>
                 <div>{searchBar}</div>
                 {/* <Paper square> */}
@@ -233,14 +242,12 @@ class Results extends React.Component {
                         }
                         {this.state.sortedSymbols.length != 0 && (
                             <>
-                                <IconButton color="primary" style={{ position: "absolute", top: 0, right: 0 }} onClick={this.onExportClicked}>
-                                    <ImportExportIcon />
-                                </IconButton>
+                                <ExportMenu items={this.supportedExports} onClick={this.onExportClicked} />
                                 {dayFilter}
                                 {
                                     this.state.sortedSymbols.map((symbol, index) => {
                                         // only show if there are recent events
-                                        let numEvents = this.props.results["symbolData"][symbol]["holdings"].filter(d => new Date(d) > lastRecentDate).length;
+                                        let numEvents = this.props.results["symbolData"][symbol]["holdings"].filter(d => daysBetween(lastRecentDate, new Date(d)) == 0).length;
                                         if (numEvents > 0) {
                                             if (searchResults.includes(symbol)) {
                                                 return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
@@ -267,7 +274,7 @@ class Results extends React.Component {
                                 this.state.sortedSymbols.map((symbol, index) => {
                                     // only show if there are recent events
                                     let events = this.props.results["symbolData"][symbol]["events"];
-                                    let numEvents = events.filter(e => new Date(e["sellDate"]) > lastRecentDate).length;
+                                    let numEvents = events.filter(e => daysBetween(lastRecentDate, new Date(e["sellDate"])) == 0).length;
                                     if (numEvents > 0) {
                                         if (searchResults.includes(symbol)) {
                                             return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
@@ -373,7 +380,7 @@ function TabPanel(props) {
     );
 }
 
-function SimpleMenu(props) {
+function SettingsMenu(props) {
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const handleClick = (event) => {
@@ -396,7 +403,7 @@ function SimpleMenu(props) {
                 <SettingsIcon />
             </IconButton>
             <Menu
-                id="simple-menu"
+                id="settings-menu"
                 anchorEl={anchorEl}
                 keepMounted
                 open={Boolean(anchorEl)}
@@ -423,6 +430,47 @@ function SimpleMenu(props) {
     );
 }
 
+function ExportMenu(props) {
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    return (
+        <>
+            <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={handleClick}
+                style={{ position: "absolute", top: 0, right: 0 }}
+                color="primary"
+            >
+                <ImportExportIcon />
+            </IconButton>
+            <Menu
+                id="export-menu"
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+            >
+                {
+                    props.items.map((item, index) => {
+                        return <MenuItem key={`results-export-${index}`} onClick={() => { props.onClick(item) }}>
+                            {item}
+                        </MenuItem>
+                    })
+                }
+            </Menu>
+        </>
+    );
+}
 
 let mapStateToProps = (state) => {
     let results = state.backtestResults;

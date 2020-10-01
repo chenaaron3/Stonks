@@ -5,7 +5,7 @@ let chrome = require('selenium-webdriver/chrome');
 const STOCKSTRACKER_URL = "https://www.stockstracker.com/";
 const XPATHS = { "watchlists": "/html/body/div[2]/table/tbody/tr/td[1]/div[2]/div[1]/div[2]/a" }
 
-async function addToWatchlist(symbols, login, watchlist) {
+async function addToStocksTrackerWatchlist(symbols, login, watchlist) {
     let options = new chrome.Options();
     options.addArguments('headless');
     let driver = new webdriver.Builder()
@@ -27,6 +27,7 @@ async function addToWatchlist(symbols, login, watchlist) {
         }
 
         console.log("DONE");
+        driver.quit();
     }
     catch {
         driver.quit();
@@ -104,4 +105,4 @@ async function addSymbol(driver, symbol) {
     await firstResult.click();
 }
 
-module.exports = { addToWatchlist }
+module.exports = { addToStocksTrackerWatchlist }

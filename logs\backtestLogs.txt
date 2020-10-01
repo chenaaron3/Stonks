@@ -484,3 +484,7 @@ Worker w00x59UBPi: Finished backtest in 117 seconds
 Worker O8XYYbUuZv: Starting backtest
 Worker 5Xuzu4PV4O: Starting backtest
 Worker 5Xuzu4PV4O: Finished backtest in 677 seconds
+Worker BaItLt95US: Starting backtest
+Worker BaItLt95US: Finished backtest in 464 seconds
+Worker YNPBigesHW: Starting backtest
+Worker YNPBigesHW: Finished backtest in 473 seconds

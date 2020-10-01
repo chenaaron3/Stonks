@@ -4,8 +4,14 @@ var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
 let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
 let { getIndicator } = require('../helpers/backtest');
-let { addToWatchlist } = require('../helpers/stockstracker');
+let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
+let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
+
+let watchlistFunctions = {
+    "StocksTracker": addToStocksTrackerWatchlist,
+    "Finviz": addToFinvizWatchlist
+}
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
@@ -37,12 +43,13 @@ router.get('/job', async function (req, res) {
 })
 
 router.post('/watchlist', async function (req, res) {
+    let destination = req.body.destination;
     let symbols = req.body.symbols;
     let login = req.body.login;
     let watchlist = req.body.watchlist;
     let position = addJob(() => {
         return new Promise(async resolveJob => {
-            await addToWatchlist(symbols, login, watchlist);
+            await watchlistFunctions[destination](symbols, login, watchlist);
             resolveJob();
         })
     }, true)
