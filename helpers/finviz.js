@@ -37,6 +37,9 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
             await addRows.click();
         }
 
+        // remove all ads
+        driver.executeScript("document.querySelectorAll('iframe').forEach(function(element) {element.remove();});")
+
         // find table
         let table = await driver.findElement(webdriver.By.xpath(XPATHS["portfolioTable"]));
         let rows = await table.findElements(webdriver.By.tagName('tr'));
@@ -68,9 +71,6 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
 
         // save main frame
         let mainWindow = driver.getWindowHandle();
-
-        // remove all ads
-        driver.executeScript("document.querySelectorAll('iframe').forEach(function(element) {element.remove();});")
 
         // calculate the shares
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
