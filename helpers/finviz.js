@@ -59,6 +59,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         // add symbols
         for (let i = 0; i < symbols.length; ++i) {
             let symbol = symbols[i];
+            removeAds(driver);
             await addSymbol(driver, symbol, rows[firstRowIndex + i]);
         }
 
@@ -70,6 +71,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         let mainWindow = driver.getWindowHandle();
 
         // calculate the shares
+        removeAds(driver);
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
         await calculateShares.click();
         // wait for alert
@@ -79,6 +81,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         // switch to main frame
         await driver.switchTo().window(mainWindow);
         // save
+        removeAds(driver);
         await saveWatchlist(driver);
 
         console.log("DONE");
@@ -128,7 +131,6 @@ async function selectWatchlist(driver, watchlistName) {
             await entry.click();
             let edit = await driver.wait(webdriver.until.elementLocated(webdriver.By.xpath(XPATHS["portfolioEdit"])));
             // remove all ads
-            driver.executeScript("document.querySelectorAll('iframe').forEach(function(element) {element.remove();});")
             await edit.click();
             return;
         }
@@ -158,6 +160,10 @@ async function saveWatchlist(driver) {
     // save button
     let save = await driver.findElement(webdriver.By.xpath(XPATHS["save"]));
     await save.click();
+}
+
+function removeAds(driver) {
+    driver.executeScript("document.querySelectorAll('iframe').forEach(function(element) {element.remove();});")
 }
 
 module.exports = { addToFinvizWatchlist }
