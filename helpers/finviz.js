@@ -37,9 +37,6 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
             await addRows.click();
         }
 
-        // remove all ads
-        driver.executeScript("document.querySelectorAll('iframe').forEach(function(element) {element.remove();});")
-
         // find table
         let table = await driver.findElement(webdriver.By.xpath(XPATHS["portfolioTable"]));
         let rows = await table.findElements(webdriver.By.tagName('tr'));
@@ -48,7 +45,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
 
         // find first empty row 
         let firstRowIndex = 0;
-        for(let i = 0; i < rows.length; ++i) {
+        for (let i = 0; i < rows.length; ++i) {
             let row = rows[i];
             let ticker = await row.findElement(webdriver.By.className("portfolio-edit"));
             let tickerText = await ticker.getAttribute("value");
@@ -87,7 +84,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         console.log("DONE");
         driver.quit();
     }
-    catch(err) {
+    catch (err) {
         console.log("ERROR!", err);
         driver.quit();
     }
@@ -130,6 +127,8 @@ async function selectWatchlist(driver, watchlistName) {
         if (text == watchlistName) {
             await entry.click();
             let edit = await driver.wait(webdriver.until.elementLocated(webdriver.By.xpath(XPATHS["portfolioEdit"])));
+            // remove all ads
+            driver.executeScript("document.querySelectorAll('iframe').forEach(function(element) {element.remove();});")
             await edit.click();
             return;
         }
@@ -145,7 +144,7 @@ async function selectWatchlist(driver, watchlistName) {
 }
 
 async function addSymbol(driver, symbol, row) {
-    let cells = await row.findElements(webdriver.By.tagName("td"));    
+    let cells = await row.findElements(webdriver.By.tagName("td"));
     // enter symbol
     let symbolInput = await cells[1].findElement(webdriver.By.tagName("input"));
     await symbolInput.sendKeys(symbol);
