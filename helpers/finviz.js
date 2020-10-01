@@ -62,6 +62,10 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
             await addSymbol(driver, symbol, rows[firstRowIndex + i]);
         }
 
+        // scroll down to avoid ads
+        await driver.findElement(webdriver.By.tagName("body")).sendKeys(webdriver.Key.CONTROL, webdriver.Key.END);
+        await new Promise(r => setTimeout(r, 1000));
+
         // calculate the shares
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
         await calculateShares.click();
