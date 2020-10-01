@@ -151,6 +151,11 @@ async function selectWatchlist(driver, watchlistName) {
 }
 
 async function addSymbol(driver, symbol, row) {
+    // reach cap
+    if (!row) {
+        return;
+    }
+    
     let cells = await row.findElements(webdriver.By.tagName("td"));
     // enter symbol
     let symbolInput = await cells[1].findElement(webdriver.By.tagName("input"));
