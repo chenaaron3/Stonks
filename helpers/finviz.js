@@ -73,6 +73,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         let mainWindow = driver.getWindowHandle();
 
         // calculate the shares
+        removeAds(driver);
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
         await calculateShares.click();
 
@@ -87,6 +88,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         // switch to main frame
         await driver.switchTo().window(mainWindow);
         // save
+        removeAds(driver);
         await saveWatchlist(driver);
 
         console.log("DONE");
