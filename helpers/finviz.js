@@ -21,7 +21,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
     options.addArguments('headless');
     let driver = new webdriver.Builder()
         .withCapabilities(webdriver.Capabilities.chrome())
-        // .setChromeOptions(options)
+        .setChromeOptions(options)
         .build();
 
     try {
