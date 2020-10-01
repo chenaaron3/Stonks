@@ -21,7 +21,7 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
     options.addArguments('headless');
     let driver = new webdriver.Builder()
         .withCapabilities(webdriver.Capabilities.chrome())
-        // .setChromeOptions(options)
+        .setChromeOptions(options)
         .build();
 
     try {
@@ -66,12 +66,17 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         await driver.findElement(webdriver.By.tagName("body")).sendKeys(webdriver.Key.CONTROL, webdriver.Key.END);
         await new Promise(r => setTimeout(r, 1000));
 
+        // save main frame
+        let mainWindow = driver.getWindowHandle();
+
         // calculate the shares
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
         await calculateShares.click();
         // wait for alert
         await driver.switchTo().alert().accept();
 
+        // switch to main frame
+        await driver.switchTo().window(mainWindow);
         // save
         await saveWatchlist(driver);
 
