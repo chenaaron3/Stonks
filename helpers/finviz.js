@@ -63,13 +63,13 @@ async function addToFinvizWatchlist(symbols, login, watchlist) {
         }
 
         // calculate the shares
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 3000));
         let calculateShares = await driver.findElement(webdriver.By.id('recalculate_button'));
         await calculateShares.click();
         // wait for alert
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 3000));
         await driver.switchTo().alert().accept();
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 3000));
 
         // save
         await saveWatchlist(driver);
