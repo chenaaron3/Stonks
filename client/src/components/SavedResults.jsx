@@ -2,26 +2,33 @@ import React, { createRef } from 'react';
 import "./SavedResults.css";
 import SavedResult from './SavedResult';
 import { connect } from 'react-redux';
-import { setBacktestResults, setSavedResults, viewStock } from '../redux';
+import { setBacktestResults, setSavedResults, viewStock, setPageIndex } from '../redux';
 
 class SavedResults extends React.Component {
     constructor(props) {
         super(props);
+
+        let demoID = "GUpzkgGRrS"
+
         // create saved results if it doesnt exist
         if (!localStorage.getItem("savedResults")) {
-            localStorage.setItem("savedResults", `[{"id":"xSVSK2YIWe","display":"Demo"}]`)
+            localStorage.setItem("savedResults", `[{"id":"${demoID}","display":"Demo"}]`)
+        }
+        // check if demo exists
+        let savedResults = JSON.parse(localStorage.getItem("savedResults"));
+        if (!savedResults.some(e => e["id"] == demoID)) {
+            savedResults.unshift({ id: demoID, display: "Demo" });
         }
 
-        this.props.setSavedResults(JSON.parse(localStorage.getItem("savedResults")))
+        this.props.setSavedResults(savedResults)
     }
 
     fetchBacktestResults = (id) => {
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/results?id=${id}`, {
             method: 'GET'
         }).then(res => res.json())
             .then(results => {
-                console.log(results["error"]);
-                // if something is wrong with the results
+                // if results are not ready
                 if (results["error"]) {
                     alert(results["error"]);
                 }
@@ -30,8 +37,10 @@ class SavedResults extends React.Component {
                     this.props.setBacktestResults(id, results);
                     // preview first stock
                     this.props.viewStock(Object.keys(results["symbolData"])[0]);
-                    // go to review page
-                    this.props.history.push("/review");
+                    // set active page to summary
+                    this.props.setPageIndex(1);
+                    // go to next page
+                    this.props.history.push("/summary");
                 }
             });
     }
@@ -76,7 +85,7 @@ class SavedResults extends React.Component {
                 {this.props.savedResults.length != 0 && (
                     this.props.savedResults.map((save, index) => {
                         return <SavedResult id={save["id"]} display={save["display"]} fetchBacktestResults={this.fetchBacktestResults}
-                            editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${index}`} />
+                            editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${save["id"]}`} />
                     })
                 )
                 }
@@ -89,4 +98,4 @@ let mapStateToProps = (state) => {
     return { savedResults: state.savedResults };
 };
 
-export default connect(mapStateToProps, { setBacktestResults, setSavedResults, viewStock })(SavedResults);
+export default connect(mapStateToProps, { setBacktestResults, setSavedResults, viewStock, setPageIndex })(SavedResults);

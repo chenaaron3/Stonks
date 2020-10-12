@@ -11,9 +11,7 @@ var pusher = new Pusher({
 
 // trigger a pusher channel
 function triggerChannel(channel, event, message) {
-    pusher.trigger(channel, event, {
-        'id': message
-    });
+    pusher.trigger(channel, event, message);
 }
 
 module.exports = { triggerChannel };

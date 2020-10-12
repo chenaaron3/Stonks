@@ -1,6 +1,7 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
 import './ReviewPage.css';
+import Sidebar from "../components/Sidebar";
 import Chart from "../components/Chart";
 import Results from "../components/Results";
 import Indicators from "../components/Indicators";
@@ -14,6 +15,9 @@ class ReviewPage extends React.Component {
     }
     return (
       <div className="review-page">
+        <div className="review-page-sidebar">
+          <Sidebar history={this.props.history} />
+        </div>
         <div className="review-page-backtest-results">
           <Results />
         </div>

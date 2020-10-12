@@ -11,17 +11,34 @@ class Indicators extends React.Component {
         this.state = { step: 0, mainBuyIndicator: "", mainSelIndicator: "" };
         this.indicators = {
             "SMA": { "fields": ["period"], "default": [9] },
+            "EMA": { "fields": ["period"], "default": [5] },
             "RSI": { "fields": ["period", "underbought", "overbought"], "default": [14, 30, 70] },
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
-            "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] }
+            "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
+            "ADX": { "fields": ["period"], "default": [12] },
+            "Structure": {"fields": ["period", "volatility"], "default": [75, .05]}
         }
+    }
 
-        // for each indicator
+    componentDidMount() {
+        // Set default values for all indicators
         Object.keys(this.indicators).map((indicatorName, index) => {
-            // initialize global state with default values
-            this.indicators[indicatorName]["fields"].map((field, index) => {
-                this.props.setIndicatorOption(indicatorName, field, this.indicators[indicatorName]["default"][index]);
-            })
+            // if used in backtest, use backtest options
+            if (this.props.backtestIndicatorOptions.hasOwnProperty(indicatorName)) {
+                Object.keys(this.props.backtestIndicatorOptions[indicatorName]).forEach(field => {
+                    this.props.setIndicatorOption(indicatorName, field, this.props.backtestIndicatorOptions[indicatorName][field]);
+                });
+                Object.keys(this.indicators).forEach(indicatorName => {
+                    this.props.setIndicatorOn(indicatorName, this.props.backtestIndicatorOptions.hasOwnProperty(indicatorName));
+                })
+            }
+            // if not used in backtest, use default values
+            else {
+                // initialize global state with default values
+                this.indicators[indicatorName]["fields"].map((field, index) => {
+                    this.props.setIndicatorOption(indicatorName, field, this.indicators[indicatorName]["default"][index]);
+                })
+            }
         })
     }
 
@@ -29,7 +46,7 @@ class Indicators extends React.Component {
         let activeIndicators = [...this.props.activeIndicators];
         return (
             <div className="indicators">
-                <h1>Indicators</h1>
+                <h2 className="indicators-title">Indicators</h2>
                 <div className="indicators-list">
                     {Object.keys(this.indicators).map((indicatorName, index) => {
                         return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
@@ -43,7 +60,7 @@ class Indicators extends React.Component {
 }
 
 let mapStateToProps = (state) => {
-    return { indicatorOptions: state.indicatorOptions, activeIndicators: state.activeIndicators };
+    return { indicatorOptions: state.indicatorOptions, activeIndicators: state.activeIndicators, backtestIndicatorOptions: state.backtestResults["strategyOptions"]["buyIndicators"] };
 };
 
 export default connect(mapStateToProps, { setIndicatorOption, setIndicatorOn, setID })(Indicators);

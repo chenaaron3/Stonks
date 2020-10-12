@@ -7,21 +7,32 @@ const { fork } = require('child_process');
 const csv = require('csv');
 let { addResult, getDocument, containsID } = require('../helpers/mongo');
 let { daysBetween, formatDate } = require('../helpers/utils');
-let { getPrices } = require('../helpers/stock');
+let { triggerChannel } = require('../helpers/pusher');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
-let SMASupport = require('../helpers/indicators/smaSupport');
+let EMA = require('../helpers/indicators/ema');
 let RSI = require('../helpers/indicators/rsi');
+let RSIDull = require('../helpers/indicators/rsiDull');
 let MACD = require('../helpers/indicators/macd');
+let MACDPos = require('../helpers/indicators/macdPos');
 let GC = require('../helpers/indicators/gc');
+let ADX = require('../helpers/indicators/adx');
+let Solid = require('../helpers/indicators/solid');
+let Hammer = require('../helpers/indicators/hammer');
+let Structure = require('../helpers/indicators/structure');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
-    "SMASupport": SMASupport,
+    "EMA": EMA,
     "RSI": RSI,
     "MACD": MACD,
+    "MACD2": MACDPos,
     "GC": GC,
+    "ADX": ADX,
+    "Solid": Solid,
+    "Hammer": Hammer,
+    "Structure": Structure
 }
 
 // paths to resources
@@ -31,11 +42,11 @@ let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
 // only get symbols from these exchanges
 let EXCHANGES = ["amex", "nasdaq", "nyse"];
 // get recent results within expiration date
-let EXPIRATION = 14;
+let EXPIRATION = 5;
 // get prices from today - START_DATE
 let START_DATE = 365 * 100;
 // how many threads to spawn on each request
-const NUM_THREADS = 5;
+const NUM_THREADS = 4;
 
 // cache settings
 const useCache = false;
@@ -50,7 +61,7 @@ function conductBacktest(strategyOptions, id) {
 
             // try to get previous results
             let previousResults = await getDocument("results", id);
-            if (typeof(previousResults["results"]) == "string") {
+            if (typeof (previousResults["results"]) == "string") {
                 previousResults = undefined;
             }
             // maps symbol to buy/sell data
@@ -59,6 +70,7 @@ function conductBacktest(strategyOptions, id) {
             // create threads that split up the work
             let finishedWorkers = 0;
             let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+            let progress = 0;
             for (let i = 0; i < NUM_THREADS; ++i) {
                 // divy up the symbols for each thread to work on
                 let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
@@ -71,20 +83,15 @@ function conductBacktest(strategyOptions, id) {
                         Object.assign(intersections, msg.intersections);
                         // if all worker threads are finished
                         if (++finishedWorkers == NUM_THREADS) {
-                            // calculate overall information
-                            let allSymbols = Object.keys(intersections);
-                            let netProfit = 0;
-                            let netPercentProfit = 0;
-                            allSymbols.forEach(symbol => {
-                                netProfit += intersections[symbol]["profit"];
-                                netPercentProfit += intersections[symbol]["percentProfit"];
-                            })
-                            let results = { strategyOptions, netProfit, netPercentProfit: netPercentProfit / allSymbols.length, symbolData: intersections, lastUpdated: new Date() };
-
+                            let results = { strategyOptions, symbolData: intersections, lastUpdated: new Date() };
                             // add result to database
                             await addResult(id, results);
                             resolve();
                         }
+                    }
+                    if (msg.status == "progress") {
+                        progress += msg.progress;
+                        triggerChannel(id, "onProgressUpdate", { progress: 100 * progress / symbols.length });
                     }
                 })
                 child.send({ type: "startIntersection", strategyOptions, id, previousResults, partition });
@@ -141,27 +148,26 @@ function getSymbols() {
     });
 }
 
-// get symbols from results
-function getConfirmedSymbols(callback) {
-    // update existing results
-    console.log("Loading Symbols from Old Results...");
-    let symbols = JSON.parse(fs.readFileSync(PATH_TO_OLD_RESULTS, { encoding: "utf-8" }));
-    callback(Object.keys(symbols));
-}
-
 // gets an indicator object
-function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices) {
-    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
+function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes) {
+    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices, opens, highs, lows, closes);
     indicator.initialize(indicatorOptions);
     return indicator;
 }
 
+// Get price from own database
+function getPrices(symbol) {
+    return new Promise(async (resolve, reject) => {
+        getDocument("prices", symbol)
+            .then(document => {
+                resolve(document.prices);
+            })
+            .catch(err => reject(err));
+    });
+}
+
 // given symbol, find intersections
 function findIntersections(strategyOptions, symbol, previousResults, lastUpdated) {
-    //  "GC":{"ma1Period":15, "ma2Period":50, "mainBuyIndicator":true}
-    // "SMA":{"period":9},
-    // "SMASupport":{"period":180},
-
     // let strategyOptions = {
     //     "indicators": {
     //         "SMA": { "period": 9 },
@@ -188,11 +194,36 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     // maps date to closing price
                     let prices = {};
                     let volumes = {};
-                    json.forEach(day => {
-                        let formattedDate = new Date(day["date"]).toISOString();
+                    let opens = {};
+                    let highs = {};
+                    let lows = {};
+                    let closes = {};
+
+                    let cutoffIndex = 0;
+                    if (lastUpdated) {
+                        // find first index where date is greater than last updated
+                        for(let i = json.length - 1; i >= 0; --i) {
+                            if (json[i]["date"] < lastUpdated) {
+                                cutoffIndex = i;
+                                break;
+                            }
+                        }
+                        cutoffIndex = Math.max(0, cutoffIndex - 200);
+                    }
+
+                    for(; cutoffIndex < json.length; ++cutoffIndex){
+                        let day = json[cutoffIndex];
+                        let date = new Date(day["date"]);
+                    
+                        let formattedDate = date.toISOString();
+                        let adjScale = day["adjClose"] / day["close"];
                         prices[formattedDate] = day["adjClose"];
                         volumes[formattedDate] = day["volume"];
-                    });
+                        opens[formattedDate] = day["open"] * adjScale;
+                        highs[formattedDate] = day["high"] * adjScale;
+                        lows[formattedDate] = day["low"] * adjScale;
+                        closes[formattedDate] = day["close"] * adjScale;
+                    };
 
                     // get sorted dates
                     let dates = Object.keys(prices).sort(function (a, b) {
@@ -210,14 +241,13 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     let supportingSellIndicators = [];
                     let buyMap = {};
                     let sellMap = {};
-                    let validIndicators = true;
+                    let stopLossIndicator = getIndicator("SMA", { period: 180, minDuration: 3 }, symbol, dates, prices, opens, highs, lows, closes);
+                    stopLossIndicator = undefined;
 
                     // set main/support buy indicators
                     Object.keys(strategyOptions["buyIndicators"]).forEach(indicatorName => {
                         let indicatorOptions = strategyOptions["buyIndicators"][indicatorName];
-                        let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
-                        // initialize the indicator
-                        indicator.initialize(indicatorOptions);
+                        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
 
                         // track buy indicators
                         if (indicatorName == strategyOptions["mainBuyIndicator"]) {
@@ -232,9 +262,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     // set main/support sell indicators
                     Object.keys(strategyOptions["sellIndicators"]).forEach(indicatorName => {
                         let indicatorOptions = strategyOptions["sellIndicators"][indicatorName];
-                        let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices);
-                        // initialize the indicator
-                        indicator.initialize(indicatorOptions);
+                        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
 
                         // track sell indicators
                         if (indicatorName == strategyOptions["mainSellIndicator"]) {
@@ -248,7 +276,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                     // store buy/sell information
                     let expiration = strategyOptions["expiration"];
-                    let lastBuyPrice;
                     let buyPrices = [];
                     let buyDates = [];
                     let buySignal;
@@ -259,8 +286,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     // store buy/sell events for debugging
                     let events = [];
                     let event = {};
-                    let recent = { buy: [], sell: [] };
-                    let today = new Date();
                     let startIndex = 0;
 
                     // load data from previous results
@@ -268,29 +293,21 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         // load previous hits
                         if (previousResults) {
                             events = previousResults["events"];
+
                             // carry over holdings to look for sells
                             previousResults["holdings"].forEach(holding => {
                                 buyDates.push(holding);
                                 buyPrices.push(prices[holding]);
                             })
-                            // check if recents are still valid
-                            previousResults["recent"]["buy"].forEach(recentBuy => {
-                                if (daysBetween(new Date(recentBuy), today) < EXPIRATION) {
-                                    recent["buy"].push(recentBuy);
-                                }
-                            })
-                            previousResults["recent"]["sell"].forEach(recentSell => {
-                                if (daysBetween(new Date(recentSell), today) < EXPIRATION) {
-                                    recent["sell"].push(recentSell);
-                                }
-                            })
+
                             // carry over profits
                             profit = previousResults["profit"];
                             count = events.length;
                             percentProfit = previousResults["percentProfit"] * count;
                         }
+
                         // start from the date after the last update
-                        for(let i = 0; i < dates.length; ++i) {
+                        for (let i = 0; i < dates.length; ++i) {
                             let day = new Date(dates[i]);
                             if (day > lastUpdated) {
                                 startIndex = i;
@@ -304,7 +321,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                     }
 
-                    console.log(symbol, "starting at", startIndex);
                     // loops over dates and checks for buy signal
                     for (let i = startIndex; i < dates.length; ++i) {
                         let day = dates[i];
@@ -330,7 +346,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                             // if all supports agree, buy the stock
                             if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
-                                lastBuyPrice = prices[day];
                                 buyPrices.push(prices[day]);
                                 buyDates.push(day);
                                 buySignal = false;
@@ -338,11 +353,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                 Object.keys(buyMap).forEach(indicator => {
                                     buyMap[indicator] = false;
                                 });
-
-                                // check if is recent buy
-                                if (daysBetween(new Date(day), today) < EXPIRATION) {
-                                    recent["buy"].push(day);
-                                }
                             }
                             else {
                                 buyExpiration -= 1;
@@ -357,10 +367,21 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             }
                         }
 
-                        // trigger stoploss if price goes below stoploss threshold
-                        let stopLossTriggered = lastBuyPrice && strategyOptions["stopLoss"] && lastBuyPrice * strategyOptions["stopLoss"] > prices[day];
+                        // find stoploss trades
+                        let stopLossTrades = [];
+                        if (strategyOptions["stopLossLow"]) {
+                            stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossLow"] > prices[day]))
+                        }
+                        if (strategyOptions["stopLossHigh"]) {
+                            stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossHigh"] < prices[day]))
+                        }
+                        // if stoploss indicator goes off, sell all
+                        if (stopLossIndicator && stopLossIndicator.shouldStop(day) == Indicator.STOP) {
+                            stopLossTrades = buyPrices;
+                        }
+
                         // if stoploss triggered or main seller indicator goes off and has stocks to sell
-                        if (stopLossTriggered || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
+                        if (stopLossTrades.length > 0 || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
                             sellSignal = true;
                         }
                         if (sellSignal) {
@@ -380,43 +401,41 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             });
 
                             // if all supports agree or stoploss triggered, sell the stock
-                            if (allIndicatorsSell || stopLossTriggered) {
-                                // check if is recent sell
-                                if (daysBetween(new Date(day), today) < EXPIRATION) {
-                                    recent["sell"].push(day);
-                                }
+                            if (allIndicatorsSell || stopLossTrades.length > 0) {
+                                let newBuyPrices = [];
+                                let newBuyDates = [];
 
                                 // sell all stocks that were bought
                                 for (let i = 0; i < buyPrices.length; ++i) {
                                     let buyPrice = buyPrices[i];
                                     let buyDate = buyDates[i];
 
-                                    // store buy/sell conditions for contextual data
-                                    let buyConditions = getConditions(mainBuyIndicator, supportingBuyIndicators, buyDate);
-                                    let sellConditions = getConditions(mainSellIndicator, supportingSellIndicators, day);
+                                    // dont sell if stoploss not met
+                                    if (stopLossTrades.length > 0 && !stopLossTrades.includes(buyPrice)) {
+                                        newBuyPrices.push(buyPrice);
+                                        newBuyDates.push(buyDate);
+                                        continue;
+                                    }
 
                                     // populate transaction information
-                                    count += 1;
                                     event["buyDate"] = buyDate;
-                                    event["buyPrice"] = buyPrice;
-                                    event["buyConditions"] = buyConditions;
                                     event["sellDate"] = day;
-                                    event["sellPrice"] = prices[day];
-                                    event["sellConditions"] = sellConditions;
                                     event["profit"] = prices[day] - buyPrice;
-                                    profit += event["profit"];
                                     event["percentProfit"] = (prices[day] - buyPrice) / buyPrice
-                                    percentProfit += event["percentProfit"];
                                     event["span"] = daysBetween(new Date(buyDate), new Date(day));
+
+                                    // calculate stats
+                                    profit += event["profit"];
+                                    percentProfit += event["percentProfit"];
+                                    count += 1;
 
                                     // add and create new event
                                     events.push(event);
                                     event = {};
                                 }
 
-                                lastBuyPrice = undefined;
-                                buyPrices = []
-                                buyDates = []
+                                buyPrices = newBuyPrices;
+                                buyDates = newBuyDates;
                                 sellSignal = false;
                                 sellExpiration = expiration;
                                 Object.keys(sellMap).forEach(indicator => {
@@ -437,7 +456,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                     };
 
-                    resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "recent": recent, "holdings": buyDates });
+                    resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "holdings": buyDates });
                 }
             });
     })

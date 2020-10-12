@@ -1,4 +1,5 @@
 .results {
+    position: relative;
     background-color: #E0E5EC;
     padding: 2vh;
     display: flex;
@@ -11,15 +12,31 @@
 .results-title {
     margin-top: 1vh;
     margin-bottom: 1vh;
-    font-size: 1.5em;
+}
+
+.results-search {
+    display: inline-block;
+    margin: auto;
+    width: 20%;
 }
 
 .results-list {
+    position: relative;
     text-align: left;
     flex: 5;
-    overflow: scroll;
+    overflow: auto;
     overflow-x: hidden;
     max-height: 80vh;
+}
+
+.results-indicators {
+    font-size: 1em;
+}
+
+.results-dayfilter {
+    margin-top: 1vh;
+    text-align: center;
+    font-size: .9em;
 }
 
 .result {

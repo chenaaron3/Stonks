@@ -4,17 +4,10 @@ let stonks;
 let priceCollection;
 let resultsCollection;
 
-const client = new MongoClient(process.env.MONGO_DATABASE_URL, {
-	useUnifiedTopology: true
-});
+let mongoURL = process.env.NODE_ENV == "production" ? process.env.PROD_MONGO_DATABASE_URL : process.env.MONGO_DATABASE_URL
 
-client.connect(async function (err) {
-	if (err) { console.log(err); return; }
-	console.log("Connected!");
-	// get mongo collection
-	stonks = client.db('stonks');
-	priceCollection = stonks.collection('prices');
-	resultsCollection = stonks.collection('results');
+const client = new MongoClient(mongoURL, {
+	useUnifiedTopology: true
 });
 
 // ensure that there is a valid connection
@@ -24,9 +17,26 @@ function ensureConnected() {
 		if (!priceCollection) {
 			// create a connection
 			client.connect(async function (err) {
-				if (err) console.log(err);
+				if (err) {
+					console.log("Connection failed!", err);
+					resolve();
+				}
+				console.log("Connected!");
 				// get mongo collection
 				stonks = client.db('stonks');
+				let collections = await stonks.listCollections().toArray();
+				let collectionNames = [];
+				collections.forEach(collection => {
+					collectionNames.push(collection["name"])
+				})
+
+				if (!collectionNames.includes("prices")) {
+					await stonks.createCollection("prices");
+				}
+				if (!collectionNames.includes("results")) {
+					await stonks.createCollection("results");
+				}
+
 				priceCollection = stonks.collection('prices');
 				resultsCollection = stonks.collection('results');
 				resolve();
@@ -144,6 +154,21 @@ function addID(id) {
 	});
 }
 
+function setDocumentField(id, fieldName, value) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		await resultsCollection.updateOne({
+			"_id": id
+		},
+			{
+				$set: { [fieldName]: value }
+			}, (err, res) => {
+				if (err) console.log(err);
+				resolve();
+			});
+	});
+}
+
 // adds a document to result collection
 function addResult(id, result) {
 	return new Promise(async (resolve, reject) => {
@@ -214,6 +239,7 @@ module.exports = {
 	addDocument,
 	getDocument,
 	deleteDocument,
+	setDocumentField,
 	getStockInfo,
 	addStockInfo,
 	containsID,

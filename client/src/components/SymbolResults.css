@@ -6,12 +6,17 @@
     height: 100%;
     text-align: center;
     max-height: 50vh;
+    position: relative;
+}
+
+.symbol-results-random {
+    top: 0;
+    right: 0;
 }
 
 .symbol-results-title {
     margin-top: 1vh;
     margin-bottom: 1vh;
-    font-size: 1.5em;
 }
 
 .symbol-results-body {
@@ -19,7 +24,14 @@
 }
 
 .symbol-results-events {
-    max-height: 20vh;
-    overflow: scroll;
+    max-height: 28vh;
+    overflow: auto;
     overflow-x: hidden;
+}
+
+.symbol-results-event {
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }

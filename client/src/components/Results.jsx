@@ -1,17 +1,42 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewStock, setBacktestResults } from '../redux';
+import { viewStock, setBacktestResults, setChartSettings } from '../redux';
 import './Results.css';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import eye from "../eye.svg";
+import buy from "../buy.svg";
+import bought from "../bought.svg";
+import sell from "../sell.svg";
 import { formatDate, daysBetween } from "../helpers/utils";
 import Pusher from 'react-pusher';
+
+import TextField from '@material-ui/core/TextField';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import SearchOutlinedIcon from '@material-ui/icons/SearchOutlined';
+import Slider from '@material-ui/core/Slider';
+import Box from '@material-ui/core/Box';
+import Paper from '@material-ui/core/Paper';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import IconButton from '@material-ui/core/IconButton';
+import SettingsIcon from '@material-ui/icons/Settings';
+import ImportExportIcon from '@material-ui/icons/ImportExport';
 
 class Results extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { numWins: 0, numLosses: 0, sortedSymbols: [] }
+        this.state = {
+            numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
+            sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
+            chartSettings: {}
+        }
+        this.supportedExports = ["StocksTracker", "Finviz"];
     }
 
     // when clicking on an item
@@ -19,166 +44,432 @@ class Results extends React.Component {
         this.props.viewStock(symbol)
     }
 
-    // statistical analysis
+    // statistical analysis (win/loss)
     analyze() {
-        console.log("Analyzing");
-        let numWins = 0;
-        let numLosses = 0;
+        let sortBy = "percentProfit";
         // get the sorted symbols
         let sortedSymbols = Object.keys(this.props.results["symbolData"]);
-        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["percentProfit"] - this.props.results["symbolData"][a]["percentProfit"]);
-        this.setState({ sortedSymbols }, () => {
-            this.state.sortedSymbols.forEach(symbol => {
-                this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                    if (event["profit"] < 0) {
-                        numLosses += 1;
-                    }
-                    else {
-                        numWins += 1;
-                    }
-                })
-            })
-            this.setState({ numWins, numLosses });
-        });
+        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b][sortBy] - this.props.results["symbolData"][a][sortBy]);
+        this.setState({ sortedSymbols });
     }
 
     componentDidMount() {
         this.analyze();
+        this.getBoughtSymbols();
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.id != this.props.id) {
             this.analyze();
+            this.getBoughtSymbols();
         }
     }
 
-    // send request to update a backtest
-    updateBacktest = () => {
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/updateBacktest?id=${this.props.id}`);
+    // load initial bought list
+    getBoughtSymbols = () => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/boughtSymbols`)
+            .then(res => res.json())
+            .then(boughtSymbols => {
+                this.setState({ boughtSymbols });
+            })
     }
 
-    // callback when a backtest is updated
-    onUpdateFinished = (data) => {
-        let id = data["id"];
+    // mark as bought
+    buySymbol = (symbol) => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/buySymbol?symbol=${symbol}`)
+            .then(res => res.json())
+            .then(boughtSymbols => {
+                this.setState({ boughtSymbols });
+            })
+    }
 
-        // get the data from the server
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
-            method: 'GET'
-        }).then(res => res.json())
-            .then(results => {
-                // store results in global state
-                this.props.setBacktestResults(id, results);
+    // sell
+    sellSymbol = (symbol) => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/sellSymbol?symbol=${symbol}`)
+            .then(res => res.json())
+            .then(boughtSymbols => {
+                this.setState({ boughtSymbols });
+            })
+    }
+
+    setTab = (event, newValue) => {
+        this.setState({ tabIndex: newValue })
+    };
+
+    onSettingChanged = (setting, state) => {
+        this.setState({ chartSettings: { ...this.state.chartSettings, [setting]: state } },
+            () => {
+                this.props.setChartSettings(this.state.chartSettings);
             });
     }
 
+    // export buys
+    onExportClicked = (destination) => {
+        // store passwords locally
+        if (!localStorage.getItem("exportInfo")) {
+            localStorage.setItem("exportInfo", `{}`)
+        }
+
+        // get login if not stored
+        let login = JSON.parse(localStorage.getItem("exportInfo"));
+        if (!login[destination]) {
+            login[destination] = {};
+        }
+        if (!login[destination]["username"]) {
+            login[destination]["username"] = prompt(`Enter your ${destination} username.`);
+        }
+        if (!login[destination]["password"]) {
+            login[destination]["password"] = prompt(`Enter your ${destination} password.`);
+        }
+        // store info back into local storage
+        localStorage.setItem("exportInfo", JSON.stringify(login));
+        // if cancel
+        if (!login[destination]["username"] || !login[destination]["password"]) {
+            return;
+        }
+
+        // get watchist
+        let watchlist = prompt("Enter the watchlist name.");
+        if (!watchlist) {
+            return;
+        }
+
+        // get symbols to export
+        let lastRecentDate = new Date()
+        lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
+        let symbolsToExport = [];
+        this.state.sortedSymbols.filter(symbol => {
+            let count = this.props.results["symbolData"][symbol]["holdings"].filter(d => daysBetween(lastRecentDate, new Date(d)) < 1).length;
+            if (count) {
+                symbolsToExport.push(symbol);
+            }
+        })
+
+        // make automation api request
+        let data = { destination, symbols: symbolsToExport, login: login[destination], watchlist };
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/watchlist`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(res => res.json())
+            .then(json => alert(json["status"]));
+    }
+
     render() {
-        let netProfit = this.props.results["netProfit"].toFixed(2);
-        let percentProfit = (100 * this.props.results["netPercentProfit"]).toFixed(4);
+        let lastRecentDate = new Date()
+        lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
+
+        let search = this.state.search.toLowerCase().trim();
+        let searchResults = this.state.sortedSymbols.filter(s => s.toLowerCase().startsWith(search));
+        let searchBar = <input className="results-search" value={this.state.search} onChange={e => { this.setState({ search: e.target.value }) }} />;
+        let dayFilter = <input className="results-search" value={this.state.recentThreshold} type="number" onChange={e => { this.setState({ recentThreshold: parseFloat(e.target.value) }) }}></input>
+
+        searchBar = <Box mb="1vh"><TextField
+            id="input-with-icon-textfield"
+            value={this.state.search}
+            onChange={e => { this.setState({ search: e.target.value }) }}
+            InputProps={{
+                startAdornment: (
+                    <InputAdornment position="start">
+                        <SearchOutlinedIcon />
+                    </InputAdornment>
+                ),
+            }}
+        /></Box>
+
+        dayFilter = <div>
+            <p className="results-dayfilter">
+                Show events {this.state.recentThreshold} days ago
+            </p>
+            <Box mx="1vw" mt="1vh"><Slider
+                defaultValue={7}
+                aria-labelledby="discrete-slider"
+                valueLabelDisplay="auto"
+                value={this.state.recentThreshold}
+                onChange={(e, v) => { this.setState({ recentThreshold: v }) }}
+                step={1}
+                marks
+                min={1}
+                max={30}
+            /></Box>
+        </div>
 
         return (
             <div className="results">
-                <Pusher
-                    channel={this.props.id}
-                    event="onUpdateFinished"
-                    onUpdate={this.onUpdateFinished}
-                />
-                <span className="results-title">Backtest Results</span>
-                <Tabs>
-                    <TabList>
-                        <Tab>Summary</Tab>
-                        <Tab>All</Tab>
-                        <Tab>Buys</Tab>
-                        <Tab>Sells</Tab>
-                    </TabList>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                <>
-                                    <div>Wins: {this.state.numWins}</div>
-                                    <div>Losses: {this.state.numLosses}</div>
-                                    <div>Win Rate: {(this.state.numWins / (this.state.numLosses + this.state.numWins) * 100).toFixed(2)}%</div>
-                                    <div>Net Profit: ${netProfit}</div>
-                                    <div>Net Percent Profit: {percentProfit}%</div>
-                                    <div>Buy Indicators: {Object.keys(this.props.results["strategyOptions"]["buyIndicators"]).join(", ")}</div>
-                                    <div>Sell Indicators: {Object.keys(this.props.results["strategyOptions"]["sellIndicators"]).join(", ")}</div>
-                                    <div>Last Updated: {formatDate(new Date(this.props.results["lastUpdated"]))}</div>
-                                    {daysBetween(new Date(this.props.results["lastUpdated"]), new Date()) > 0 && (
-                                        <input type="button" value="Update Backtest" onClick={this.updateBacktest} />
-                                    )}
-                                </>
-                            )
-                            }
-                        </div>
-                    </TabPanel>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                this.state.sortedSymbols.map((symbol, index) => {
-                                    return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
-                                })
-                            )
-                            }
-                        </div>
-                    </TabPanel>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                this.state.sortedSymbols.map((symbol, index) => {
-                                    // only show if there are recent events
-                                    let recentEvents = this.props.results["symbolData"][symbol]["recent"];
-                                    let numEvents = recentEvents["buy"].length;
-                                    if (numEvents > 0) {
-                                        return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
-                                    }
-                                })
-                            )
-                            }
-                        </div>
-                    </TabPanel>
-                    <TabPanel>
-                        <div className="results-list">
-                            {this.state.sortedSymbols.length == 0 && (<span>
-                                There are no results...
-                            </span>)
-                            }
-                            {this.state.sortedSymbols.length != 0 && (
-                                this.state.sortedSymbols.map((symbol, index) => {
-                                    // only show if there are recent events
-                                    let recentEvents = this.props.results["symbolData"][symbol]["recent"];
-                                    let numEvents = recentEvents["sell"].length;
-                                    if (numEvents > 0) {
-                                        return <Result key={index} symbol={symbol} index={index} handleGetResult={this.handleGetResult} />
-                                    }
-                                })
-                            )
-                            }
-                        </div>
-                    </TabPanel>
+                <h2 className="results-title">
+                    Results {<SettingsMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
+                </h2>
+                <div>{searchBar}</div>
+                {/* <Paper square> */}
+                <Tabs value={this.state.tabIndex} onChange={this.setTab} indicatorColor="primary" centered aria-label="simple tabs example">
+                    <Tab style={{ minWidth: "3vw" }} label="All" {...a11yProps(0)} />
+                    <Tab style={{ minWidth: "3vw" }} label="Buys" {...a11yProps(1)} />
+                    <Tab style={{ minWidth: "3vw" }} label="Sells" {...a11yProps(2)} />
+                    <Tab style={{ minWidth: "3vw" }} label="Watch" {...a11yProps(3)} />
                 </Tabs>
+                {/* </Paper> */}
+                <TabPanel value={this.state.tabIndex} index={0}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        {this.state.sortedSymbols.length != 0 && (
+                            <>
+                                {
+                                    this.state.sortedSymbols.map((symbol, index) => {
+                                        if (searchResults.includes(symbol)) {
+                                            return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                boughtSymbols={this.state.boughtSymbols} />
+                                        }
+                                    })
+                                }
+                            </>
+                        )
+                        }
+                    </div>
+                </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={1}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        {this.state.sortedSymbols.length != 0 && (
+                            <>
+                                <ExportMenu items={this.supportedExports} onClick={this.onExportClicked} />
+                                {dayFilter}
+                                {
+                                    this.state.sortedSymbols.map((symbol, index) => {
+                                        // only show if there are recent events
+                                        let numEvents = this.props.results["symbolData"][symbol]["holdings"].filter(d => daysBetween(lastRecentDate, new Date(d)) == 0).length;
+                                        if (numEvents > 0) {
+                                            if (searchResults.includes(symbol)) {
+                                                return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                    handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                    boughtSymbols={this.state.boughtSymbols} />
+                                            }
+                                        }
+                                    })
+                                }
+                            </>
+                        )
+                        }
+                    </div>
+                </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={2}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        <>
+                            {dayFilter}
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
+                                    // only show if there are recent events
+                                    let events = this.props.results["symbolData"][symbol]["events"];
+                                    let numEvents = events.filter(e => daysBetween(lastRecentDate, new Date(e["sellDate"])) == 0).length;
+                                    if (numEvents > 0) {
+                                        if (searchResults.includes(symbol)) {
+                                            return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                boughtSymbols={this.state.boughtSymbols} />
+                                        }
+                                    }
+                                })
+                            )
+                            }
+                        </>
+                    </div>
+                </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={3}>
+                    <div className="results-list">
+                        {this.state.sortedSymbols.length == 0 && (<span>
+                            There are no results...
+                        </span>)
+                        }
+                        <>
+                            {this.state.sortedSymbols.length != 0 && (
+                                this.state.sortedSymbols.map((symbol, index) => {
+                                    if (this.state.boughtSymbols.hasOwnProperty(symbol)) {
+                                        return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                            handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                            boughtSymbols={this.state.boughtSymbols} />
+                                    }
+                                })
+                            )
+                            }
+                        </>
+                    </div>
+                </TabPanel>
             </div>
         );
     }
 }
 
 class Result extends React.Component {
+    state = { hovered: false }
+
+    buySymbol = () => {
+        this.props.buySymbol(this.props.symbol);
+    }
+
+    sellSymbol = () => {
+        this.props.sellSymbol(this.props.symbol);
+    }
+
     render() {
-        return (<div className="result">
-            <img className="result-icon result-hover" width="25px" height="25px" src={eye} alt="Eye" onClick={() => this.props.handleGetResult(this.props.symbol)} />
-            <span className="result-text">{`${this.props.index + 1}. ${this.props.symbol}`}</span>
+        return (<div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
+            <img className={`result-icon result-hover`} width="25px" height="25px" src={eye} alt="Eye" onClick={() => this.props.handleGetResult(this.props.symbol)} />
+            <span className="result-text" style={{ color: `${this.props.result["percentProfit"] > 0 ? "green" : "red"}` }}>{`${this.props.index + 1}. ${this.props.symbol}`}</span>
+            {
+                this.props.buy && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                    <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
+                        onClick={this.buySymbol} />)
+            }
+            {
+                this.props.buy && this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                    <img className={`result-trailer result-hover`} width="35px" height="35px" src={bought} alt="Bought"
+                        onClick={this.sellSymbol} />)
+            }
+            {
+                this.props.sell && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                    <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
+                        onClick={this.buySymbol} />)
+            }
+            {
+                this.props.sell && this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                    <img className={`result-trailer result-hover`} width="35px" height="35px" src={sell} alt="Sell"
+                        onClick={this.sellSymbol} />)
+            }
+
         </div>);
     }
+}
+
+function a11yProps(index) {
+    return {
+        id: `simple-tab-${index}`,
+        'aria-controls': `simple-tabpanel-${index}`,
+    };
+}
+
+function TabPanel(props) {
+    const { children, value, index, ...other } = props;
+
+    return (
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`simple-tabpanel-${index}`}
+            aria-labelledby={`simple-tab-${index}`}
+            {...other}
+        >
+            {value === index && (
+                <Box>
+                    <Typography>{children}</Typography>
+                </Box>
+            )}
+        </div>
+    );
+}
+
+function SettingsMenu(props) {
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    return (
+        <>
+            <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={handleClick}
+                style={{ position: "absolute", top: 0, right: 0 }}
+            >
+                <SettingsIcon />
+            </IconButton>
+            <Menu
+                id="settings-menu"
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+            >
+                {
+                    props.items.map((item, index) => {
+                        return <MenuItem key={`results-settings-${index}`}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={props.options[item] ? true : false}
+                                        onChange={(e) => { props.onChange(item, e.target.checked) }}
+                                        color="primary"
+                                    />
+                                }
+                                label={`${item}`}
+                            />
+                        </MenuItem>
+                    })
+                }
+            </Menu>
+        </>
+    );
+}
+
+function ExportMenu(props) {
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    return (
+        <>
+            <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={handleClick}
+                style={{ position: "absolute", top: 0, right: 0 }}
+                color="primary"
+            >
+                <ImportExportIcon />
+            </IconButton>
+            <Menu
+                id="export-menu"
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+            >
+                {
+                    props.items.map((item, index) => {
+                        return <MenuItem key={`results-export-${index}`} onClick={() => { props.onClick(item) }}>
+                            {item}
+                        </MenuItem>
+                    })
+                }
+            </Menu>
+        </>
+    );
 }
 
 let mapStateToProps = (state) => {
@@ -186,4 +477,4 @@ let mapStateToProps = (state) => {
     return { results, id: state.id };
 };
 
-export default connect(mapStateToProps, { viewStock, setBacktestResults })(Results);
+export default connect(mapStateToProps, { viewStock, setBacktestResults, setChartSettings })(Results);

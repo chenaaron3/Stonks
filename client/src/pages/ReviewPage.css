@@ -22,7 +22,7 @@
 /* Left side of page */
 
 .review-page-data {
-    flex: 9;
+    flex: 8;
     display: flex;
     flex-direction: column;
 }
@@ -36,10 +36,6 @@
 
 .review-page-missing-chart {
     font-size: 2em;
-}
-
-.review-page-details {
-    flex: 2;
 }
 
 /* Right side of page */

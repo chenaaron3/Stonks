@@ -7,6 +7,8 @@ const SET_INDICATOR_OPTION = "SET_INDICATOR_OPTION";
 const SET_INDICATOR_ON = "SET_INDICATOR_ON";
 const CLEAR_INDICATORS = "CLEAR_INDICATORS";
 const SET_SAVED_RESULTS = "SET_SAVED_RESULTS";
+const SET_PAGE_INDEX = "SET_PAGE_INDEX";
+const SET_CHART_SETTINGS = "";
 
 const initialState = {
     id: "",
@@ -15,7 +17,10 @@ const initialState = {
     indicatorOptions: {},
     activeIndicators: new Set(),
     savedResults: [],
-    eventIndex: -1
+    eventIndex: -1,
+    boughtSymbols:{},
+    pageIndex: 1,
+    chartSettings: {}
 };
 
 // Reducer
@@ -74,6 +79,16 @@ export default function reducer(state = initialState, action) {
                 ...state,
                 savedResults: action.savedResults
             }
+        case SET_PAGE_INDEX:
+            return {
+                ...state,
+                pageIndex: action.pageIndex
+            }
+        case SET_CHART_SETTINGS:
+            return {
+                ...state,
+                chartSettings: action.chartSettings
+            }
         default: return state;
     }
 }
@@ -109,4 +124,12 @@ export function clearIndicators() {
 
 export function setSavedResults(savedResults) {
     return { type: SET_SAVED_RESULTS, savedResults }
+}
+
+export function setPageIndex(pageIndex) {
+    return { type: SET_PAGE_INDEX, pageIndex }
+}
+
+export function setChartSettings(chartSettings) {
+    return { type: SET_CHART_SETTINGS, chartSettings }
 }

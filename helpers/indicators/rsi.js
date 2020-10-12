@@ -22,6 +22,14 @@ class RSI extends Indicator {
 		return this.graph[date];
 	}
 
+	normalize(data) {
+        let res = [];
+        data.forEach(d => {
+            res.push(d / 100);
+        })
+        return res;
+    }
+
 	getAction(date) {
 		let yesterday = this.dates[this.dates.indexOf(date) - 1];
 

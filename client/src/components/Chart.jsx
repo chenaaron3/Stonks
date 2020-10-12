@@ -9,6 +9,7 @@ import distinctColors from 'distinct-colors'
 import './Chart.css';
 import RSI from "./indicators/RSI";
 import MACD from "./indicators/MACD";
+import ADX from "./indicators/ADX";
 import { formatDate } from '../helpers/utils';
 
 class Chart extends React.Component {
@@ -16,8 +17,8 @@ class Chart extends React.Component {
         super(props);
 
         // constants
-        this.indicatorCharts = { "RSI": RSI, "MACD": MACD };
-        this.overlayCharts = ["SMA", "GC"];
+        this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -31,9 +32,13 @@ class Chart extends React.Component {
             priceGraph: [],
             buyDates: new Set(),
             sellDates: new Set(),
+            holdings: new Set(),
             myOverlayCharts: [],
             startBrushIndex: this.chunkSize - Math.floor(this.chunkSize / 4),
-            endBrushIndex: this.chunkSize - 1
+            endBrushIndex: this.chunkSize - 1,
+            supportLevels: [],
+            resistanceLevels: [],
+            supportResistanceLevels: []
         }
     }
 
@@ -49,6 +54,7 @@ class Chart extends React.Component {
 
     componentDidUpdate(prevProps) {
         console.log("updating chart");
+        console.log(this.props);
         // if symbol, indicator, or event index changed
         if (this.props.symbol != "" &&
             (this.props.symbol !== prevProps.symbol || this.props.activeIndicators.length != prevProps.activeIndicators.length || this.props.eventIndex != prevProps.eventIndex)) {
@@ -81,11 +87,12 @@ class Chart extends React.Component {
         // cache all buy/sell dates for quick access
         let buyDates = new Set();
         let sellDates = new Set();
+        let holdings = new Set(results["holdings"]);
         events.forEach(event => {
             buyDates.add(event["buyDate"]);
             sellDates.add(event["sellDate"]);
         });
-        this.setState({ buyDates, sellDates });
+        this.setState({ buyDates, sellDates, holdings });
     }
 
     fetchData = () => {
@@ -95,7 +102,7 @@ class Chart extends React.Component {
         });
         let graphData = { symbol: this.props.symbol, indicators: finalOptions };
 
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/priceGraph`, {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/priceGraph`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -103,7 +110,7 @@ class Chart extends React.Component {
             body: JSON.stringify(graphData)
         })
             .then(res => res.json())
-            .then(graphs => {
+            .then(async graphs => {
                 // save graphs to load chunks later
                 this.graphs = graphs;
                 console.log("received data from server");
@@ -131,6 +138,10 @@ class Chart extends React.Component {
                         this.dates.push(day["date"]);
                     });
 
+                    // cache support and resistance info
+                    await this.getSupportResistance();
+
+                    // set brush range
                     // if large enough to be chunked
                     if (graphs["price"].length > this.chunkSize) {
                         // set brush to end
@@ -155,6 +166,8 @@ class Chart extends React.Component {
 
     goToEvent = () => {
         if (this.props.eventIndex == -1) {
+            // update indicator changes
+            this.loadChunk();
             return;
         }
         let events = this.props.results["events"];
@@ -168,11 +181,12 @@ class Chart extends React.Component {
         let max = 0;
         let min = 0;
 
+        // set full view
         // If chunkable
         if (this.graphs["price"].length > this.chunkSize) {
             // place event in the center of the chunk
             let chunkMarginSize = Math.floor((this.chunkSize - (sellDateIndex - buyDateIndex)) / 2);
-            this.startIndex = buyDateIndex - chunkMarginSize;
+            this.startIndex = Math.max(0, buyDateIndex - chunkMarginSize);
             // max/min at ends of chunk
             max = this.maxThreshold;
             min = this.minThreshold;
@@ -190,8 +204,19 @@ class Chart extends React.Component {
         }
         this.loadChunk();
 
-        let startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
-        let endBrushIndex = Math.min(max, sellDateIndex - this.startIndex + brushMarginSize);
+        // set brush view
+        let startBrushIndex;
+        let endBrushIndex;
+        if (this.props.chartSettings["Test Mode"]) {
+            // place buy at the end
+            startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
+            endBrushIndex = Math.min(max, buyDateIndex - this.startIndex);
+        }
+        else {
+            // place brush around buy/sell events
+            startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
+            endBrushIndex = Math.min(max, sellDateIndex - this.startIndex + brushMarginSize);
+        }
         this.setState({ startBrushIndex, endBrushIndex });
     }
 
@@ -203,7 +228,15 @@ class Chart extends React.Component {
         if (name == "price") {
             return [value.toFixed(4), this.props.symbol];
         }
-        return value.toFixed(4);
+        if (value) {
+            try {
+                return value.toFixed(4);
+            }
+            catch {
+                console.log(value, typeof (value));
+                return value;
+            }
+        }
     }
 
     brushFormatter = (value) => {
@@ -258,12 +291,52 @@ class Chart extends React.Component {
         let days = this.graphs["price"];
         days = days.slice(this.startIndex, this.startIndex + this.chunkSize);
 
+        console.log("Loading chunks for", Object.keys(indicatorGraphs));
+
+        if (this.supportLevels && days.length > 0) {
+            // only load support/resistance levels in range
+            let firstDay = new Date(days[0]["date"]);
+            let lastDay = new Date(days[days.length - 1]["date"]);
+            let supportLevels = [];
+            let resistanceLevels = [];
+            let supportResistanceLevels = [];
+            Object.keys(this.supportLevels).forEach(groupAvg => {
+                let end = new Date(this.supportLevels[groupAvg]["end"]);
+                let start = new Date(this.supportLevels[groupAvg]["start"]);
+                if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
+                    supportLevels.push(groupAvg);
+                }
+            });
+            Object.keys(this.resistanceLevels).forEach(groupAvg => {
+                let end = new Date(this.resistanceLevels[groupAvg]["end"]);
+                let start = new Date(this.resistanceLevels[groupAvg]["start"]);
+                if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
+                    resistanceLevels.push(groupAvg);
+                }
+            });
+            Object.keys(this.supportResistanceLevels).forEach(groupAvg => {
+                let end = new Date(this.supportResistanceLevels[groupAvg]["end"]);
+                let start = new Date(this.supportResistanceLevels[groupAvg]["start"]);
+                let count = this.supportResistanceLevels[groupAvg]["count"]
+                if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
+                    supportResistanceLevels.push({ price: groupAvg, count });
+                }
+            });
+            this.setState({ supportLevels, resistanceLevels, supportResistanceLevels });
+        }
+
         // fill in graphs
         days.forEach(day => {
             // for price
+            let adjScale = day["adjClose"] / day["close"];
             let date = day["date"];
-            let price = day["adjClose"];
-            let priceEntry = { date, price };
+            let close = day["adjClose"];
+            let open = day["open"] * adjScale;
+            let low = day["low"] * adjScale;
+            let high = day["high"] * adjScale;
+            let greenCandleBody = close >= open ? [close - open, 0] : undefined;
+            let redCandleBody = close < open ? [0, open - close] : undefined;
+            let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick: [close - low, high - close] };
 
             // for indicators
             Object.keys(indicatorGraphs).forEach(indicatorName => {
@@ -302,6 +375,170 @@ class Chart extends React.Component {
         }
     }
 
+    getSupportResistance = () => {
+        return new Promise((resolve, reject) => {
+            let data = { indicatorName: "Structure", indicatorOptions: { "period": 75, "volatility": .05 }, symbol: this.props.symbol };
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(pivots => {
+                    try {
+                        this.pivots = Object.keys(pivots["pivots"]);
+                    }
+                    catch {
+
+                    }
+                })
+
+            let graphData = { indicatorName: "EMA", indicatorOptions: { "period": 5 }, symbol: this.props.symbol };
+
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(graphData)
+            })
+                .then(res => res.json())
+                .then(smoothedGraph => {
+                    smoothedGraph = smoothedGraph["EMA(5)"];
+                    let resistanceLevels = [];
+                    let supportLevels = [];
+                    let days = this.graphs["price"];
+                    let previousPrice = smoothedGraph[days[0]["date"]];
+                    let previousSlope = "P";
+                    for (let i = 1; i < days.length; ++i) {
+                        let day = days[i];
+                        let date = day["date"];
+                        let price = day["adjClose"];
+                        let difference = smoothedGraph[date] - previousPrice;
+                        // if has a direction, check for possible reversal
+                        if (difference != 0) {
+                            let slope = difference > 0 ? "P" : "N";
+                            // different slope
+                            if (previousSlope != slope) {
+                                // if slope up, is support
+                                if (slope == "P") {
+                                    // look for local min
+                                    let minIndex = i;
+                                    while (minIndex > 1) {
+                                        if (days[minIndex - 1]["adjClose"] > days[minIndex]["adjClose"]) break;
+                                        minIndex--;
+                                    }
+                                    supportLevels.push({ price: days[minIndex]["adjClose"], date: new Date(days[minIndex]["date"]) });
+                                }
+                                // if slow down, is support
+                                else if (slope == "N") {
+                                    // look for local max
+                                    let maxIndex = i;
+                                    while (maxIndex > 1) {
+                                        if (days[maxIndex - 1]["adjClose"] < days[maxIndex]["adjClose"]) break;
+                                        maxIndex--;
+                                    }
+                                    resistanceLevels.push({ price: days[maxIndex]["adjClose"], date: new Date(days[maxIndex]["date"]) });
+                                }
+                            }
+                            previousSlope = slope;
+                        }
+                        previousPrice = smoothedGraph[date];
+                    }
+
+                    // merge similar support and resistances
+                    this.supportLevels = this.mergeLevels(supportLevels);
+                    this.resistanceLevels = this.mergeLevels(resistanceLevels);
+
+                    // merge support and resistance
+                    this.mergeSupportResistance();
+
+                    let cutoff = 25;
+                    // view raw support/resistance levels, verbose
+                    // this.setState({ supportLevels: supportLevels.splice(supportLevels.length - cutoff, cutoff), resistanceLevels: resistanceLevels.splice(resistanceLevels.length - cutoff, cutoff) });
+                    resolve();
+                });
+        });
+    }
+
+    mergeSupportResistance = () => {
+        let similarityThreshold = .05;
+        let merged = { ...this.supportLevels };
+        Object.keys(this.resistanceLevels).forEach(resistanceLevel => {
+            let level = this.resistanceLevels[resistanceLevel];
+            let groupMatch = undefined;
+            let groupAverages = Object.keys(merged);
+            // look for a group that is close to this level
+            for (let i = 0; i < groupAverages.length; ++i) {
+                let groupAverage = groupAverages[i];
+                if (groupAverage * (1 + similarityThreshold) > resistanceLevel && groupAverage * (1 - similarityThreshold) < resistanceLevel) {
+                    groupMatch = groupAverage;
+                    break;
+                }
+            }
+            // if found an agreeing support, add to group
+            if (groupMatch) {
+                // remove from support/resistance
+                if (this.supportLevels.hasOwnProperty(groupMatch)) {
+                    delete this.supportLevels[groupMatch];
+                }
+                if (this.resistanceLevels.hasOwnProperty(resistanceLevel)) {
+                    delete this.resistanceLevels[resistanceLevel];
+                }
+                let oldStart = merged[groupMatch]["start"];
+                let oldEnd = merged[groupMatch]["end"];
+                let oldCount = merged[groupMatch]["count"];
+                let newStart = oldStart < level["start"] ? oldStart : level["start"];
+                let newEnd = oldEnd > level["end"] ? oldEnd : level["end"];
+                let newCount = oldCount + level["count"];
+                let newAverage = (groupMatch * oldCount + resistanceLevel * level["count"]) / newCount;
+                delete merged[groupMatch];
+                merged[newAverage] = { count: newCount, end: newEnd, start: newStart, merged: true };
+            }
+        });
+        // remove unmerged levels
+        Object.keys(merged).forEach(level => {
+            if (!merged[level]["merged"]) {
+                delete merged[level];
+            }
+        });
+        this.supportResistanceLevels = merged;
+    }
+
+    // takes volatile support and resistance levels, and merges similar levels 
+    mergeLevels = (levels) => {
+        let similarityThreshold = .05;
+        let merged = {};
+        levels.forEach(level => {
+            let groupMatch = undefined;
+            let groupAverages = Object.keys(merged);
+            // look for a group that is close to this level
+            for (let i = 0; i < groupAverages.length; ++i) {
+                let groupAverage = groupAverages[i];
+                if (groupAverage * (1 + similarityThreshold) > level["price"] && groupAverage * (1 - similarityThreshold) < level["price"]) {
+                    groupMatch = groupAverage;
+                    break;
+                }
+            }
+            // if found a group, add to group
+            if (groupMatch) {
+                let oldStart = merged[groupMatch]["start"];
+                let oldCount = merged[groupMatch]["count"];
+                let newCount = oldCount + 1;
+                let newAverage = (groupMatch * oldCount + level["price"]) / newCount;
+                delete merged[groupMatch];
+                merged[newAverage] = { count: newCount, end: level["date"], start: oldStart };
+            }
+            // if not found, create a group
+            else {
+                merged[level["price"]] = { count: 1, end: level["date"], start: level["date"] };
+            }
+        });
+        return merged;
+    }
+
     render() {
         console.log(this.state);
         // if no symbol, return
@@ -312,6 +549,7 @@ class Chart extends React.Component {
         let sideChartHeight = 15;
         let mainChartHeight = 100 - (this.props.activeIndicators.filter(i => !this.overlayCharts.includes(i)).length + 1) * sideChartHeight;
 
+        // Brushes
         let mainBrush = <Brush gap={1} height={65} dataKey="date" startIndex={this.state.startBrushIndex} endIndex={this.state.endBrushIndex} onChange={this.onBrushChange} tickFormatter={this.brushFormatter}>
             <AreaChart>
                 <CartesianGrid horizontal={false} />
@@ -331,22 +569,49 @@ class Chart extends React.Component {
             labelFormatter={label => getFormattedDate(label)}
         />;
 
+        // Main Line
+        let mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />}>
+            <ErrorBar dataKey="greenCandleBody" width={0} strokeWidth={5} stroke="green" direction="y" />
+            <ErrorBar dataKey="redCandleBody" width={0} strokeWidth={5} stroke="red" direction="y" />
+            <ErrorBar dataKey="candleWick" width={1} strokeWidth={1} stroke="black" direction="y" />
+        </Line>;
+        if (!this.props.chartSettings["Candles"]) {
+            mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />} />;
+        }
+
+        // Support Resistance Lines
+        let supportResistanceLines = this.state.supportResistanceLevels.map(sr => <ReferenceLine y={sr["price"]} stroke="black" strokeDasharray="3 3" />);
+        if (!this.props.chartSettings["Support Lines"]) {
+            supportResistanceLines = <></>;
+        }
+
+        console.log("CHART SETTINGS", this.props.chartSettings);
+
         return (
             <div className="chart-container" onWheel={this.wheelHandler}>
                 {/* Main Chart */}
                 <ResponsiveContainer width="100%" height={`${mainChartHeight}%`}>
                     <LineChart data={this.state.priceGraph} syncId="graph" margin={margins}>
-                        <CartesianGrid vertical={false} />
+                        <CartesianGrid vertical={false} horizontal={false} />
                         <XAxis dataKey="date" minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
                         <YAxis domain={["auto", "auto"]} orientation="left" />
+                        {/* Main Line */}
+                        {mainLine}
                         {/* Overlay Charts */}
-                        <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />} />
                         {
                             this.state.myOverlayCharts.length > 0 && this.state.myOverlayCharts.map((overlay, index) => {
                                 let colors = distinctColors({ count: this.state.myOverlayCharts.length, lightMin: 50 });
                                 return <Line key={overlay} dataKey={overlay} strokeWidth={3} stroke={`${colors[index].hex()}`} dot={false} />
                             })
                         }
+                        {/* Support and Resistance Lines */}
+                        {supportResistanceLines}
+                        {/* {
+                            this.state.supportLevels.map(support => <ReferenceLine y={support} stroke="green" strokeDasharray="3 3" />)
+                        }
+                        {
+                            this.state.resistanceLevels.map(resistance => <ReferenceLine y={resistance} stroke="red" strokeDasharray="3 3" />)
+                        } */}
                         {hiddenBrush}
                         {tooltip}
                     </LineChart>
@@ -385,6 +650,13 @@ class Chart extends React.Component {
 
         let dotRadius = props.size;
 
+        // debug pivots
+        if (this.pivots && this.pivots.includes(payload["date"])) {
+            return (
+                <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="blue" />
+            );
+        }
+
         // if is a buy date
         if (this.state.buyDates.has(payload["date"])) {
             return (
@@ -397,7 +669,8 @@ class Chart extends React.Component {
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="red" />
             );
         }
-        else if (this.props.results["recent"]["buy"].includes(payload["date"])) {
+        // if holding
+        else if (this.state.holdings.has(payload["date"])) {
             return <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="yellow" />
         }
 
@@ -427,7 +700,7 @@ let mapStateToProps = (state) => {
     return {
         symbol: state.selectedSymbol, results: state.backtestResults["symbolData"][state.selectedSymbol],
         activeIndicators: [...state.activeIndicators], indicatorOptions: state.indicatorOptions,
-        eventIndex: state.eventIndex
+        eventIndex: state.eventIndex, chartSettings: state.chartSettings
     }
 };
 

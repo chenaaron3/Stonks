@@ -2,9 +2,16 @@ import React, { createRef } from 'react';
 import "./CreateBacktest.css";
 import { connect } from 'react-redux';
 import { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedResults, setBacktestResults, viewStock } from '../redux';
-import Stepper from 'react-stepper-horizontal';
+// import Stepper from 'react-stepper-horizontal';
 import Indicator from './Indicator';
 import Pusher from 'react-pusher';
+import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
+
+import { makeStyles } from '@material-ui/core/styles';
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
 
 class CreateBacktest extends React.Component {
     constructor(props) {
@@ -14,13 +21,20 @@ class CreateBacktest extends React.Component {
             mainBuyIndicator: "",
             mainSelIndicator: "",
             buyOptions: {},
-            sellOptions: {}
+            sellOptions: {},
+            stopLossHigh: 0,
+            minVolume: 1000000,
         };
         this.indicators = {
-            "SMA": { "fields": ["period"], "default": [9] },
+            "SMA": { "fields": ["period", "minDuration"], "default": [180, 1] },
+            "EMA": { "fields": ["period", "minDuration"], "default": [5, 1] },
             "RSI": { "fields": ["period", "underbought", "overbought"], "default": [14, 30, 70] },
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
-            "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] }
+            "MACD2": { "fields": ["ema1", "ema2", "signalPeriod", "buyThreshold"], "default": [12, 26, 9, -.01] },
+            "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
+            "ADX": { "fields": ["period"], "default": [12] },
+            "Hammer": { "fields": ["headRatio", "legRatio", "expiration"], "default": [1, 2, 0] },
+            "Structure": { "fields": ["period", "volatility", "minCount"], "default": [75, .05, 1] }
         }
 
         // for each indicator
@@ -53,13 +67,24 @@ class CreateBacktest extends React.Component {
 
     // get results from api
     getResults = () => {
+        if (process.env.NODE_ENV == "production") {
+            let pass = prompt('Enter the secret code.');
+            if (pass != "stonks") {
+                return;
+            }
+        }
+
+        // go back to first step as confirmation
+        this.setStep(0);
+
         let strategyOptions = {
             "buyIndicators": this.state.buyOptions,
             "sellIndicators": this.state.sellOptions,
             "mainBuyIndicator": this.state.mainBuyIndicator,
             "mainSellIndicator": this.state.mainSellIndicator,
-            // "stopLoss": .5,
-            "minVolume": 1000000,
+            // "stopLossLow": .98,
+            "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
+            "minVolume": this.state.minVolume,
             "expiration": 7,
             "multipleBuys": true
         };
@@ -73,7 +98,7 @@ class CreateBacktest extends React.Component {
         //     });
 
         // fetch results here        
-        fetch(`${process.env.REACT_APP_SUBDIRECTORY}/backtest`, {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/backtest`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -82,6 +107,9 @@ class CreateBacktest extends React.Component {
         })
             .then(res => res.json())
             .then(results => {
+                console.log("STATUS:", results["status"]);
+                setTimeout(() => { alert(results["status"]); }, 1000);
+
                 let id = results["id"];
                 console.log(`Getting id ${id} from server!`);
                 this.props.setID(id);
@@ -101,6 +129,10 @@ class CreateBacktest extends React.Component {
             });
     }
 
+    previousStep = () => {
+        this.setStep(this.state.step - 1);
+    }
+
     // error checking
     nextStep = () => {
         if (this.state.step == 0) {
@@ -118,11 +150,36 @@ class CreateBacktest extends React.Component {
             this.setState({ sellOptions: this.deriveIndicatorOptions() });
         }
         if (this.state.step < 2) {
-            this.setState({ step: this.state.step + 1 });
+            this.setStep(this.state.step + 1);
         }
     }
 
     setStep = (step) => {
+        // prefill previous form data
+        if (step == 0) {
+            // sets options
+            Object.keys(this.state.buyOptions).forEach(indicatorName => {
+                Object.keys(this.state.buyOptions[indicatorName]).forEach(field => {
+                    this.props.setIndicatorOption(indicatorName, field, this.state.buyOptions[indicatorName][field]);
+                })
+            })
+            // sets on/off
+            Object.keys(this.indicators).forEach(indicatorName => {
+                this.props.setIndicatorOn(indicatorName, this.state.buyOptions.hasOwnProperty(indicatorName));
+            })
+        }
+        if (step == 1) {
+            // sets options
+            Object.keys(this.state.sellOptions).forEach(indicatorName => {
+                Object.keys(this.state.sellOptions[indicatorName]).forEach(field => {
+                    this.props.setIndicatorOption(indicatorName, field, this.state.sellOptions[indicatorName][field]);
+                })
+            })
+            // sets on/off
+            Object.keys(this.indicators).forEach(indicatorName => {
+                this.props.setIndicatorOn(indicatorName, this.state.sellOptions.hasOwnProperty(indicatorName));
+            })
+        }
         this.setState({ step });
     }
 
@@ -133,14 +190,12 @@ class CreateBacktest extends React.Component {
         let results = await this.fetchBacktestResults(id);
         // store results in global state
         this.props.setBacktestResults(id, results);
-
-        // TODO tell user that results are ready
     }
 
     fetchBacktestResults = (id) => {
         return new Promise(resolve => {
             // get the data from the server
-            fetch(`${process.env.REACT_APP_SUBDIRECTORY}/results?id=${id}`, {
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/results?id=${id}`, {
                 method: 'GET'
             }).then(res => res.json())
                 .then(results => {
@@ -153,6 +208,12 @@ class CreateBacktest extends React.Component {
         let allIndicators = Object.keys(this.indicators);
         let activeIndicators = [...this.props.activeIndicators];
         activeIndicators.sort();
+
+        let buyIndicators = JSON.stringify(this.state.buyOptions, null, 2).replace(/[{},"]/g, "");
+        buyIndicators = buyIndicators.split("\n").filter(x => x.trim().length > 0).join("\n");
+        let sellIndicators = JSON.stringify(this.state.sellOptions, null, 2).replace(/[{},"]/g, "");
+        sellIndicators = sellIndicators.split("\n").filter(x => x.trim().length > 0).join("\n");
+
         return (
             <div className="create-backtest">
                 <Pusher
@@ -164,79 +225,116 @@ class CreateBacktest extends React.Component {
 
                 <div className="create-backtest-form">
                     <div className="create-backtest-stepper">
-                        <Stepper defaultTitleColor="#ecf0f1" activeTitleColor="#ecf0f1" completeTitleColor="#ecf0f1"
-                            steps={[{ title: 'Set Buy Criterias', onClick: (e) => { e.preventDefault(); this.setStep(0) } },
-                            { title: "Set Sell Criterias", onClick: (e) => { e.preventDefault(); this.setStep(1) } },
-                            { title: "Start Backtest!", onClick: (e) => { e.preventDefault(); this.setStep(2) } }]} activeStep={this.state.step} />
+                        <Stepper alternativeLabel activeStep={this.state.step} style={{ width: "100%", height: "100%", backgroundColor: "#dee4ec" }}>
+                            <Step>
+                                <StepLabel>Buy Criterias</StepLabel>
+                            </Step>
+                            <Step>
+                                <StepLabel>Sell Criterias</StepLabel>
+                            </Step>
+                            <Step>
+                                <StepLabel>Start Backtest</StepLabel>
+                            </Step>
+                        </Stepper>
                     </div>
-
                     <div className="create-backtest-form-body">
-                        {
-                            this.state.step == 0 && (
-                                <>
-                                    <h2 className="create-backtest-form-body-title">Customize your buy criterias.</h2>
-                                    <h3>Select buy indicators to identify entry signals.</h3>
-                                    <div className="create-backtest-indicator-list">
-                                        {Object.keys(this.indicators).map((indicatorName, index) => {
-                                            return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
-                                                setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
-                                                options={this.props.indicatorOptions[indicatorName]} />
-                                        })}
-                                    </div>
-                                    <h3>Select a main buy indicator to initiate buy events.</h3>
-                                    <div className="create-backtest-main-indicator-list">
-                                        {activeIndicators.length == 0 && (
-                                            <p className="create-backtest-error">No indicators selected...</p>
-                                        )}
-                                        {activeIndicators.map((indicatorName, index) => {
-                                            return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainBuyIndicator == indicatorName} key={index}
-                                                setMainIndicator={this.setMainIndicator} isBuy={true} />
-                                        })}
-                                    </div>
-                                </>
-                            )}
-                        {
-                            this.state.step == 1 && (
-                                <>
-                                    <h2 className="create-backtest-form-body-title">Customize your sell criterias.</h2>
-                                    <h3>Select sell indicators to identify exit signals.</h3>
-                                    <div className="create-backtest-indicator-list">
-                                        {Object.keys(this.indicators).map((indicatorName, index) => {
-                                            return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
-                                                setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
-                                                options={this.props.indicatorOptions[indicatorName]} />
-                                        })}
-                                    </div>
-                                    <h3>Select a main sell indicator to initiate a sell events.</h3>
-                                    <div className="create-backtest-main-indicator-list">
-                                        {activeIndicators.length == 0 && (
-                                            <p className="create-backtest-error">No indicators selected...</p>
-                                        )}
-                                        {activeIndicators.map((indicatorName, index) => {
-                                            return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainSellIndicator == indicatorName} key={index}
-                                                setMainIndicator={this.setMainIndicator} isBuy={false} />
-                                        })}
-                                    </div>
-                                </>
-                            )
-                        }
-                        {
-                            this.state.step == 2 && (
-                                <>
-                                    <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2>
-                                    <h3>Buy Criterias:</h3>
-                                    <p>Main Indicator: {this.state.mainBuyIndicator}</p>
-                                    <p>Indicators: {JSON.stringify(this.state.buyOptions)}</p>
-                                    <h3>Sell Criterias:</h3>
-                                    <p>Indicators: {JSON.stringify(this.state.sellOptions)}</p>
-                                    <p>Main Indicator: {this.state.mainSellIndicator}</p>
-                                </>
-                            )
-                        }
-
-                        <button className="create-backtest-start-button" onClick={this.state.step < 2 ? this.nextStep : this.getResults}>
-                            <span className="create-backtest-start-text">{this.state.step < 2 ? "Next" : "Get Results"}</span>
-                        </button>
+                        <div className="create-backtest-form-body-content">
+                            {
+                                this.state.step == 0 && (
+                                    <>
+                                        {/* <h2 className="create-backtest-form-body-title">Customize your buy criterias.</h2> */}
+                                        <h3 className="create-backtest-subtitle">Select buy indicators to identify entry signals.</h3>
+                                        <div className="create-backtest-indicator-list">
+                                            {Object.keys(this.indicators).map((indicatorName, index) => {
+                                                return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
+                                                    setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
+                                                    options={this.props.indicatorOptions[indicatorName]} />
+                                            })}
+                                        </div>
+                                        <h3 className="create-backtest-subtitle">Select a main indicator to initiate buy events.</h3>
+                                        <div className="create-backtest-main-indicator-list">
+                                            {activeIndicators.length == 0 && (
+                                                <p className="create-backtest-error">No indicators selected...</p>
+                                            )}
+                                            {activeIndicators.map((indicatorName, index) => {
+                                                return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainBuyIndicator == indicatorName} key={index}
+                                                    setMainIndicator={this.setMainIndicator} isBuy={true} />
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+                            {
+                                this.state.step == 1 && (
+                                    <>
+                                        {/* <h2 className="create-backtest-form-body-title">Customize your sell criterias.</h2> */}
+                                        <h3 className="create-backtest-subtitle">Select sell indicators to identify exit signals.</h3>
+                                        <div className="create-backtest-indicator-list">
+                                            {Object.keys(this.indicators).map((indicatorName, index) => {
+                                                return <Indicator name={indicatorName} fields={this.indicators[indicatorName]["fields"]} default={this.indicators[indicatorName]["default"]} key={index}
+                                                    setIndicatorOption={this.props.setIndicatorOption} setIndicatorOn={this.props.setIndicatorOn} active={activeIndicators.includes(indicatorName)}
+                                                    options={this.props.indicatorOptions[indicatorName]} />
+                                            })}
+                                        </div>
+                                        <h3 className="create-backtest-subtitle">Select a main indicator to initiate a sell events.</h3>
+                                        <div className="create-backtest-main-indicator-list">
+                                            {activeIndicators.length == 0 && (
+                                                <p className="create-backtest-error">No indicators selected...</p>
+                                            )}
+                                            {activeIndicators.map((indicatorName, index) => {
+                                                return <MainIndicatorOption name={indicatorName} isChecked={this.state.mainSellIndicator == indicatorName} key={index}
+                                                    setMainIndicator={this.setMainIndicator} isBuy={false} />
+                                            })}
+                                        </div>
+                                    </>
+                                )
+                            }
+                            {
+                                this.state.step == 2 && (
+                                    <>
+                                        {/* <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2> */}
+                                        <div className="create-backtest-form-body-split">
+                                            <div className="create-backtest-additional-options">
+                                                <h3 className="create-backtest-subtitle">Additional Options</h3>
+                                                <div>
+                                                    <TextField label="Take profit" value={this.state.stopLossHigh}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ stopLossHigh: newValue })
+                                                        }} helperText="20 to sell at 20% profit. 0 to disable." />
+                                                </div>
+                                                <div>
+                                                    <TextField label="Minimum Volume" value={this.state.minVolume}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ minVolume: newValue })
+                                                        }} helperText="Will only execute buy if above volume." />
+                                                </div>
+                                            </div>
+                                            <div className="create-backtest-review-criterias">
+                                                <h3 className="create-backtest-subtitle">Buy Criterias:</h3>
+                                                <p>Main Indicator: {this.state.mainBuyIndicator}</p>
+                                                <pre id="json" style={{ fontSize: "1em" }}>{buyIndicators}</pre>
+                                            </div>
+                                            <div className="create-backtest-review-criterias">
+                                                <h3 className="create-backtest-subtitle">Sell Criterias:</h3>
+                                                <p>Main Indicator: {this.state.mainSellIndicator}</p>
+                                                <pre id="json" style={{ fontSize: "1em" }}>{sellIndicators}</pre>
+                                            </div>
+                                        </div>
+                                    </>
+                                )
+                            }
+                        </div>
+                        <div className="create-backtest-actions">
+                            <Button variant="contained" onClick={this.previousStep} color="primary" disabled={this.state.step == 0}>
+                                Previous
+                            </Button>
+                            <Button variant="contained" onClick={this.state.step < 2 ? this.nextStep : this.getResults} color="primary">
+                                {this.state.step < 2 ? "Next" : "Get Results"}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
