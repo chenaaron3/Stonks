@@ -164,7 +164,7 @@ class Chart extends React.Component {
             })
     }
 
-    goToEvent = () => {
+    goToEvent = async () => {
         if (this.props.eventIndex == -1) {
             // update indicator changes
             this.loadChunk();
@@ -202,7 +202,8 @@ class Chart extends React.Component {
             // base margin on price size
             brushMarginSize = Math.floor(this.graphs["price"].length * this.eventMargin)
         }
-        this.loadChunk();
+
+        await this.loadChunk();
 
         // set brush view
         let startBrushIndex;
@@ -216,8 +217,15 @@ class Chart extends React.Component {
             // place brush around buy/sell events
             startBrushIndex = Math.max(min, buyDateIndex - this.startIndex - brushMarginSize);
             endBrushIndex = Math.min(max, sellDateIndex - this.startIndex + brushMarginSize);
+            // for recent events where not a full chunk is loaded
+            console.log(this.state.priceGraph.length, this.chunkSize);
+            if (this.state.priceGraph.length < this.chunkSize) {
+                endBrushIndex = Math.min(endBrushIndex, this.state.priceGraph.length - 2);
+            }
         }
-        this.setState({ startBrushIndex, endBrushIndex });
+        this.setState({ startBrushIndex, endBrushIndex }, () => {
+            this.refreshGraph();
+        });        
     }
 
     xAxisTickFormatter = (value) => {
@@ -275,95 +283,108 @@ class Chart extends React.Component {
     }
 
     loadChunk = () => {
-        let priceGraph = [];
-        let myindicatorGraphs = {};
-        let indicatorGraphs = this.graphs["indicators"];
+        return new Promise(res => {
+            let priceGraph = [];
+            let myindicatorGraphs = {};
+            let indicatorGraphs = this.graphs["indicators"];
 
-        // initialize indicator graphs
-        Object.keys(indicatorGraphs).forEach(indicatorName => {
-            // non-overlays have their own lists in state
-            if (!this.overlayCharts.includes(indicatorName)) {
-                myindicatorGraphs[indicatorName] = [];
-            }
-        });
-
-        // only load a certain chunk for better performance
-        let days = this.graphs["price"];
-        days = days.slice(this.startIndex, this.startIndex + this.chunkSize);
-
-        console.log("Loading chunks for", Object.keys(indicatorGraphs));
-
-        if (this.supportLevels && days.length > 0) {
-            // only load support/resistance levels in range
-            let firstDay = new Date(days[0]["date"]);
-            let lastDay = new Date(days[days.length - 1]["date"]);
-            let supportLevels = [];
-            let resistanceLevels = [];
-            let supportResistanceLevels = [];
-            Object.keys(this.supportLevels).forEach(groupAvg => {
-                let end = new Date(this.supportLevels[groupAvg]["end"]);
-                let start = new Date(this.supportLevels[groupAvg]["start"]);
-                if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
-                    supportLevels.push(groupAvg);
-                }
-            });
-            Object.keys(this.resistanceLevels).forEach(groupAvg => {
-                let end = new Date(this.resistanceLevels[groupAvg]["end"]);
-                let start = new Date(this.resistanceLevels[groupAvg]["start"]);
-                if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
-                    resistanceLevels.push(groupAvg);
-                }
-            });
-            Object.keys(this.supportResistanceLevels).forEach(groupAvg => {
-                let end = new Date(this.supportResistanceLevels[groupAvg]["end"]);
-                let start = new Date(this.supportResistanceLevels[groupAvg]["start"]);
-                let count = this.supportResistanceLevels[groupAvg]["count"]
-                if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
-                    supportResistanceLevels.push({ price: groupAvg, count });
-                }
-            });
-            this.setState({ supportLevels, resistanceLevels, supportResistanceLevels });
-        }
-
-        // fill in graphs
-        days.forEach(day => {
-            // for price
-            let adjScale = day["adjClose"] / day["close"];
-            let date = day["date"];
-            let close = day["adjClose"];
-            let open = day["open"] * adjScale;
-            let low = day["low"] * adjScale;
-            let high = day["high"] * adjScale;
-            let greenCandleBody = close >= open ? [close - open, 0] : undefined;
-            let redCandleBody = close < open ? [0, open - close] : undefined;
-            let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick: [close - low, high - close] };
-
-            // for indicators
+            // initialize indicator graphs
             Object.keys(indicatorGraphs).forEach(indicatorName => {
-                // overlays store data with symbol price
-                if (this.overlayCharts.includes(indicatorName)) {
-                    let graphNames = Object.keys(indicatorGraphs[indicatorName]);
-                    graphNames.forEach(graphName => {
-                        priceEntry[graphName] = indicatorGraphs[indicatorName][graphName][date];
-                    })
-                }
-                // non-overlays have their own lists
-                else {
-                    let entry = { date };
-                    // each indicator may have multiple graphs
-                    let graphNames = Object.keys(indicatorGraphs[indicatorName]);
-                    graphNames.forEach(graphName => {
-                        entry[graphName] = indicatorGraphs[indicatorName][graphName][date];
-                    })
-                    myindicatorGraphs[indicatorName].push(entry)
+                // non-overlays have their own lists in state
+                if (!this.overlayCharts.includes(indicatorName)) {
+                    myindicatorGraphs[indicatorName] = [];
                 }
             });
 
-            priceGraph.push(priceEntry);
-        });
+            // only load a certain chunk for better performance
+            let days = this.graphs["price"];
+            days = days.slice(this.startIndex, this.startIndex + this.chunkSize);
 
-        this.setState(myindicatorGraphs);
-        this.setState({ priceGraph });
+            console.log("Loading chunks for", Object.keys(indicatorGraphs));
+
+            if (this.supportLevels && days.length > 0) {
+                // only load support/resistance levels in range
+                let firstDay = new Date(days[0]["date"]);
+                let lastDay = new Date(days[days.length - 1]["date"]);
+                let supportLevels = [];
+                let resistanceLevels = [];
+                let supportResistanceLevels = [];
+                Object.keys(this.supportLevels).forEach(groupAvg => {
+                    let end = new Date(this.supportLevels[groupAvg]["end"]);
+                    let start = new Date(this.supportLevels[groupAvg]["start"]);
+                    if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
+                        supportLevels.push(groupAvg);
+                    }
+                });
+                Object.keys(this.resistanceLevels).forEach(groupAvg => {
+                    let end = new Date(this.resistanceLevels[groupAvg]["end"]);
+                    let start = new Date(this.resistanceLevels[groupAvg]["start"]);
+                    if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
+                        resistanceLevels.push(groupAvg);
+                    }
+                });
+                Object.keys(this.supportResistanceLevels).forEach(groupAvg => {
+                    let end = new Date(this.supportResistanceLevels[groupAvg]["end"]);
+                    let start = new Date(this.supportResistanceLevels[groupAvg]["start"]);
+                    let count = this.supportResistanceLevels[groupAvg]["count"]
+                    if (end > firstDay && end < lastDay || start > firstDay && start < lastDay) {
+                        supportResistanceLevels.push({ price: groupAvg, count });
+                    }
+                });
+                this.setState({ supportLevels, resistanceLevels, supportResistanceLevels });
+            }
+
+            // fill in graphs
+            days.forEach(day => {
+                // for price
+                let adjScale = day["adjClose"] / day["close"];
+                let date = day["date"];
+                let close = day["adjClose"];
+                let open = day["open"] * adjScale;
+                let low = day["low"] * adjScale;
+                let high = day["high"] * adjScale;
+                let greenCandleBody = close >= open ? [close - open, 0] : undefined;
+                let redCandleBody = close < open ? [0, open - close] : undefined;
+                let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick: [close - low, high - close] };
+
+                // for indicators
+                Object.keys(indicatorGraphs).forEach(indicatorName => {
+                    // overlays store data with symbol price
+                    if (this.overlayCharts.includes(indicatorName)) {
+                        let graphNames = Object.keys(indicatorGraphs[indicatorName]);
+                        graphNames.forEach(graphName => {
+                            priceEntry[graphName] = indicatorGraphs[indicatorName][graphName][date];
+                        })
+                    }
+                    // non-overlays have their own lists
+                    else {
+                        let entry = { date };
+                        // each indicator may have multiple graphs
+                        let graphNames = Object.keys(indicatorGraphs[indicatorName]);
+                        graphNames.forEach(graphName => {
+                            entry[graphName] = indicatorGraphs[indicatorName][graphName][date];
+                        })
+                        myindicatorGraphs[indicatorName].push(entry)
+                    }
+                });
+
+                priceGraph.push(priceEntry);
+            });
+
+            this.setState(myindicatorGraphs);
+            this.setState({ priceGraph }, () => {
+                res()
+            });
+        });
+    }
+
+    refreshGraph = () => {
+        let priceGraph = [...this.state.priceGraph];
+        let missing = priceGraph.pop();
+        this.setState({ priceGraph }, () => {
+            priceGraph.push(missing);
+            this.setState({ priceGraph });
+        });
     }
 
     wheelHandler = (e) => {

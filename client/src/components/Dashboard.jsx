@@ -15,6 +15,12 @@ import Button from '@material-ui/core/Button';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Box from '@material-ui/core/Box';
 import Pusher from 'react-pusher';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import TextField from '@material-ui/core/TextField';
+import InputLabel from '@material-ui/core/InputLabel';
+import Slider from '@material-ui/core/Slider';
 
 let winLossColor = ["#2ecc71", "#FFCCCB"];
 
@@ -24,8 +30,11 @@ class Dashboard extends React.Component {
         this.state = {
             numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
             winLossData: [], spanData: [], percentProfitData: [], profitData: [], yearData: [],
-            updateProgress: -1
+            updateProgress: -1, type: "yearly", range: 50
         }
+
+        this.types = ["yearly", "6 months", "3 months", "1 month"];
+        this.typeLookup = { "yearly": 12, "6 months": 6, "3 months": 3, "1 month": 1 };
     }
 
     componentDidMount() {
@@ -50,13 +59,18 @@ class Dashboard extends React.Component {
         let numWins = 0;
         let numLosses = 0;
         let yearlyData = {};
+
         // get the sorted symbols
         let sortedSymbols = Object.keys(this.props.results["symbolData"]);
         sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["percentProfit"] - this.props.results["symbolData"][a]["percentProfit"]);
         this.setState({ sortedSymbols }, () => {
             this.state.sortedSymbols.forEach(symbol => {
                 this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                    let buyYear = (new Date(event["buyDate"])).getFullYear();
+                    let buyDate = new Date(event["buyDate"]);
+                    // group based on type
+                    let groupSize = this.typeLookup[this.state.type];
+                    let buyMonth = Math.floor(buyDate.getMonth() / groupSize) * groupSize;
+                    let buyYear = new Date(buyDate.getFullYear(), buyMonth, 1, 0, 0, 0, 0).getTime();
                     if (!yearlyData.hasOwnProperty(buyYear)) {
                         yearlyData[buyYear] = { winTrades: 0, lossTrades: 0, profit: 0 };
                     }
@@ -138,9 +152,17 @@ class Dashboard extends React.Component {
 
             let yearData = [];
             let years = Object.keys(yearlyData);
-            years.sort();
+            years.sort((a, b) => {
+                console.log(new Date(parseInt(a)), new Date(parseInt(b)));
+                return new Date(parseInt(a)) - new Date(parseInt(b))
+            });
             let profit = 0;
+            let currentYear = new Date().getFullYear();
             years.forEach(year => {
+                // range cut off
+                if (new Date(parseInt(year)).getFullYear() < currentYear - this.state.range) {
+                    return;
+                }
                 profit += yearlyData[year]["profit"];
                 yearData.push({ year, ...yearlyData[year], profit });
             })
@@ -176,6 +198,22 @@ class Dashboard extends React.Component {
         return value.toFixed(4);
     }
 
+    xAxisTickFormatter = (value) => {
+        let date = new Date(parseInt(value));
+        return this.formatDate(date);
+    }
+
+    formatDate = (date) => {
+        return (date.getMonth() + 1) + "/" + date.getFullYear();
+    }
+
+    handleTypeChange = (e) => {
+        console.log("changing type to", e.target.value)
+        this.setState({ type: this.types[e.target.value] }, () => {
+            this.analyze();
+        })
+    }
+
     render() {
         let totalTrades = this.state.numWins + this.state.numLosses;
         let winRate = (100 * (this.state.numWins) / (this.state.numWins + this.state.numLosses));
@@ -207,7 +245,42 @@ class Dashboard extends React.Component {
             />
             <div className="dashboard">
                 <div className="dashboard-header">
-                    <span className="dashboard-title">Backtest Summary</span>
+                    {/* <div> */}
+                        <span className="dashboard-title">Backtest Summary</span>
+                        <div className="dashboard-settings">
+                            <Box mx="1vw" mt="1vh">
+                                <FormControl style={{ minWidth: "5vw" }}>
+                                    <InputLabel id="dashboard-chart-range">Chart Range</InputLabel>
+                                    <Slider
+                                        defaultValue={50}
+                                        aria-labelledby="discrete-slider"
+                                        valueLabelDisplay="auto"
+                                        value={this.state.range}
+                                        onChange={(e, v) => { this.setState({ range: v }, () => { this.analyze() }) }}
+                                        step={5}
+                                        marks
+                                        min={5}
+                                        max={100}
+                                    />
+                                </FormControl>
+                            </Box>
+                            <Box width="10vw" display="flex" justifyContent="flex-start">
+                                <FormControl style={{ minWidth: "5vw" }}>
+                                    <InputLabel id="dashboard-chart-type">Frequency</InputLabel>
+                                    <Select
+                                        value={this.types.indexOf(this.state.type)}
+                                        onChange={this.handleTypeChange}
+                                    >
+                                        {
+                                            this.types.map((value, index) => {
+                                                return <MenuItem key={`dashboard-types-${index}`} value={index}>{value}</MenuItem>
+                                            })
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        </div>
+                    {/* </div> */}
                     <div className="dashboard-update">
                         {
                             this.state.updateProgress < 0 && <span className="dashboard-update-text">Updated {daysBetweenUpdate > 0 ? `${daysBetweenUpdate} days ago` : `${hoursBetweenUpdate} hours ago`}</span>
@@ -279,7 +352,7 @@ class Dashboard extends React.Component {
                                 <XAxis dataKey="year" minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
                                 <YAxis domain={[0, "dataMax"]} orientation="left" tickFormatter={v => numberWithCommas(v.toFixed(0))} />
                                 <Area dataKey="profit" stroke={winLossColor[0]} fillOpacity={1} fill={`${winLossColor[0]}`} />
-                                <Tooltip formatter={(value) => "$" + numberWithCommas(value.toFixed(0))} />
+                                <Tooltip formatter={value => "$" + numberWithCommas(value.toFixed(0))} labelFormatter={this.xAxisTickFormatter} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -293,7 +366,7 @@ class Dashboard extends React.Component {
                                 <YAxis domain={["auto", "auto"]} orientation="left" />
                                 <Bar dataKey="winTrades" stackId="a" fill={winLossColor[0]} />
                                 <Bar dataKey="lossTrades" stackId="a" fill={winLossColor[1]} />
-                                <Tooltip />
+                                <Tooltip labelFormatter={this.xAxisTickFormatter} />
                                 {/* <Legend verticalAlign="top" align="right" height={36} /> */}
                             </BarChart>
                         </ResponsiveContainer>

@@ -202,7 +202,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     let cutoffIndex = 0;
                     if (lastUpdated) {
                         // find first index where date is greater than last updated
-                        for(let i = json.length - 1; i >= 0; --i) {
+                        for (let i = json.length - 1; i >= 0; --i) {
                             if (json[i]["date"] < lastUpdated) {
                                 cutoffIndex = i;
                                 break;
@@ -211,10 +211,10 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         cutoffIndex = Math.max(0, cutoffIndex - 200);
                     }
 
-                    for(; cutoffIndex < json.length; ++cutoffIndex){
+                    for (; cutoffIndex < json.length; ++cutoffIndex) {
                         let day = json[cutoffIndex];
                         let date = new Date(day["date"]);
-                    
+
                         let formattedDate = date.toISOString();
                         let adjScale = day["adjClose"] / day["close"];
                         prices[formattedDate] = day["adjClose"];
@@ -374,6 +374,12 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                         if (strategyOptions["stopLossHigh"]) {
                             stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossHigh"] < prices[day]))
+                        }
+                        // overdue stocks
+                        if (strategyOptions["maxDays"]) {
+                            stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, index) => {
+                                return daysBetween(new Date(buyDates[index]), new Date(day)) > strategyOptions["maxDays"]
+                            }));
                         }
                         // if stoploss indicator goes off, sell all
                         if (stopLossIndicator && stopLossIndicator.shouldStop(day) == Indicator.STOP) {

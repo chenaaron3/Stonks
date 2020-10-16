@@ -23,7 +23,9 @@ class CreateBacktest extends React.Component {
             buyOptions: {},
             sellOptions: {},
             stopLossHigh: 0,
+            stopLossLow: 0,
             minVolume: 1000000,
+            maxDays: 30
         };
         this.indicators = {
             "SMA": { "fields": ["period", "minDuration"], "default": [180, 1] },
@@ -82,9 +84,10 @@ class CreateBacktest extends React.Component {
             "sellIndicators": this.state.sellOptions,
             "mainBuyIndicator": this.state.mainBuyIndicator,
             "mainSellIndicator": this.state.mainSellIndicator,
-            // "stopLossLow": .98,
+            "stopLossLow": this.state.stopLossLow == 0 ? undefined : 1 - this.state.stopLossLow / 100,
             "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
             "minVolume": this.state.minVolume,
+            "maxDays": this.state.maxDays,
             "expiration": 7,
             "multipleBuys": true
         };
@@ -304,12 +307,28 @@ class CreateBacktest extends React.Component {
                                                         }} helperText="20 to sell at 20% profit. 0 to disable." />
                                                 </div>
                                                 <div>
+                                                    <TextField label="Stop Loss" value={this.state.stopLossLow}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ stopLossLow: newValue })
+                                                        }} helperText="20 to sell at 20% loss. 0 to disable." />
+                                                </div>
+                                                <div>
                                                     <TextField label="Minimum Volume" value={this.state.minVolume}
                                                         onChange={(e) => {
                                                             let newValue = parseFloat(e.target.value);
                                                             if (!newValue) newValue = 0;
                                                             this.setState({ minVolume: newValue })
                                                         }} helperText="Will only execute buy if above volume." />
+                                                </div>
+                                                <div>
+                                                    <TextField label="Max Days" value={this.state.maxDays}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ maxDays: newValue })
+                                                        }} helperText="Will sell if in trade longer than max days." />
                                                 </div>
                                             </div>
                                             <div className="create-backtest-review-criterias">
