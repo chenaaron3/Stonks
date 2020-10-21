@@ -241,45 +241,48 @@ class Dashboard extends React.Component {
             <Pusher
                 channel={this.props.id}
                 event="onUpdateFinished"
-                onUpdate={(data) => { this.fetchBacktestResults(data["id"]) }}
+                onUpdate={(data) => {
+                    this.fetchBacktestResults(data["id"]);
+                    this.setState({ updateProgress: -1 });
+                }}
             />
             <div className="dashboard">
                 <div className="dashboard-header">
                     {/* <div> */}
-                        <span className="dashboard-title">Backtest Summary</span>
-                        <div className="dashboard-settings">
-                            <Box mx="1vw" mt="1vh">
-                                <FormControl style={{ minWidth: "5vw" }}>
-                                    <InputLabel id="dashboard-chart-range">Chart Range</InputLabel>
-                                    <Slider
-                                        defaultValue={50}
-                                        aria-labelledby="discrete-slider"
-                                        valueLabelDisplay="auto"
-                                        value={this.state.range}
-                                        onChange={(e, v) => { this.setState({ range: v }, () => { this.analyze() }) }}
-                                        step={5}
-                                        marks
-                                        min={5}
-                                        max={100}
-                                    />
-                                </FormControl>
-                            </Box>
-                            <Box width="10vw" display="flex" justifyContent="flex-start">
-                                <FormControl style={{ minWidth: "5vw" }}>
-                                    <InputLabel id="dashboard-chart-type">Frequency</InputLabel>
-                                    <Select
-                                        value={this.types.indexOf(this.state.type)}
-                                        onChange={this.handleTypeChange}
-                                    >
-                                        {
-                                            this.types.map((value, index) => {
-                                                return <MenuItem key={`dashboard-types-${index}`} value={index}>{value}</MenuItem>
-                                            })
-                                        }
-                                    </Select>
-                                </FormControl>
-                            </Box>
-                        </div>
+                    <span className="dashboard-title">Backtest Summary</span>
+                    <div className="dashboard-settings">
+                        <Box mx="1vw" mt="1vh">
+                            <FormControl style={{ minWidth: "5vw" }}>
+                                <InputLabel id="dashboard-chart-range">Chart Range</InputLabel>
+                                <Slider
+                                    defaultValue={50}
+                                    aria-labelledby="discrete-slider"
+                                    valueLabelDisplay="auto"
+                                    value={this.state.range}
+                                    onChange={(e, v) => { this.setState({ range: v }, () => { this.analyze() }) }}
+                                    step={5}
+                                    marks
+                                    min={5}
+                                    max={100}
+                                />
+                            </FormControl>
+                        </Box>
+                        <Box width="10vw" display="flex" justifyContent="flex-start">
+                            <FormControl style={{ minWidth: "5vw" }}>
+                                <InputLabel id="dashboard-chart-type">Frequency</InputLabel>
+                                <Select
+                                    value={this.types.indexOf(this.state.type)}
+                                    onChange={this.handleTypeChange}
+                                >
+                                    {
+                                        this.types.map((value, index) => {
+                                            return <MenuItem key={`dashboard-types-${index}`} value={index}>{value}</MenuItem>
+                                        })
+                                    }
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    </div>
                     {/* </div> */}
                     <div className="dashboard-update">
                         {

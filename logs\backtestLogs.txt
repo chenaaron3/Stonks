@@ -513,3 +513,5 @@ Worker yCihltHGhY: Starting backtest
 Worker yCihltHGhY: Finished backtest in 574 seconds
 Worker 1tgWkLgzs1: Starting backtest
 Worker 1tgWkLgzs1: Finished backtest in 575 seconds
+Worker yCihltHGhY: Starting backtest
+Worker yCihltHGhY: Finished backtest in 209 seconds

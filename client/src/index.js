@@ -4,6 +4,7 @@ import './index.css';
 import ReviewPage from './pages/ReviewPage';
 import CreatePage from './pages/CreatePage';
 import SummaryPage from './pages/SummaryPage';
+import SimulatePage from './pages/SimulatePage';
 import WatchlistPage from './pages/WatchlistPage';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'react-redux'
@@ -44,6 +45,7 @@ ReactDOM.render(
           <Route exact path="/" component={CreatePage} />
           <Route path="/review" component={ReviewPage} />
           <Route path="/summary" component={SummaryPage} />
+          <Route path="/simulate" component={SimulatePage} />
           <Route path="/watchlist" component={WatchlistPage} />
         </Router>
       </ThemeProvider>
