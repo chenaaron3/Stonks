@@ -1,12 +1,16 @@
 import React, { createRef } from 'react';
 import "./SavedResults.css";
 import SavedResult from './SavedResult';
+import Loading from './Loading';
 import { connect } from 'react-redux';
 import { setBacktestResults, setSavedResults, viewStock, setPageIndex } from '../redux';
 
 class SavedResults extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            loading: false
+        }
 
         let demoID = "GUpzkgGRrS"
 
@@ -24,6 +28,7 @@ class SavedResults extends React.Component {
     }
 
     fetchBacktestResults = (id) => {
+        this.setState({ loading: true });
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/results?id=${id}`, {
             method: 'GET'
         }).then(res => res.json())
@@ -42,6 +47,7 @@ class SavedResults extends React.Component {
                     // go to next page
                     this.props.history.push("/summary");
                 }
+                this.setState({ loading: false });
             });
     }
 
@@ -76,6 +82,9 @@ class SavedResults extends React.Component {
 
     render() {
         return <div className="saved-results">
+            {this.state.loading &&
+                <Loading />
+            }
             <h1 className="saved-results-title">Saved Results</h1>
             <div className="saved-results-list">
                 {this.props.savedResults.length == 0 && (<span>

@@ -154,6 +154,7 @@ router.get('/trim', async function (req, res) {
 
 // check if any symbols needs an update because of a split
 router.get("/checkSplits", async function (req, res) {
+	res.send("Checking");
 	let priceCollection = await getCollection("prices");
 	// check all stocks for their beginning price
 	let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
