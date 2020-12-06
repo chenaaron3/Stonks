@@ -34,7 +34,7 @@ class Results extends React.Component {
         this.state = {
             numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
             sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
-            chartSettings: {}
+            chartSettings: {}, ready: false
         }
         this.supportedExports = ["StocksTracker", "Finviz"];
     }
@@ -51,6 +51,18 @@ class Results extends React.Component {
         let sortedSymbols = Object.keys(this.props.results["symbolData"]);
         sortedSymbols.sort((a, b) => this.props.results["symbolData"][b][sortBy] - this.props.results["symbolData"][a][sortBy]);
         this.setState({ sortedSymbols });
+
+        let symbols = Object.keys(this.props.results["symbolData"]);
+        symbols.forEach(symbol => {
+            let score = 0;
+            let localityWeight = .8;
+            this.props.results["symbolData"][symbol]["events"].forEach(event => {
+                let newScore = event["percentProfit"] > 0 ? 1 : 0;
+                score = (newScore * localityWeight + score * (1 - localityWeight)) / 2;
+            });
+            this.props.results["symbolData"][symbol]["score"] = score;
+        });
+        this.setState({ ready: true });
     }
 
     componentDidMount() {
@@ -160,6 +172,10 @@ class Results extends React.Component {
     }
 
     render() {
+        if (!this.state.ready) {
+            return <></>;
+        }
+
         let lastRecentDate = new Date()
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
 
@@ -197,6 +213,15 @@ class Results extends React.Component {
                 max={30}
             /></Box>
         </div>
+
+        let buySymbols = [];
+        for (let i = 0; i < this.state.sortedSymbols.length; ++i) {
+            let symbol = this.state.sortedSymbols[i];
+            if (this.props.results["symbolData"][symbol]["holdings"].find(d => daysBetween(lastRecentDate, new Date(d)) == 0)) {
+                buySymbols.push({ symbol: symbol, index: i });
+            }
+        }
+        buySymbols.sort((a, b) => this.props.results["symbolData"][b["symbol"]]["score"] - this.props.results["symbolData"][a["symbol"]]["score"]);
 
         return (
             <div className="results">
@@ -244,18 +269,12 @@ class Results extends React.Component {
                             <>
                                 <ExportMenu items={this.supportedExports} onClick={this.onExportClicked} />
                                 {dayFilter}
-                                {
-                                    this.state.sortedSymbols.map((symbol, index) => {
-                                        // only show if there are recent events
-                                        let numEvents = this.props.results["symbolData"][symbol]["holdings"].filter(d => daysBetween(lastRecentDate, new Date(d)) == 0).length;
-                                        if (numEvents > 0) {
-                                            if (searchResults.includes(symbol)) {
-                                                return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
-                                                    handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
-                                                    boughtSymbols={this.state.boughtSymbols} />
-                                            }
-                                        }
-                                    })
+                                {this.state.sortedSymbols.length != 0 && (
+                                    buySymbols.map(({ symbol, index }) =>
+                                        <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                            handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                            boughtSymbols={this.state.boughtSymbols} />)
+                                )
                                 }
                             </>
                         )

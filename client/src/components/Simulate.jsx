@@ -44,7 +44,12 @@ class Simulate extends React.Component {
         let dates = new Set();
         let symbols = Object.keys(this.props.results["symbolData"]);
         symbols.forEach(symbol => {
+            let score = 0;
+            let localityWeight = .8;
             this.props.results["symbolData"][symbol]["events"].forEach(event => {
+                event["score"] = score;
+                let newScore = event["percentProfit"] > 0 ? 1 : -1;
+                score = newScore * localityWeight + score * (1 - localityWeight);
                 let buyDate = new Date(event["buyDate"]).getTime();
                 let sellDate = new Date(event["sellDate"]).getTime();
                 if (!dates.has(buyDate)) {
@@ -90,7 +95,8 @@ class Simulate extends React.Component {
             // if looking for buys
             if (this.holdings.length < this.state.maxPositions) {
                 let events = eventsByDate[date];
-                if (events) {
+                if (events) {                    
+                    events.sort((a, b) => b["score"] - a["score"]);
                     // keep buying until holdings maxed
                     for (let i = 0; i < events.length; ++i) {
                         let event = events[i];
@@ -111,6 +117,10 @@ class Simulate extends React.Component {
                 if (date == new Date(holding["sellDate"]).getTime()) {
                     sold.push(holding);
                     equity += holding["buyAmount"] * (holding["percentProfit"]);
+                    if (equity <= 0)
+                    {
+                        equity = this.state.startSize;
+                    }
                 }
             })
             this.holdings = this.holdings.filter(h => !sold.includes(h));

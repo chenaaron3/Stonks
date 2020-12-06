@@ -131,8 +131,8 @@ class Structure extends Indicator {
         return data;
     }
 
-    getAction(date) {
-        let todayIndex = this.dates.indexOf(date);
+    getAction(date, dateIndex) {
+        let todayIndex = dateIndex;
         let yesterday = this.dates[todayIndex - 1];
         let beforeYesterday = this.dates[todayIndex - 2];
 

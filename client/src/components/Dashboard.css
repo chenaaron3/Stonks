@@ -14,7 +14,7 @@
 }
 
 .dashboard-settings {
-    display:flex;
+    display: flex;
     flex-direction: row;
 }
 
@@ -79,9 +79,7 @@
     display: grid;
     grid-template-columns: repeat(5, 16vw);
     grid-template-rows: repeat(2, 40vh);
-    grid-template-areas: 
-    "profitPie percentProfitPie profitGraph profitGraph indicators" 
-    "tradeGraph tradeGraph tradePie spanPie indicators";
+    grid-template-areas: "profitPie percentProfitPie profitGraph profitGraph indicators" "tradeGraph tradeGraph tradePie spanPie indicators";
     column-gap: 2vw;
     row-gap: 2vh;
 }
@@ -117,4 +115,8 @@
 
 .dashboard-indicator {
     font-size: 1em;
+}
+
+.dasbhaord-sub-section {
+    margin-left: 1vw;
 }

@@ -1,6 +1,6 @@
 var yahooFinance = require('yahoo-finance');
-var { updateStockInfo, getDocument, getCollection } = require("./mongo");
-let { formatDate, daysBetween, hoursBetween, clampRange } = require('./utils');
+var { updateStockInfo, getDocument, getCollection, setStockInfo } = require("./mongo");
+let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual } = require('./utils');
 let { getIndicator } = require('./backtest');
 
 // update a price document if needed
@@ -20,7 +20,7 @@ function updateStock(doc, updateDate) {
             // try to get price data
             try {
                 // get last recorded date
-                let baseDate = process.env.NODE_ENV == "production" ? "1/1/2018" : "1/1/1500";
+                let baseDate = "1/1/1500";
                 let startDate = new Date(baseDate);
                 if (doc.prices.length > 0) {
                     startDate = new Date(doc.prices[0]["date"])
@@ -76,7 +76,7 @@ function getUpdatedPrices(symbol, startDate, endDate) {
                         }
                     }
                     // check last 3 results for repeats
-                    let baseDate = process.env.NODE_ENV == "production" ? "1/1/2018" : "1/1/1500";
+                    let baseDate = "1/1/1500";
                     let previousDate = new Date(baseDate);
                     for (let i = Math.max(0, quotes.length - 3); i < quotes.length; ++i) {
                         if (quotes[i]["date"].getTime() == previousDate.getTime()) {
@@ -118,6 +118,51 @@ function getPrices(symbol) {
     });
 }
 
+// rewrite a document in the case of a stock split
+async function checkSplit(doc) {
+    let today = new Date();
+    let baseDate = new Date("1/1/1500");
+    
+    // get symbol and first entry
+    let symbol = doc["_id"];
+    let entry = doc["prices"][0];
+
+    // empty stock
+    if (!entry) {
+        return 0;
+    }
+
+    // get the date to search up API
+    let recordedDate = new Date(entry["date"]);
+    recordedDate.setDate(recordedDate.getDate() + 1);
+    let previousDate = new Date(recordedDate);
+    previousDate.setDate(previousDate.getDate() - 2);
+
+    // search up api
+    let updatedEntry = await getUpdatedPrices(symbol, previousDate, recordedDate);
+    updatedEntry = updatedEntry[0];
+    if (!updatedEntry) {
+        return 0;
+    }
+
+    // check if valid
+    let valid = new Date(entry["date"]).getTime() == new Date(updatedEntry["date"]).getTime();
+    if (!valid) {
+        return 0;
+    }
+
+    delete entry["date"];
+    delete updatedEntry["date"];
+    valid = valid && shallowEqual(entry, updatedEntry);
+    if (!valid) {
+        // get full update
+        let updatedEntry = await getUpdatedPrices(symbol, baseDate, today);
+        // update mongo document
+        setStockInfo(symbol, updatedEntry, today);
+        return 1;
+    }
+    return 0;
+}
 
 // used for ml dataset
 async function gatherData(symbols, result, window) {
@@ -211,4 +256,4 @@ async function gatherData(symbols, result, window) {
     return { features, labels };
 }
 
-module.exports = { updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice }
+module.exports = { updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit }

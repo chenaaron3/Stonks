@@ -25,8 +25,8 @@ class EMA extends Indicator {
         return clampRange(data);
     }
 
-    getAction(date) {
-        let todayIndex = this.dates.indexOf(date);
+    getAction(date, dateIndex) {
+        let todayIndex = dateIndex;
         let firstDayIndex = Math.max(1, todayIndex - this.minDuration + 1);
         let buy = true;
 

@@ -47,8 +47,8 @@ class MACDPos extends Indicator {
 		return clampRange(data);
 	}
 
-	getAction(date) {
-		let yesterday = this.dates[this.dates.indexOf(date) - 1];
+	getAction(date, dateIndex) {
+		let yesterday = this.dates[dateIndex - 1];
 
 		let yesterdayMACD = this.graph[yesterday];
 		let todayMACD = this.graph[date];

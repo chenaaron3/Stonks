@@ -32,4 +32,9 @@ function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-module.exports = {formatDate, daysBetween, hoursBetween, numberWithCommas};
+function camelToDisplay(s) {
+    return s.replace(/([A-Z])/g, ' $1')
+        .replace(/^./, function (str) { return str.toUpperCase(); });
+}
+
+module.exports = { formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay };

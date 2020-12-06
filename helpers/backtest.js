@@ -21,6 +21,8 @@ let ADX = require('../helpers/indicators/adx');
 let Solid = require('../helpers/indicators/solid');
 let Hammer = require('../helpers/indicators/hammer');
 let Structure = require('../helpers/indicators/structure');
+let ATR = require('../helpers/indicators/atr');
+let Pullback = require('../helpers/indicators/pullback');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -32,19 +34,16 @@ let INDICATOR_OBJECTS = {
     "ADX": ADX,
     "Solid": Solid,
     "Hammer": Hammer,
-    "Structure": Structure
+    "Structure": Structure,
+    "ATR": ATR,
+    "Pullback": Pullback
 }
 
 // paths to resources
-let PATH_TO_OLD_RESULTS = path.join(__dirname, '../res/results.json');
 let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
 
 // only get symbols from these exchanges
 let EXCHANGES = ["amex", "nasdaq", "nyse"];
-// get recent results within expiration date
-let EXPIRATION = 5;
-// get prices from today - START_DATE
-let START_DATE = 365 * 100;
 // how many threads to spawn on each request
 const NUM_THREADS = 4;
 
@@ -168,19 +167,6 @@ function getPrices(symbol) {
 
 // given symbol, find intersections
 function findIntersections(strategyOptions, symbol, previousResults, lastUpdated) {
-    // let strategyOptions = {
-    //     "indicators": {
-    //         "SMA": { "period": 9 },
-    //         "RSI": { "period": 14, "underbought": 30, "overbought": 70 },
-    //         "MACD": { "ema1": 12, "ema2": 26, "signalPeriod": 9 },
-    //     },
-    //     "mainBuyIndicator": "RSI",
-    //     "mainSellIndicator": "RSI",
-    //     "minVolume": 1000000,
-    //     "expiration": 7,
-    //     "multipleBuys": true,
-    // };
-
     return new Promise((resolve, reject) => {
         // find prices
         getPrices(symbol)
@@ -191,102 +177,39 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                 }
                 // if valid prices
                 else {
-                    // maps date to closing price
-                    let prices = {};
-                    let volumes = {};
-                    let opens = {};
-                    let highs = {};
-                    let lows = {};
-                    let closes = {};
-
-                    let cutoffIndex = 0;
-                    if (lastUpdated) {
-                        // find first index where date is greater than last updated
-                        for (let i = json.length - 1; i >= 0; --i) {
-                            if (json[i]["date"] < lastUpdated) {
-                                cutoffIndex = i;
-                                break;
-                            }
-                        }
-                        cutoffIndex = Math.max(0, cutoffIndex - 200);
-                    }
-
-                    for (; cutoffIndex < json.length; ++cutoffIndex) {
-                        let day = json[cutoffIndex];
-                        let date = new Date(day["date"]);
-
-                        let formattedDate = date.toISOString();
-                        let adjScale = day["adjClose"] / day["close"];
-                        prices[formattedDate] = day["adjClose"];
-                        volumes[formattedDate] = day["volume"];
-                        opens[formattedDate] = day["open"] * adjScale;
-                        highs[formattedDate] = day["high"] * adjScale;
-                        lows[formattedDate] = day["low"] * adjScale;
-                        closes[formattedDate] = day["close"] * adjScale;
-                    };
+                    // maps date to data
+                    let [prices, volumes, opens, highs, lows, closes] = getAdjustedData(json, lastUpdated);
 
                     // get sorted dates
                     let dates = Object.keys(prices).sort(function (a, b) {
                         return new Date(a) - new Date(b);
                     });
 
-                    let profit = 0;
-                    let percentProfit = 0;
-                    let count = 0;
-
-                    // create indicator objects
-                    let mainBuyIndicator;
-                    let mainSellIndicator;
-                    let supportingBuyIndicators = [];
-                    let supportingSellIndicators = [];
-                    let buyMap = {};
-                    let sellMap = {};
-                    let stopLossIndicator = getIndicator("SMA", { period: 180, minDuration: 3 }, symbol, dates, prices, opens, highs, lows, closes);
-                    stopLossIndicator = undefined;
-
-                    // set main/support buy indicators
-                    Object.keys(strategyOptions["buyIndicators"]).forEach(indicatorName => {
-                        let indicatorOptions = strategyOptions["buyIndicators"][indicatorName];
-                        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
-
-                        // track buy indicators
-                        if (indicatorName == strategyOptions["mainBuyIndicator"]) {
-                            mainBuyIndicator = indicator;
-                        }
-                        else {
-                            supportingBuyIndicators.push(indicator);
-                            buyMap[indicatorName] = false;
-                        }
-                    })
-
-                    // set main/support sell indicators
-                    Object.keys(strategyOptions["sellIndicators"]).forEach(indicatorName => {
-                        let indicatorOptions = strategyOptions["sellIndicators"][indicatorName];
-                        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
-
-                        // track sell indicators
-                        if (indicatorName == strategyOptions["mainSellIndicator"]) {
-                            mainSellIndicator = indicator;
-                        }
-                        else {
-                            supportingSellIndicators.push(indicator);
-                            sellMap[indicatorName] = false;
-                        }
-                    })
+                    // get indicator objects
+                    let [mainBuyIndicator, supportingBuyIndicators, buyMap] = getIndicatorObjects(strategyOptions, "buy", symbol, dates, prices, opens, highs, lows, closes);
+                    let [mainSellIndicator, supportingSellIndicators, sellMap] = getIndicatorObjects(strategyOptions, "sell", symbol, dates, prices, opens, highs, lows, closes)
+                    let stopLossIndicator = undefined; //getIndicator("SMA", { period: 180, minDuration: 3 }, symbol, dates, prices, opens, highs, lows, closes);
+                    let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes);
 
                     // store buy/sell information
-                    let expiration = strategyOptions["expiration"];
                     let buyPrices = [];
                     let buyDates = [];
+                    let stopLosses = [];
                     let buySignal;
                     let sellSignal;
+                    let expiration = strategyOptions["expiration"];
                     let buyExpiration = expiration;
                     let sellExpiration = expiration;
 
-                    // store buy/sell events for debugging
+                    // store buy/sell events for backtest
                     let events = [];
                     let event = {};
                     let startIndex = 0;
+
+                    // accumulators
+                    let profit = 0;
+                    let count = 0;
+                    let percentProfit = 0;
 
                     // load data from previous results
                     if (lastUpdated) {
@@ -298,6 +221,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             previousResults["holdings"].forEach(holding => {
                                 buyDates.push(holding);
                                 buyPrices.push(prices[holding]);
+                                stopLosses.push(lows[holding] - (strategyOptions["stopLossAtr"] ? strategyOptions["stopLossAtr"] : 1) * atr.getValue(holding));
                             })
 
                             // carry over profits
@@ -324,14 +248,14 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     // loops over dates and checks for buy signal
                     for (let i = startIndex; i < dates.length; ++i) {
                         let day = dates[i];
-                        // if main buy indicator goes off
-                        if (mainBuyIndicator.getAction(day) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
+                        // if main buy indicator goes off and enough volume
+                        if (mainBuyIndicator.getAction(day, i) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
                             buySignal = true;
                         }
                         if (buySignal) {
                             // check each non main indicator for buy signal
                             supportingBuyIndicators.forEach(indicator => {
-                                if (indicator.getAction(day) == Indicator.BUY) {
+                                if (indicator.getAction(day, i) == Indicator.BUY) {
                                     buyMap[indicator.name] = true;
                                 }
                             });
@@ -348,6 +272,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
                                 buyPrices.push(prices[day]);
                                 buyDates.push(day);
+                                stopLosses.push(lows[day] - (strategyOptions["stopLossAtr"] ? strategyOptions["stopLossAtr"] : 1) * atr.getValue(day));
                                 buySignal = false;
                                 buyExpiration = expiration;
                                 Object.keys(buyMap).forEach(indicator => {
@@ -367,33 +292,20 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             }
                         }
 
-                        // find stoploss trades
-                        let stopLossTrades = [];
-                        if (strategyOptions["stopLossLow"]) {
-                            stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossLow"] > prices[day]))
-                        }
-                        if (strategyOptions["stopLossHigh"]) {
-                            stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossHigh"] < prices[day]))
-                        }
-                        // overdue stocks
-                        if (strategyOptions["maxDays"]) {
-                            stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, index) => {
-                                return daysBetween(new Date(buyDates[index]), new Date(day)) > strategyOptions["maxDays"]
-                            }));
-                        }
+                        let stopLossTrades = getStopLossTrades(strategyOptions, prices, dates, i, buyPrices, buyDates, stopLosses, atr, lows);
                         // if stoploss indicator goes off, sell all
                         if (stopLossIndicator && stopLossIndicator.shouldStop(day) == Indicator.STOP) {
                             stopLossTrades = buyPrices;
                         }
 
                         // if stoploss triggered or main seller indicator goes off and has stocks to sell
-                        if (stopLossTrades.length > 0 || (mainSellIndicator.getAction(day) == Indicator.SELL && buyPrices.length > 0)) {
+                        if (stopLossTrades.length > 0 || (mainSellIndicator.getAction(day, i) == Indicator.SELL && buyPrices.length > 0)) {
                             sellSignal = true;
                         }
                         if (sellSignal) {
                             // check each non main indicator for sell signal
                             supportingSellIndicators.forEach(indicator => {
-                                if (indicator.getAction(day) == Indicator.SELL) {
+                                if (indicator.getAction(day, i) == Indicator.SELL) {
                                     sellMap[indicator.name] = true;
                                 }
                             });
@@ -410,6 +322,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             if (allIndicatorsSell || stopLossTrades.length > 0) {
                                 let newBuyPrices = [];
                                 let newBuyDates = [];
+                                let newStopLosses = [];
 
                                 // sell all stocks that were bought
                                 for (let i = 0; i < buyPrices.length; ++i) {
@@ -420,6 +333,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                     if (stopLossTrades.length > 0 && !stopLossTrades.includes(buyPrice)) {
                                         newBuyPrices.push(buyPrice);
                                         newBuyDates.push(buyDate);
+                                        newStopLosses.push(stopLosses[i]);
                                         continue;
                                     }
 
@@ -442,6 +356,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                                 buyPrices = newBuyPrices;
                                 buyDates = newBuyDates;
+                                stopLosses = newStopLosses;
                                 sellSignal = false;
                                 sellExpiration = expiration;
                                 Object.keys(sellMap).forEach(indicator => {
@@ -466,6 +381,131 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                 }
             });
     })
+}
+
+// convert raw data from api to adjusted prices for backtest
+function getAdjustedData(rawData, lastUpdated) {
+    // maps date to closing price
+    let prices = {};
+    let volumes = {};
+    let opens = {};
+    let highs = {};
+    let lows = {};
+    let closes = {};
+
+    // only get new data for update
+    let cutoffIndex = 0;
+    if (lastUpdated) {
+        // find first index where date is greater than last updated
+        for (let i = rawData.length - 1; i >= 0; --i) {
+            if (rawData[i]["date"] < lastUpdated) {
+                cutoffIndex = i;
+                break;
+            }
+        }
+        cutoffIndex = Math.max(0, cutoffIndex - 200);
+    }
+
+    // parse list into dictionaries
+    for (; cutoffIndex < rawData.length; ++cutoffIndex) {
+        let day = rawData[cutoffIndex];
+        let date = new Date(day["date"]);
+
+        let formattedDate = date.toISOString();
+        let adjScale = day["adjClose"] / day["close"];
+        prices[formattedDate] = day["adjClose"];
+        volumes[formattedDate] = day["volume"];
+        opens[formattedDate] = day["open"] * adjScale;
+        highs[formattedDate] = day["high"] * adjScale;
+        lows[formattedDate] = day["low"] * adjScale;
+        closes[formattedDate] = day["close"] * adjScale;
+    };
+
+    return [prices, volumes, opens, highs, lows, closes];
+}
+
+// create indicator objects from options
+function getIndicatorObjects(strategyOptions, type, symbol, dates, prices, opens, highs, lows, closes) {
+    let mainIndicator;
+    let supportingIndicators = [];
+    let map = {};
+
+    Object.keys(strategyOptions[type + "Indicators"]).forEach(indicatorName => {
+        let indicatorOptions = strategyOptions[type + "Indicators"][indicatorName];
+        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
+
+        // track buy indicators
+        if (indicatorName == strategyOptions["main" + type[0].toUpperCase() + type.slice(1) + "Indicator"]) {
+            mainIndicator = indicator;
+        }
+        else {
+            supportingIndicators.push(indicator);
+            map[indicatorName] = false;
+        }
+    });
+
+    return [mainIndicator, supportingIndicators, map];
+}
+
+// sell stocks prematurely
+function getStopLossTrades(strategyOptions, prices, dates, dateIndex, buyPrices, buyDates, stopLosses, atr, lows) {
+    let stopLossTrades = [];
+    let day = dates[dateIndex];
+
+    // find static stoploss trades (deprecated in front-end)
+    if (strategyOptions["stopLossLow"]) {
+        stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossLow"] > prices[day]))
+    }
+    if (strategyOptions["stopLossHigh"]) {
+        stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossHigh"] < prices[day]))
+    }
+
+    // overdue stocks
+    if (strategyOptions["maxDays"]) {
+        stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, index) => {
+            return daysBetween(new Date(buyDates[index]), new Date(day)) > strategyOptions["maxDays"]
+        }));
+    }
+
+    // use ATR for stoploss and targets
+    if (strategyOptions["stopLossAtr"]) {
+        let multiplier = strategyOptions["stopLossAtr"];
+        // below buy date's low - atr * multiplyer 
+        stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
+            let stopLoss = lows[buyDates[i]] - multiplier * atr.getValue(buyDates[i]);
+            return stopLoss > prices[day];
+        }));
+
+        // above custom target based on risk reward ratio 
+        let ratio = strategyOptions["riskRewardRatio"];
+        if (ratio) {
+            stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
+                let stopLoss = lows[buyDates[i]] - multiplier * atr.getValue(buyDates[i]);
+                let margin = bp - stopLoss;
+                return bp + ratio * margin < prices[day];
+            }));
+        }
+        // use trailing stop loss
+        else {
+            let yesterdayPrice = prices[dates[dateIndex - 1]];
+            let todayPrice = prices[day];
+
+            // update trailing stop loss
+            for (let i = 0; i < stopLosses.length; ++i) {
+                let newStopLoss = todayPrice - multiplier * atr.getValue(buyDates[i]);
+                if (newStopLoss > buyPrices[i] && newStopLoss > stopLosses[i]) {
+                    stopLosses[i] = newStopLoss;
+                }
+            }
+
+            // see if went below
+            stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
+                return stopLosses[i] > prices[day];
+            }));
+        }
+    }
+
+    return stopLossTrades;
 }
 
 // get buy or sell conditions

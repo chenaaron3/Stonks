@@ -18,7 +18,7 @@ class Chart extends React.Component {
 
         // constants
         this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
-        this.overlayCharts = ["SMA", "GC", "EMA", "Structure"];
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -398,23 +398,23 @@ class Chart extends React.Component {
 
     getSupportResistance = () => {
         return new Promise((resolve, reject) => {
-            let data = { indicatorName: "Structure", indicatorOptions: { "period": 75, "volatility": .05 }, symbol: this.props.symbol };
-            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-                .then(res => res.json())
-                .then(pivots => {
-                    try {
-                        this.pivots = Object.keys(pivots["pivots"]);
-                    }
-                    catch {
+            // let data = { indicatorName: "Structure", indicatorOptions: { "period": 75, "volatility": .05 }, symbol: this.props.symbol };
+            // fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify(data)
+            // })
+            //     .then(res => res.json())
+            //     .then(pivots => {
+            //         try {
+            //             this.pivots = Object.keys(pivots["pivots"]);
+            //         }
+            //         catch {
 
-                    }
-                })
+            //         }
+            //     })
 
             let graphData = { indicatorName: "EMA", indicatorOptions: { "period": 5 }, symbol: this.props.symbol };
 

@@ -28,6 +28,7 @@ function getSimpleMovingAverage(dates, prices, period) {
     // go through each date
     for (let i = 0; i < dates.length; ++i) {
         let day = dates[i];
+        let originalSum = sum;
         // if not enough for moving sum, keep adding
         if (i < period) {
             sum += prices[day];
@@ -38,6 +39,11 @@ function getSimpleMovingAverage(dates, prices, period) {
         // start saving moving sum
         else {
             sum += prices[day] - prices[dates[i - period]];
+            res[day] = sum / period;
+        }
+        // rollback for errors
+        if (Number.isNaN(sum)) {
+            sum = originalSum;
             res[day] = sum / period;
         }
     }

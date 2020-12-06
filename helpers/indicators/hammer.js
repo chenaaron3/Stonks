@@ -23,8 +23,8 @@ class Hammer extends Indicator {
         return clampRange(data);
     }
 
-    getAction(date) {
-        let todayIndex = this.dates.indexOf(date);
+    getAction(date, dateIndex) {
+        let todayIndex = dateIndex;
         let firstDayIndex = Math.max(0, todayIndex - this.minLength + 1);
         let buy = true;
         // candles with legs longer than body

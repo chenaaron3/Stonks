@@ -2,12 +2,13 @@ var fs = require('fs');
 var path = require('path');
 
 let { conductBacktest, findIntersections } = require('../helpers/backtest');
-let { updateStock, gatherData } = require('../helpers/stock');
+let { updateStock, gatherData, checkSplit } = require('../helpers/stock');
 
 let logDirectory = path.join(__dirname, "../logs");
 let backtestPath = path.join(logDirectory, "backtestLogs.txt");
 let intersectionPath = path.join(logDirectory, "intersectionLogs.txt");
 let updateLogs = path.join(logDirectory, "updateLogs.txt");
+let checkLogs = path.join(logDirectory, "checkLogs.txt");
 let datasetPath = path.join(logDirectory, "datasetLogs.txt");
 
 process.on('message', async (msg) => {
@@ -97,6 +98,32 @@ process.on('message', async (msg) => {
         let time = Math.floor((Date.now() - start) / 1000);
         fs.appendFileSync(updateLogs,
             `Worker ${msg.updateID}: Finished update for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
+        setTimeout(() => { process.exit(0); }, 1000)
+    }
+    // thread to check for splits
+    else if (msg.type == "startSplitCheck") {
+        // log start information
+        let documents = msg.partition;
+        const start = Date.now();
+        let startTicker = documents[0]._id;
+        let endTicker = documents[documents.length - 1]._id;
+        fs.appendFileSync(checkLogs,
+            `Worker ${msg.jobID}: Starting split check for tickers ${startTicker} to ${endTicker}\n`, { encoding: "utf-8" })
+
+        let changes = 0;
+        // start actual checks
+        for (let i = 0; i < documents.length; ++i) {
+            let document = documents[i];
+            // check the stock
+            changes += await checkSplit(document);
+        }
+        // notify parent
+        process.send({ status: "finished", changes });
+
+        // log end information
+        let time = Math.floor((Date.now() - start) / 1000);
+        fs.appendFileSync(checkLogs,
+            `Worker ${msg.jobID}: Finished split check for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
         setTimeout(() => { process.exit(0); }, 1000)
     }
     // thread to create dataset for ML

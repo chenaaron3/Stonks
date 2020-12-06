@@ -10,7 +10,7 @@ import {
     Bar, BarChart, Legend,
     AreaChart, Area
 } from 'recharts';
-import { numberWithCommas, hoursBetween, daysBetween } from "../helpers/utils"
+import { numberWithCommas, hoursBetween, daysBetween, camelToDisplay } from "../helpers/utils"
 import Button from '@material-ui/core/Button';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Box from '@material-ui/core/Box';
@@ -410,19 +410,35 @@ class Dashboard extends React.Component {
                         </ResponsiveContainer>
                         <h4 className="dashboard-card-caption">Number of days in a trade</h4>
                     </div>
-                    <div className="dashboard-card dashboard-indicator" id="dashboard-indicators">
+                    <div className="dashboard-card" id="dashboard-indicators">
                         <h3 className="dashboard-card-title">Indicators</h3>
-                        <div>
-                            <h4 className="dashboard-card-subtitle">Buy Criterias</h4>
-                            <pre id="json" className="dashboard-indicator">
-                                {buyIndicators}
-                            </pre>
+                        <div className="dasbhaord-sub-section">
+                            <div>
+                                <h4 className="dashboard-card-subtitle">Buy Criterias</h4>
+                                <pre id="json" className="dashboard-indicator">
+                                    {buyIndicators}
+                                </pre>
+                            </div>
+                            <div>
+                                <h4 className="dashboard-card-subtitle">Sell Criterias</h4>
+                                <pre id="json" className="dashboard-indicator">
+                                    {sellIndicators}
+                                </pre>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="dashboard-card-subtitle">Sell Criterias</h4>
-                            <pre id="json" className="dashboard-indicator">
-                                {sellIndicators}
-                            </pre>
+                        <br />
+                        <h3 className="dashboard-card-title">Additional Options</h3>
+                        <div className="dasbhaord-sub-section">
+                            {
+                                Object.keys(this.props.results["strategyOptions"]).map(key => {
+                                    if (key.includes("Indicator")) {
+                                        return;
+                                    }
+                                    return <>
+                                        <h4 className="dashboard-card-subtitle">{camelToDisplay(key) + ": " + this.props.results["strategyOptions"][key]}</h4>
+                                    </>
+                                })
+                            }
                         </div>
                     </div>
                 </div>

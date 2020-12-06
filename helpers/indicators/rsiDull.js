@@ -31,8 +31,8 @@ class RSIDull extends Indicator {
         return res;
     }
 
-    getAction(date) {
-        let todayIndex = this.dates.indexOf(date);
+    getAction(date, dateIndex) {
+        let todayIndex = dateIndex;
         let firstDayIndex = Math.max(0, todayIndex - this.minDuration);
         let buy = true;
         // first day has to cross underbought

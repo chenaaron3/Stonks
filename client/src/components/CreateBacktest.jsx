@@ -24,6 +24,8 @@ class CreateBacktest extends React.Component {
             sellOptions: {},
             stopLossHigh: 0,
             stopLossLow: 0,
+            stopLossAtr: 0,
+            riskRewardRatio: 0,
             minVolume: 1000000,
             maxDays: 30
         };
@@ -36,7 +38,8 @@ class CreateBacktest extends React.Component {
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
             "Hammer": { "fields": ["headRatio", "legRatio", "expiration"], "default": [1, 2, 0] },
-            "Structure": { "fields": ["period", "volatility", "minCount"], "default": [75, .05, 1] }
+            "Structure": { "fields": ["period", "volatility", "minCount"], "default": [75, .05, 1] },
+            "Pullback": { "fields": ["period", "length"], "default": [180, 12] }
         }
 
         // for each indicator
@@ -86,6 +89,8 @@ class CreateBacktest extends React.Component {
             "mainSellIndicator": this.state.mainSellIndicator,
             "stopLossLow": this.state.stopLossLow == 0 ? undefined : 1 - this.state.stopLossLow / 100,
             "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
+            "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
+            "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
             "minVolume": this.state.minVolume,
             "maxDays": this.state.maxDays,
             "expiration": 7,
@@ -306,13 +311,29 @@ class CreateBacktest extends React.Component {
                                                             this.setState({ stopLossHigh: newValue })
                                                         }} helperText="20 to sell at 20% profit. 0 to disable." />
                                                 </div>
-                                                <div>
+                                                {/* <div>
                                                     <TextField label="Stop Loss" value={this.state.stopLossLow}
                                                         onChange={(e) => {
                                                             let newValue = parseFloat(e.target.value);
                                                             if (!newValue) newValue = 0;
                                                             this.setState({ stopLossLow: newValue })
                                                         }} helperText="20 to sell at 20% loss. 0 to disable." />
+                                                </div> */}
+                                                <div>
+                                                    <TextField label="Stop Loss ATR" value={this.state.stopLossAtr}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ stopLossAtr: newValue })
+                                                        }} helperText="1 to sell at 1 ATR below. 0 to disable." />
+                                                </div>
+                                                <div>
+                                                    <TextField label="Risk Reward Ratio" value={this.state.riskRewardRatio}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ riskRewardRatio: newValue })
+                                                        }} helperText="2 for 2:1 ratio. 0 to disable." />
                                                 </div>
                                                 <div>
                                                     <TextField label="Minimum Volume" value={this.state.minVolume}

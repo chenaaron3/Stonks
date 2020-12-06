@@ -30,8 +30,8 @@ class RSI extends Indicator {
         return res;
     }
 
-	getAction(date) {
-		let yesterday = this.dates[this.dates.indexOf(date) - 1];
+	getAction(date, dateIndex) {
+		let yesterday = this.dates[dateIndex - 1];
 
 		let yesterdayRSI = this.graph[yesterday];
 		let todayRSI = this.graph[date];

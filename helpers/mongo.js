@@ -214,6 +214,22 @@ function addStockInfo(symbol, pricesList) {
 	});
 }
 
+// rewrite a stock's price history
+function setStockInfo(symbol, pricesList, updateDate) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		await priceCollection.updateOne({
+			"_id": symbol
+		},
+			{
+				$set: { prices: pricesList, lastUpdated: updateDate.toString() }
+			}, (err, res) => {
+				if (err) console.log(err);
+			});
+		resolve();
+	});
+}
+
 // updates a stock by adding prices to it
 function updateStockInfo(symbol, pricesList, updateDate) {
 	return new Promise(async (resolve, reject) => {
@@ -245,5 +261,6 @@ module.exports = {
 	containsID,
 	addID,
 	addResult,
+	setStockInfo,
 	updateStockInfo
 };
