@@ -42,11 +42,14 @@ ReactDOM.render(
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <Router basename={"/stocks"}>
-          <Route exact path="/" component={CreatePage} />
-          <Route path="/review" component={ReviewPage} />
-          <Route path="/summary" component={SummaryPage} />
-          <Route path="/simulate" component={SimulatePage} />
-          <Route path="/watchlist" component={WatchlistPage} />
+          <Switch>
+            <Route exact path="/" component={CreatePage} />
+            <Route path="/review" component={ReviewPage} />
+            <Route path="/summary" component={SummaryPage} />
+            <Route path="/simulate" component={SimulatePage} />
+            <Route path="/watchlist" component={WatchlistPage} />
+            <Route path="/:backtestID" render={(props) => <CreatePage {...props} />} />
+          </Switch>
         </Router>
       </ThemeProvider>
     </Provider>

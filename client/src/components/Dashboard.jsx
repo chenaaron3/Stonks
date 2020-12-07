@@ -21,6 +21,9 @@ import FormControl from '@material-ui/core/FormControl';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import Slider from '@material-ui/core/Slider';
+import LinkIcon from '@material-ui/icons/Link';
+import IconButton from '@material-ui/core/IconButton';
+import IconTooltip from '@material-ui/core/Tooltip';
 
 let winLossColor = ["#2ecc71", "#FFCCCB"];
 
@@ -214,6 +217,10 @@ class Dashboard extends React.Component {
         })
     }
 
+    onCopyLink = () => {
+        navigator.clipboard.writeText("chenaaron.com/stocks/" + this.props.id);
+    }
+
     render() {
         let totalTrades = this.state.numWins + this.state.numLosses;
         let winRate = (100 * (this.state.numWins) / (this.state.numWins + this.state.numLosses));
@@ -249,7 +256,14 @@ class Dashboard extends React.Component {
             <div className="dashboard">
                 <div className="dashboard-header">
                     {/* <div> */}
-                    <span className="dashboard-title">Backtest Summary</span>
+                    <span className="dashboard-title">
+                        Backtest Summary
+                        <IconTooltip title="Share Link">
+                            <IconButton className="dashboard-link" onClick={this.onCopyLink}>
+                                <LinkIcon />
+                            </IconButton>
+                        </IconTooltip>
+                    </span>
                     <div className="dashboard-settings">
                         <Box mx="1vw" mt="1vh">
                             <FormControl style={{ minWidth: "5vw" }}>

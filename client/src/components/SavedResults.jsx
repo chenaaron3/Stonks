@@ -24,7 +24,13 @@ class SavedResults extends React.Component {
             savedResults.unshift({ id: demoID, display: "Demo" });
         }
 
-        this.props.setSavedResults(savedResults)
+        this.props.setSavedResults(savedResults);
+
+        // if link to specific backtest
+        if (this.props.match.params.backtestID) {
+            this.fetchBacktestResults(this.props.match.params.backtestID);
+            this.state.loading = true;
+        }
     }
 
     fetchBacktestResults = (id) => {

@@ -9,10 +9,10 @@ class CreatePage extends React.Component {
         return (
             <div className="create-page">
                 <div className="create-page-recents">
-                    <SavedResults history={this.props.history} />
+                    <SavedResults {...this.props} />
                 </div>
                 <div className="create-page-new">
-                    <CreateBacktest history={this.props.history} />
+                    <CreateBacktest {...this.props} />
                 </div>
             </div>
         );
