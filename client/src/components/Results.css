@@ -24,13 +24,6 @@
     position: relative;
     text-align: left;
     flex: 5;
-    overflow: auto;
-    overflow-x: hidden;
-    max-height: 80vh;
-}
-
-.results-indicators {
-    font-size: 1em;
 }
 
 .results-dayfilter {

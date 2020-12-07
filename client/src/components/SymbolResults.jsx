@@ -65,19 +65,19 @@ class SymbolResults extends React.Component {
                         <div>Profit: ${profit}</div>
                         <div>Percent Profit: {percentProfit}%</div>
                         <div>Average Span: {averageSpan} days</div>
-                        <h3>Events</h3>
-                        <div className="symbol-results-events">
-                            {
-                                this.props.results["events"].map((event, index) => {
-                                    return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}
-                                        style={{ color: `${event["percentProfit"] > 0 ? "green" : "red"}` }}>
-                                        <span>{formatDate(event["buyDate"])}</span>
-                                        <ArrowForwardSharpIcon />
-                                        <span>{formatDate(event["sellDate"])}</span>
-                                    </div>);
-                                })
-                            }
-                        </div>
+                    </div>
+                    <h3 className="symbol-results-subtitle">Events</h3>
+                    <div className="symbol-results-events">
+                        {
+                            this.props.results["events"].map((event, index) => {
+                                return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}
+                                    style={{ color: `${event["percentProfit"] > 0 ? "green" : "red"}` }}>
+                                    <span>{formatDate(event["buyDate"])}</span>
+                                    <ArrowForwardSharpIcon />
+                                    <span>{formatDate(event["sellDate"])}</span>
+                                </div>);
+                            })
+                        }
                     </div>
                 </div>
             </>

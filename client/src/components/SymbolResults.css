@@ -14,7 +14,7 @@
     right: 0;
 }
 
-.symbol-results-title {
+.symbol-results-title, .symbol-results-subtitle {
     margin-top: 1vh;
     margin-bottom: 1vh;
 }
@@ -23,8 +23,12 @@
     text-align: left;
 }
 
+.symbol-results-subtitle{
+    text-align: left;
+}
+
 .symbol-results-events {
-    max-height: 28vh;
+    flex: 1;
     overflow: auto;
     overflow-x: hidden;
 }

@@ -223,6 +223,8 @@ class Results extends React.Component {
         }
         buySymbols.sort((a, b) => this.props.results["symbolData"][b["symbol"]]["score"] - this.props.results["symbolData"][a["symbol"]]["score"]);
 
+        let tabPanelStyle = { overflow: "auto" };
+
         return (
             <div className="results">
                 <h2 className="results-title">
@@ -237,7 +239,7 @@ class Results extends React.Component {
                     <Tab style={{ minWidth: "3vw" }} label="Watch" {...a11yProps(3)} />
                 </Tabs>
                 {/* </Paper> */}
-                <TabPanel value={this.state.tabIndex} index={0}>
+                <TabPanel value={this.state.tabIndex} index={0} style={tabPanelStyle}>
                     <div className="results-list">
                         {this.state.sortedSymbols.length == 0 && (<span>
                             There are no results...
@@ -259,7 +261,7 @@ class Results extends React.Component {
                         }
                     </div>
                 </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={1}>
+                <TabPanel value={this.state.tabIndex} index={1} style={tabPanelStyle}>
                     <div className="results-list">
                         {this.state.sortedSymbols.length == 0 && (<span>
                             There are no results...
@@ -281,7 +283,7 @@ class Results extends React.Component {
                         }
                     </div>
                 </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={2}>
+                <TabPanel value={this.state.tabIndex} index={2} style={tabPanelStyle}>
                     <div className="results-list">
                         {this.state.sortedSymbols.length == 0 && (<span>
                             There are no results...
@@ -307,7 +309,7 @@ class Results extends React.Component {
                         </>
                     </div>
                 </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={3}>
+                <TabPanel value={this.state.tabIndex} index={3} style={tabPanelStyle}>
                     <div className="results-list">
                         {this.state.sortedSymbols.length == 0 && (<span>
                             There are no results...
@@ -346,7 +348,9 @@ class Result extends React.Component {
     render() {
         return (<div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
             <img className={`result-icon result-hover`} width="25px" height="25px" src={eye} alt="Eye" onClick={() => this.props.handleGetResult(this.props.symbol)} />
-            <span className="result-text" style={{ color: `${this.props.result["percentProfit"] > 0 ? "green" : "red"}` }}>{`${this.props.index + 1}. ${this.props.symbol}`}</span>
+            <span className="result-text" style={{ color: `${this.props.result["percentProfit"] > 0 ? "green" : "red"}` }} onClick={() => this.props.handleGetResult(this.props.symbol)} >{
+                `${this.props.index + 1}. ${this.props.symbol}`}
+            </span>
             {
                 this.props.buy && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
                     <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
