@@ -238,6 +238,18 @@ function daysBetween(date1, date2) {
     return Math.round(differenceMs / ONE_DAY);
 }
 
+function sameDay(d1, d2) {
+    d1 = new Date(d1.toUTCString());
+    d2 = new Date(d2.toUTCString());
+    return d1.getFullYear() == d2.getFullYear() && d1.getMonth() == d2.getMonth() && d1.getUTCDate() == d2.getUTCDate();
+}
+
+function toPST(date) {
+    var utcDate = new Date(date.toUTCString());
+    utcDate.setHours(utcDate.getHours() - 8);
+    return new Date(utcDate);
+}
+
 function makeid(length) {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -253,7 +265,7 @@ function clampRange(data) {
     if (data.length <= 1) {
         return data;
     }
-    
+
     let min = Math.min(...data);
     let max = Math.max(...data);
     let res = [];
@@ -289,21 +301,21 @@ function getMean(array) {
 function shallowEqual(object1, object2) {
     const keys1 = Object.keys(object1);
     const keys2 = Object.keys(object2);
-  
+
     if (keys1.length !== keys2.length) {
-      return false;
-    }
-  
-    for (let key of keys1) {
-      if (object1[key] !== object2[key]) {
         return false;
-      }
     }
-  
+
+    for (let key of keys1) {
+        if (object1[key] !== object2[key]) {
+            return false;
+        }
+    }
+
     return true;
-  }
+}
 
 module.exports = {
     isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement,
-    formatDate, hoursBetween, daysBetween, makeid, normalizeRange, clampRange, shallowEqual
+    formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual
 };

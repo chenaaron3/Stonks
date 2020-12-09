@@ -250,6 +250,29 @@ function updateStockInfo(symbol, pricesList, updateDate) {
 	});
 }
 
+function addActiveResult(id) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		let key = "activeResults";
+
+		// add document if doesnt exist
+		if ((await resultsCollection.find({ _id: key }).count()) == 0) {
+			await addDocument("results", { _id: key, [key]: [] });
+		}
+
+		await resultsCollection.updateOne({
+			"_id": key
+		}, {
+			$addToSet: {
+				"activeResults": id
+			}
+		}, {
+			upsert: true
+		});
+		resolve();
+	});
+}
+
 module.exports = {
 	getCollection,
 	addDocument,
@@ -262,5 +285,6 @@ module.exports = {
 	addID,
 	addResult,
 	setStockInfo,
-	updateStockInfo
+	updateStockInfo,
+	addActiveResult
 };

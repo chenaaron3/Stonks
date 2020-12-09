@@ -3,7 +3,7 @@ var router = express.Router();
 var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
 let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
-let { getIndicator } = require('../helpers/backtest');
+let { getIndicator, getActionsToday } = require('../helpers/backtest');
 let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
@@ -41,6 +41,12 @@ router.get('/job', async function (req, res) {
 
     res.send("ok");
 })
+
+router.get("/test", async function (req, res) {
+    let id = req.query.id;
+
+    res.json(await getActionsToday(id, "chenaaron3@gmail.com"));
+});
 
 router.post('/watchlist', async function (req, res) {
     let destination = req.body.destination;

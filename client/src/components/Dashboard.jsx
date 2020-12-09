@@ -33,7 +33,8 @@ class Dashboard extends React.Component {
         this.state = {
             numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
             winLossData: [], spanData: [], percentProfitData: [], profitData: [], yearData: [],
-            updateProgress: -1, type: "yearly", range: 50
+            updateProgress: -1, type: "yearly", range: 50,
+            ctrl: false
         }
 
         this.types = ["yearly", "6 months", "3 months", "1 month"];
@@ -42,6 +43,11 @@ class Dashboard extends React.Component {
 
     componentDidMount() {
         this.analyze();
+        document.addEventListener('keydown', this.keydownHandler);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.keydownHandler);
     }
 
     componentDidUpdate(prevProps) {
@@ -184,6 +190,21 @@ class Dashboard extends React.Component {
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/updateBacktest?id=${this.props.id}`)
             .then(res => res.json())
             .then(json => alert(json["status"]));
+
+        // set to auto update
+        if (this.state.ctrl) {
+            // get the email to notify
+            let email = prompt("Enter email to notify.");
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: this.props.id, email })
+            })
+                .then(res => res.json())
+                .then(json => alert(json["status"]));
+        }
     }
 
     // reload the page when update is complete
@@ -217,8 +238,14 @@ class Dashboard extends React.Component {
         })
     }
 
-    onCopyLink = () => {
+    onCopyLink = (e) => {
         navigator.clipboard.writeText("chenaaron.com/stocks/" + this.props.id);
+    }
+
+    keydownHandler = (e) => {
+        if (e.keyCode == 17) {
+            this.setState({ ctrl: !this.state.ctrl });
+        }
     }
 
     render() {
@@ -309,7 +336,9 @@ class Dashboard extends React.Component {
                             <>
                                 {
                                     this.state.updateProgress < 0 && <Box ml="1vw" ><Button variant="contained" color="primary" onClick={this.updateBacktest}>
-                                        Update
+                                        {
+                                            this.state.ctrl ? "Auto Update" : "Update"
+                                        }
                                     </Button></Box>
                                 }
                                 {

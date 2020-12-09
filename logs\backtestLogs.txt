@@ -577,3 +577,16 @@ Worker 9D9ngXdixW: Starting backtest
 Worker 9D9ngXdixW: Finished backtest in 164 seconds
 Worker XBfCxf6xre: Starting backtest
 Worker XBfCxf6xre: Finished backtest in 232 seconds
+Worker HGxSUb7Df8: Starting backtest
+Worker HGxSUb7Df8: Finished backtest in 147 seconds
+Worker iu4eCC0sch: Starting backtest
+Worker iu4eCC0sch: Finished backtest in 233 seconds
+Worker 2iaUToCIKe: Starting backtest
+Worker 2iaUToCIKe: Finished backtest in 240 seconds
+Worker KnnzLeaxD2: Starting backtest
+Worker KnnzLeaxD2: Finished backtest in 136 seconds
+Worker KnnzLeaxD2: Starting backtest
+Worker KnnzLeaxD2: Starting backtest
+Worker KnnzLeaxD2: Starting backtest
+Worker KnnzLeaxD2: Finished backtest in 187 seconds
+Worker ZrPgOxyAGi: Starting backtest

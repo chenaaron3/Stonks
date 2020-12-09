@@ -8,6 +8,7 @@
     "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "dependencies": {
+    "@sendgrid/mail": "^7.4.0",
     "child_process": "^1.0.2",
     "chromedriver": "^85.0.1",
     "connect-mongo": "^3.2.0",

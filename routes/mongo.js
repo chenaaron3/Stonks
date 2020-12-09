@@ -6,7 +6,7 @@ const { fork } = require('child_process');
 
 let { getCollection, addDocument, getDocument, deleteDocument } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
-let { getSymbols } = require('../helpers/backtest');
+let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
 let { getUpdatedPrices } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
@@ -33,6 +33,14 @@ function ensureUpdated() {
 			// check for splits on saturdays
 			if (date.getDay() == 6) {
 				checkSplit();
+			}
+
+			// update the active backtests
+			let activeBacktests = getDocument("results", "activeResults");
+			for (let i = 0; i < activeBacktests.length; ++i) {
+				let { id, email } = activeBacktests[i];
+				updateBacktest(id);
+				getActionsToday(id, email);
 			}
 		}
 		// market not closed

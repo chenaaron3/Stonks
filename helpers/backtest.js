@@ -2,12 +2,14 @@ let fetch = require('node-fetch');
 var path = require('path');
 var fs = require('fs');
 const { fork } = require('child_process');
+const sgMail = require('@sendgrid/mail');
 
 // own helpers
 const csv = require('csv');
-let { addResult, getDocument, containsID } = require('../helpers/mongo');
-let { daysBetween, formatDate } = require('../helpers/utils');
+let { addResult, getDocument, setDocumentField, containsID } = require('../helpers/mongo');
+let { daysBetween, sameDay } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
+let { addJob } = require('../helpers/queue');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
@@ -49,6 +51,104 @@ const NUM_THREADS = 4;
 
 // cache settings
 const useCache = false;
+
+// queues a backtest
+function backtest(id, strategyOptions) {
+    return addJob(() => {
+        return new Promise(async resolveJob => {
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "../helpers/worker.js"));
+            child.send({ type: "startBacktest", strategyOptions, id });
+            child.on('message', function (message) {
+                console.log(message);
+                if (message.status == "finished") {
+                    console.log("Trigger client", id);
+                    triggerChannel(id, "onResultsFinished", { id: `${id}` });
+                    resolveJob();
+                }
+            });
+        });
+    });
+}
+
+// queues a backtest update
+function updateBacktest(id) {
+    return addJob(() => {
+        return new Promise(async resolveJob => {
+            let doc = await getDocument("results", id);
+            // same day needs no update
+            if (daysBetween(new Date(doc["lastUpdated"]), new Date()) < 1) {
+                resolveJob();
+                return;
+            }
+            // already updating
+            else if (doc["status"] == "updating") {
+                resolveJob();
+                return;
+            }
+            else {
+                setDocumentField(id, "status", "updating");
+            }
+            let strategyOptions = doc.results["strategyOptions"];
+
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "../helpers/worker.js"));
+            child.send({ type: "startBacktest", strategyOptions, id });
+            child.on('message', function (message) {
+                console.log(message);
+                if (message.status == "finished") {
+                    setDocumentField(id, "status", "ready");
+                    console.log("Trigger client", id);
+                    triggerChannel(id, "onUpdateFinished", { id: `${id}` });
+                    resolveJob();
+                }
+            });
+        });
+    });
+}
+
+// get actions today for a backtest
+async function getActionsToday(id, email) {
+    return addJob(() => {
+        return new Promise(async resolveJob => {
+            let doc = await getDocument("results", id);
+            let symbols = Object.keys(doc["results"]["symbolData"]);
+            let today = new Date();
+            let actions = { buy: [], sell: [] };
+            symbols.forEach(symbol => {
+                let symbolData = doc["results"]["symbolData"][symbol];
+
+                // look through holdings for buy actions  
+                let holdings = symbolData["holdings"];
+                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1])) < 2) {
+                    actions["buy"].push(symbol);
+                }
+
+                // look through events for sell actions
+                let events = symbolData["events"];
+                if (events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
+                    actions["sell"].push(symbol);
+                }
+            });
+
+            // send email
+            sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+            const msg = {
+                to: email,
+                from: "backtest@updated.com",
+                subject: "Your Backtest Has Finished Updating!",
+                text: "Buys:\n" + actions["buy"].join("\n") + "\nSells:\n" + actions["sell"].join("\n")
+            };
+            sgMail.send(msg)
+                .then(() => resolveJob())
+                .catch(function (err) {
+                    console.log(err);
+                    console.log(err["response"]["body"]["errors"])
+                    resolveJob();
+                })
+        })
+    });
+}
 
 // conduct a backtest with given strategy
 function conductBacktest(strategyOptions, id) {
@@ -178,12 +278,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                 // if valid prices
                 else {
                     // maps date to data
-                    let [prices, volumes, opens, highs, lows, closes] = getAdjustedData(json, lastUpdated);
-
-                    // get sorted dates
-                    let dates = Object.keys(prices).sort(function (a, b) {
-                        return new Date(a) - new Date(b);
-                    });
+                    let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, lastUpdated);
 
                     // get indicator objects
                     let [mainBuyIndicator, supportingBuyIndicators, buyMap] = getIndicatorObjects(strategyOptions, "buy", symbol, dates, prices, opens, highs, lows, closes);
@@ -421,7 +516,11 @@ function getAdjustedData(rawData, lastUpdated) {
         closes[formattedDate] = day["close"] * adjScale;
     };
 
-    return [prices, volumes, opens, highs, lows, closes];
+    let dates = Object.keys(prices).sort(function (a, b) {
+        return new Date(a) - new Date(b);
+    });
+
+    return [prices, volumes, opens, highs, lows, closes, dates];
 }
 
 // create indicator objects from options
@@ -518,4 +617,4 @@ function getConditions(mainIndicator, supportingIndicators, date) {
     return conditions
 }
 
-module.exports = { conductBacktest, findIntersections, getSymbols, getIndicator };
+module.exports = { backtest, updateBacktest, getActionsToday, conductBacktest, findIntersections, getSymbols, getAdjustedData, getIndicator };

@@ -5,12 +5,23 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
+let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveResult } = require('../helpers/mongo');
 let { makeid, daysBetween } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
-let { getIndicator } = require('../helpers/backtest');
+let { backtest, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
 let { getLatestPrice } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
+
+router.post("/autoUpdate", async (req, res) => {
+    // id of the result
+    let id = req.body.id;
+    // email to notify when update is finished
+    let email = req.body.email;
+
+    await addActiveResult({ id, email });
+
+    res.json({ status: "Backtest will now be updated daily!" });
+});
 
 // gets the most updated price for a stock
 router.get("/latestPrice", async (req, res) => {
@@ -104,24 +115,7 @@ router.post("/indicatorGraph", async (req, res) => {
     stockInfo = await stockInfo.toArray();
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo[0]["prices"];
-        let prices = {};
-        let opens = {};
-        let highs = {};
-        let lows = {};
-        let closes = {};
-        pricesJSON.forEach(day => {
-            let adjScale = day["adjClose"] / day["close"];
-            let formattedDate = new Date(day["date"]).toISOString();
-            prices[formattedDate] = day["adjClose"];
-            opens[formattedDate] = day["open"] * adjScale;
-            highs[formattedDate] = day["high"] * adjScale;
-            lows[formattedDate] = day["low"] * adjScale;
-            closes[formattedDate] = day["close"] * adjScale;
-        });
-        // get sorted dates
-        let dates = Object.keys(prices).sort(function (a, b) {
-            return new Date(a) - new Date(b);
-        });
+        let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
 
         let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
 
@@ -139,24 +133,7 @@ router.post("/priceGraph", async (req, res) => {
     stockInfo = await stockInfo.toArray();
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo[0]["prices"];
-        let prices = {};
-        let opens = {};
-        let highs = {};
-        let lows = {};
-        let closes = {};
-        pricesJSON.forEach(day => {
-            let adjScale = day["adjClose"] / day["close"];
-            let formattedDate = new Date(day["date"]).toISOString();
-            prices[formattedDate] = day["adjClose"];
-            opens[formattedDate] = day["open"] * adjScale;
-            highs[formattedDate] = day["high"] * adjScale;
-            lows[formattedDate] = day["low"] * adjScale;
-            closes[formattedDate] = day["close"] * adjScale;
-        });
-        // get sorted dates
-        let dates = Object.keys(prices).sort(function (a, b) {
-            return new Date(a) - new Date(b);
-        });
+        let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
 
         let indicatorGraphs = {};
         Object.keys(indicators).forEach(indicatorName => {
@@ -184,38 +161,7 @@ router.get("/updateBacktest", async (req, res) => {
         return;
     }
 
-    let position = addJob(() => {
-        return new Promise(async resolveJob => {
-            let doc = await getDocument("results", id);
-            // same day needs no update
-            if (daysBetween(new Date(doc["lastUpdated"]), new Date()) < 1) {
-                resolveJob();
-                return;
-            }
-            // already updating
-            else if (doc["status"] == "updating") {
-                resolveJob();
-                return;
-            }
-            else {
-                setDocumentField(id, "status", "updating");
-            }
-            let strategyOptions = doc.results["strategyOptions"];
-
-            // spawn child to do work
-            let child = fork(path.join(__dirname, "../helpers/worker.js"));
-            child.send({ type: "startBacktest", strategyOptions, id });
-            child.on('message', function (message) {
-                console.log(message);
-                if (message.status == "finished") {
-                    setDocumentField(id, "status", "ready");
-                    console.log("Trigger client", id);
-                    triggerChannel(id, "onUpdateFinished", { id: `${id}` });
-                    resolveJob();
-                }
-            });
-        });
-    });
+    let position = updateBacktest(id);
 
     if (position == 0) {
         res.json({ status: "Updating your backtest!" });
@@ -239,21 +185,7 @@ router.post("/backtest", async (req, res) => {
     // add id to the database
     addID(id);
 
-    let position = addJob(() => {
-        return new Promise(async resolveJob => {
-            // spawn child to do work
-            let child = fork(path.join(__dirname, "../helpers/worker.js"));
-            child.send({ type: "startBacktest", strategyOptions, id });
-            child.on('message', function (message) {
-                console.log(message);
-                if (message.status == "finished") {
-                    console.log("Trigger client", id);
-                    triggerChannel(id, "onResultsFinished", { id: `${id}` });
-                    resolveJob();
-                }
-            });
-        });
-    });
+    let position = backtest(id, strategyOptions);
 
     // send response so doesn't hang and gets the unique id
     if (position == 0) {
