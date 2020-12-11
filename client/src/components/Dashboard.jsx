@@ -34,7 +34,7 @@ class Dashboard extends React.Component {
             numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
             winLossData: [], spanData: [], percentProfitData: [], profitData: [], yearData: [],
             updateProgress: -1, type: "yearly", range: 50,
-            ctrl: false
+            ctrl: false, active: false
         }
 
         this.types = ["yearly", "6 months", "3 months", "1 month"];
@@ -43,6 +43,8 @@ class Dashboard extends React.Component {
 
     componentDidMount() {
         this.analyze();
+        this.updateActiveStatus();
+
         document.addEventListener('keydown', this.keydownHandler);
     }
 
@@ -190,21 +192,30 @@ class Dashboard extends React.Component {
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/updateBacktest?id=${this.props.id}`)
             .then(res => res.json())
             .then(json => alert(json["status"]));
+    }
 
-        // set to auto update
-        if (this.state.ctrl) {
-            // get the email to notify
-            let email = prompt("Enter email to notify.");
-            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id: this.props.id, email })
-            })
-                .then(res => res.json())
-                .then(json => alert(json["status"]));
-        }
+    setAutoUpdate = () => {
+        // get the email to notify
+        let email = prompt("Enter email to notify.");
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: this.props.id, email, subscribe: !this.state.active })
+        })
+            .then(res => res.json())
+            .then(json => {
+                alert(json["status"]);
+                this.updateActiveStatus();
+            });
+    }
+
+    updateActiveStatus = () => {
+        // check if is active
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/isAutoUpdate?id=${this.props.id}`)
+            .then(res => res.json())
+            .then(json => this.setState({ active: json["status"] }));
     }
 
     // reload the page when update is complete
@@ -327,29 +338,40 @@ class Dashboard extends React.Component {
                     {/* </div> */}
                     <div className="dashboard-update">
                         {
-                            this.state.updateProgress < 0 && <span className="dashboard-update-text">Updated {daysBetweenUpdate > 0 ? `${daysBetweenUpdate} days ago` : `${hoursBetweenUpdate} hours ago`}</span>
+                            this.state.ctrl && <>
+                                <Box ml="1vw" ><Button variant="contained" color="primary" onClick={this.setAutoUpdate}>
+                                    {
+                                        this.state.active ? "Manual Update" : "Auto Update"
+                                    }
+                                </Button></Box>
+                            </>
                         }
                         {
-                            this.state.updateProgress >= 0 && <span className="dashboard-update-text">Updating</span>
-                        }
-                        {daysBetweenUpdate > 0 && (
-                            <>
+                            !this.state.ctrl && <>
                                 {
-                                    this.state.updateProgress < 0 && <Box ml="1vw" ><Button variant="contained" color="primary" onClick={this.updateBacktest}>
+                                    this.state.updateProgress < 0 && <span className="dashboard-update-text">Updated {daysBetweenUpdate > 0 ? `${daysBetweenUpdate} days ago` : `${hoursBetweenUpdate} hours ago`}</span>
+                                }
+                                {
+                                    this.state.updateProgress >= 0 && <span className="dashboard-update-text">Updating</span>
+                                }
+                                {daysBetweenUpdate > 0 && (
+                                    <>
                                         {
-                                            this.state.ctrl ? "Auto Update" : "Update"
-                                        }
+                                            this.state.updateProgress < 0 && <Box ml="1vw" ><Button variant="contained" color="primary" onClick={this.updateBacktest}>
+                                                Update
                                     </Button></Box>
-                                }
-                                {
-                                    this.state.updateProgress >= 0 && (
-                                        <>
-                                            <Box ml="1vw" ><LinearProgress className="dashboard-progress" variant="determinate" value={this.state.updateProgress} /></Box>
-                                        </>
-                                    )
-                                }
+                                        }
+                                        {
+                                            this.state.updateProgress >= 0 && (
+                                                <>
+                                                    <Box ml="1vw" ><LinearProgress className="dashboard-progress" variant="determinate" value={this.state.updateProgress} /></Box>
+                                                </>
+                                            )
+                                        }
+                                    </>
+                                )}
                             </>
-                        )}
+                        }
                     </div>
                 </div>
                 <div className="dashboard-body">

@@ -43,9 +43,13 @@ router.get('/job', async function (req, res) {
 })
 
 router.get("/test", async function (req, res) {
-    let id = req.query.id;
-
-    res.json(await getActionsToday(id, "chenaaron3@gmail.com"));
+    let activeResults = await getDocument("results", "activeResults");
+    activeResults = activeResults["activeResults"];
+    for (let i = 0; i < activeResults.length; ++i) {
+        let { id, email, sessionID } = activeResults[i];
+        getActionsToday(id, email, sessionID);
+    }
+    res.send("ok")
 });
 
 router.post('/watchlist', async function (req, res) {

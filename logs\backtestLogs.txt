@@ -590,3 +590,11 @@ Worker KnnzLeaxD2: Starting backtest
 Worker KnnzLeaxD2: Starting backtest
 Worker KnnzLeaxD2: Finished backtest in 187 seconds
 Worker ZrPgOxyAGi: Starting backtest
+Worker uTij0qJ9BC: Starting backtest
+Worker uTij0qJ9BC: Finished backtest in 337 seconds
+Worker KnnzLeaxD2: Starting backtest
+Worker KnnzLeaxD2: Finished backtest in 199 seconds
+Worker 2iaUToCIKe: Starting backtest
+Worker 2iaUToCIKe: Finished backtest in 170 seconds
+Worker uTij0qJ9BC: Starting backtest
+Worker uTij0qJ9BC: Finished backtest in 130 seconds

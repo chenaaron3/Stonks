@@ -108,44 +108,52 @@ function updateBacktest(id) {
 }
 
 // get actions today for a backtest
-async function getActionsToday(id, email) {
+async function getActionsToday(id, email, sessionID) {
     return addJob(() => {
         return new Promise(async resolveJob => {
             let doc = await getDocument("results", id);
             let symbols = Object.keys(doc["results"]["symbolData"]);
+            let userDoc = await getDocument("sessions", sessionID);
+            let watchlist = Object.keys(JSON.parse(userDoc["session"])["buys"]);
             let today = new Date();
             let actions = { buy: [], sell: [] };
+
             symbols.forEach(symbol => {
                 let symbolData = doc["results"]["symbolData"][symbol];
 
-                // look through holdings for buy actions  
-                let holdings = symbolData["holdings"];
-                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1])) < 2) {
-                    actions["buy"].push(symbol);
-                }
+                // // look through holdings for buy actions  
+                // let holdings = symbolData["holdings"];
+                // if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1])) < 2) {
+                //     actions["buy"].push(symbol);
+                // }
 
                 // look through events for sell actions
                 let events = symbolData["events"];
-                if (events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
+                if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
                     actions["sell"].push(symbol);
                 }
             });
 
-            // send email
-            sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-            const msg = {
-                to: email,
-                from: "backtest@updated.com",
-                subject: "Your Backtest Has Finished Updating!",
-                text: "Buys:\n" + actions["buy"].join("\n") + "\nSells:\n" + actions["sell"].join("\n")
-            };
-            sgMail.send(msg)
-                .then(() => resolveJob())
-                .catch(function (err) {
-                    console.log(err);
-                    console.log(err["response"]["body"]["errors"])
-                    resolveJob();
-                })
+            // only send email if there are stocks to sell
+            if (actions["sell"].length > 0) {
+                let text = "Symbols to Sell:\n" + actions["sell"].join("\n");
+
+                // send email
+                sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+                const msg = {
+                    to: email,
+                    from: "backtest@updated.com",
+                    subject: "You Have Stocks To Sell!",
+                    text: text
+                };
+                sgMail.send(msg)
+                    .then(() => console.log("Email sent to ", email))
+                    .catch(function (err) {
+                        console.log(err);
+                        console.log(err["response"]["body"]["errors"])
+                    })
+            }
+            resolveJob();
         })
     });
 }

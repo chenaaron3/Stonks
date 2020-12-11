@@ -5,7 +5,7 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveResult } = require('../helpers/mongo');
+let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveResult, deleteActiveResult } = require('../helpers/mongo');
 let { makeid, daysBetween } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { backtest, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
@@ -17,11 +17,44 @@ router.post("/autoUpdate", async (req, res) => {
     let id = req.body.id;
     // email to notify when update is finished
     let email = req.body.email;
+    // sessionID of client to get watchlist
+    let sessionID = req.sessionID;
 
-    await addActiveResult({ id, email });
-
-    res.json({ status: "Backtest will now be updated daily!" });
+    if (req.body.subscribe) {
+        await addActiveResult({ id, email, sessionID });
+        res.json({ status: "Added backtest to daily updates!" });
+    }
+    else {
+        await deleteActiveResult({ id, email, sessionID });
+        res.json({ status: "Removed backtest from daily updates!" });
+    }
 });
+
+router.get("/isAutoUpdate", async (req, res) => {
+    // each session and backtest can only have 1 email
+    let id = req.query.id;
+    let sessionID = req.sessionID;
+
+    let found = false;
+    let activeResults;
+    try {
+        activeResults = await getDocument("results", "activeResults");
+        activeResults = activeResults["activeResults"];
+        for (let i = 0; i < activeResults.length; ++i) {
+            let activeResult = activeResults[i];
+            if (activeResult["id"] == id && activeResult["sessionID"] == sessionID) {
+                found = true;
+                break;
+            }
+        }
+    }
+    catch(e){
+        // no active results
+        found = false;
+    }
+
+    res.json({ status: found });
+})
 
 // gets the most updated price for a stock
 router.get("/latestPrice", async (req, res) => {

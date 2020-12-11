@@ -705,6 +705,10 @@ function getFormattedDate(date) {
     if (typeof date == "string") {
         date = new Date(date);
     }
+
+    // add 1 day, data is off
+    date.setDate(date.getDate() + 1);
+
     var year = date.getFullYear();
 
     var month = (1 + date.getMonth()).toString();

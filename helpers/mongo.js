@@ -273,6 +273,25 @@ function addActiveResult(id) {
 	});
 }
 
+function deleteActiveResult(id) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		let key = "activeResults";
+
+		if ((await resultsCollection.find({ _id: key }).count()) != 0) {
+			await resultsCollection.updateOne({
+				"_id": key
+			}, {
+				$pull: {
+					"activeResults": id
+				}
+			});
+		}
+
+		resolve();
+	});
+}
+
 module.exports = {
 	getCollection,
 	addDocument,
@@ -286,5 +305,6 @@ module.exports = {
 	addResult,
 	setStockInfo,
 	updateStockInfo,
-	addActiveResult
+	addActiveResult,
+	deleteActiveResult
 };

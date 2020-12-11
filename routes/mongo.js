@@ -15,7 +15,7 @@ let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
 
 ensureUpdated();
 // ensure our database is constantly updated
-function ensureUpdated() {
+async function ensureUpdated() {
 	console.log("Retreiving metadata...");
 	let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA));
 	let date = new Date();
@@ -36,11 +36,12 @@ function ensureUpdated() {
 			}
 
 			// update the active backtests
-			let activeBacktests = getDocument("results", "activeResults");
-			for (let i = 0; i < activeBacktests.length; ++i) {
-				let { id, email } = activeBacktests[i];
+			let activeResults = await getDocument("results", "activeResults");
+			activeResults = activeResults["activeResults"];
+			for (let i = 0; i < activeResults.length; ++i) {
+				let { id, email, sessionID } = activeResults[i];
 				updateBacktest(id);
-				getActionsToday(id, email);
+				getActionsToday(id, email, sessionID);
 			}
 		}
 		// market not closed
