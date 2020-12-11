@@ -5,7 +5,7 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveResult, deleteActiveResult } = require('../helpers/mongo');
+let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveResult, deleteActiveResult, deleteDocument } = require('../helpers/mongo');
 let { makeid, daysBetween } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { backtest, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
@@ -48,7 +48,7 @@ router.get("/isAutoUpdate", async (req, res) => {
             }
         }
     }
-    catch(e){
+    catch (e) {
         // no active results
         found = false;
     }
@@ -128,6 +128,13 @@ router.get("/results", async (req, res) => {
     else {
         res.json(doc["results"]);
     }
+})
+
+// delete backtest results
+router.delete("/deleteResults/:id", async (req, res) => {
+    let id = req.params.id;
+    deleteDocument("results", id);
+    res.json({ status: "Deleted" });
 })
 
 // start fake backtesting for testing

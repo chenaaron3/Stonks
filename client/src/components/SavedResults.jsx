@@ -84,6 +84,11 @@ class SavedResults extends React.Component {
 
         this.props.setSavedResults(newSave);
         localStorage.setItem("savedResults", JSON.stringify(newSave));
+        
+        // remove result from database
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/deleteResults/${id}`, {
+            method: 'DELETE'
+        })
     }
 
     render() {
