@@ -25,6 +25,7 @@ class CreateBacktest extends React.Component {
             stopLossHigh: 0,
             stopLossLow: 0,
             stopLossAtr: 0,
+            targetAtr: 0,
             riskRewardRatio: 0,
             minVolume: 1000000,
             maxDays: 30
@@ -39,7 +40,8 @@ class CreateBacktest extends React.Component {
             "ADX": { "fields": ["period"], "default": [12] },
             "Hammer": { "fields": ["headRatio", "legRatio", "expiration"], "default": [1, 2, 0] },
             "Structure": { "fields": ["period", "volatility", "minCount"], "default": [75, .05, 1] },
-            "Pullback": { "fields": ["period", "length"], "default": [180, 12] }
+            "Pullback": { "fields": ["period", "length"], "default": [180, 12] },
+            "Breakout": { "fields": ["period", "tests"], "default": [180, 3] }
         }
 
         // for each indicator
@@ -90,6 +92,7 @@ class CreateBacktest extends React.Component {
             "stopLossLow": this.state.stopLossLow == 0 ? undefined : 1 - this.state.stopLossLow / 100,
             "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
             "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
+            "targetAtr": this.state.targetAtr == 0 ? undefined : this.state.targetAtr,
             "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
             "minVolume": this.state.minVolume,
             "maxDays": this.state.maxDays,
@@ -326,6 +329,14 @@ class CreateBacktest extends React.Component {
                                                             if (!newValue) newValue = 0;
                                                             this.setState({ stopLossAtr: newValue })
                                                         }} helperText="1 to sell at 1 ATR below. 0 to disable." />
+                                                </div>
+                                                <div>
+                                                    <TextField label="Target ATR" value={this.state.targetAtr}
+                                                        onChange={(e) => {
+                                                            let newValue = parseFloat(e.target.value);
+                                                            if (!newValue) newValue = 0;
+                                                            this.setState({ targetAtr: newValue })
+                                                        }} helperText="1 to sell at 1 ATR above. 0 to disable." />
                                                 </div>
                                                 <div>
                                                     <TextField label="Risk Reward Ratio" value={this.state.riskRewardRatio}

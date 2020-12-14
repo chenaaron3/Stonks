@@ -39,7 +39,7 @@ class RSI extends Indicator {
 		if (todayRSI > this.underbought && yesterdayRSI <= this.underbought) {
 			return Indicator.BUY;
 		}
-		else if (todayRSI < this.overbought && yesterdayRSI >= this.overbought) {
+		else if (todayRSI > this.overbought && yesterdayRSI >= this.overbought) {
 			return Indicator.SELL;
 		}
 		else {

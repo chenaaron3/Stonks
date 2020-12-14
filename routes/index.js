@@ -186,7 +186,7 @@ router.post("/priceGraph", async (req, res) => {
             }
         })
 
-        res.json({ price: pricesJSON, indicators: indicatorGraphs });
+        res.json({ price: pricesJSON, volumes: volumes, indicators: indicatorGraphs });
     }
     else {
         res.json({ price: [], indicators: {} });

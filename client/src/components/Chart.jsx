@@ -18,7 +18,7 @@ class Chart extends React.Component {
 
         // constants
         this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
-        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback"];
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -587,7 +587,7 @@ class Chart extends React.Component {
             contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
             labelStyle={{ fontWeight: 'bold', color: '#666666' }}
             formatter={this.tooltipFormatter}
-            labelFormatter={label => getFormattedDate(label)}
+            labelFormatter={label => getFormattedDate(label) + "\n" + this.graphs["volumes"][label]}
         />;
 
         // Main Line

@@ -6,6 +6,7 @@ class ATR extends Indicator {
         this.period = options["period"];
         this.name = "ATR";
         this.graph = this.calculate();
+
     }
 
     calculate() {
@@ -14,11 +15,21 @@ class ATR extends Indicator {
         let newDates = [...this.dates];
         newDates.shift();
         let atr = getSimpleMovingAverage(newDates, tr["data"], this.period);
+
+        let sma = getSimpleMovingAverage(newDates, this.prices, 180);
+        this.offset1 = {};
+        this.offset2 = {};
+        this.offset3 = {};
+        Object.keys(atr).forEach(d => {
+            this.offset1[d] = sma[d] + atr[d];
+            // this.offset2[d] = sma[d] + 2 * atr[d];
+            this.offset3[d] = sma[d] - atr[d];
+        })
         return atr;
     }
 
     getGraph() {
-        return { ATR: this.graph }
+        return { ATR1: this.offset1, ATR2: this.offset2, ATR3: this.offset3 }
     }
 
     getValue(date, dateIndex) {

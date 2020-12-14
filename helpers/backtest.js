@@ -25,6 +25,7 @@ let Hammer = require('../helpers/indicators/hammer');
 let Structure = require('../helpers/indicators/structure');
 let ATR = require('../helpers/indicators/atr');
 let Pullback = require('../helpers/indicators/pullback');
+let Breakout = require('../helpers/indicators/breakout');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -38,7 +39,8 @@ let INDICATOR_OBJECTS = {
     "Hammer": Hammer,
     "Structure": Structure,
     "ATR": ATR,
-    "Pullback": Pullback
+    "Pullback": Pullback,
+    "Breakout": Breakout
 }
 
 // paths to resources
@@ -571,6 +573,14 @@ function getStopLossTrades(strategyOptions, prices, dates, dateIndex, buyPrices,
     if (strategyOptions["maxDays"]) {
         stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, index) => {
             return daysBetween(new Date(buyDates[index]), new Date(day)) > strategyOptions["maxDays"]
+        }));
+    }
+
+    if (strategyOptions["targetAtr"]) {
+        let multiplier = strategyOptions["targetAtr"];
+        stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
+            let target = bp + multiplier * atr.getValue(buyDates[i]);
+            return target < prices[day];
         }));
     }
 

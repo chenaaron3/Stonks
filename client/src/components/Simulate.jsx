@@ -22,7 +22,7 @@ class Simulate extends React.Component {
 
         this.state = {
             data: [],
-            range: 50, startSize: 10000, maxPositions: 5, positionSize: 10
+            range: 50, startSize: 1000, maxPositions: 20, positionSize: 5
         }
 
         this.holdings = [];
@@ -38,6 +38,22 @@ class Simulate extends React.Component {
         }
     }
 
+    score = (events, index) => {
+        let score = 0;
+        let localityWeight = .7;
+        let mainEvent = events[index];
+        for (let i = 0; i < index; ++i) {
+            let event = events[i];
+            if (new Date(event["sellDate"]) > new Date(mainEvent["buyDate"])) {
+                break;
+            }
+            // let newScore = event["percentProfit"] > 0 ? 1 : -1;
+            // score = newScore * localityWeight + score * (1 - localityWeight);
+            score += event["percentProfit"] > 0 ? 1 : 0;
+        }
+        return score / (index + 1);
+    }
+
     simulate = () => {
         // store all events based on their buy dates
         let eventsByDate = {};
@@ -46,8 +62,10 @@ class Simulate extends React.Component {
         symbols.forEach(symbol => {
             let score = 0;
             let localityWeight = .8;
-            this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                event["score"] = score;
+            let events = this.props.results["symbolData"][symbol]["events"];
+            for (let i = 0; i < events.length; ++i) {
+                let event = events[i];
+                event["score"] = this.score(events, i);
                 let newScore = event["percentProfit"] > 0 ? 1 : -1;
                 score = newScore * localityWeight + score * (1 - localityWeight);
                 let buyDate = new Date(event["buyDate"]).getTime();
@@ -62,7 +80,7 @@ class Simulate extends React.Component {
                     eventsByDate[buyDate] = [];
                 }
                 eventsByDate[buyDate].push(event);
-            });
+            };
         });
 
         // sort the dates to simulate
@@ -95,7 +113,7 @@ class Simulate extends React.Component {
             // if looking for buys
             if (this.holdings.length < this.state.maxPositions) {
                 let events = eventsByDate[date];
-                if (events) {                    
+                if (events) {
                     events.sort((a, b) => b["score"] - a["score"]);
                     // keep buying until holdings maxed
                     for (let i = 0; i < events.length; ++i) {
@@ -117,8 +135,7 @@ class Simulate extends React.Component {
                 if (date == new Date(holding["sellDate"]).getTime()) {
                     sold.push(holding);
                     equity += holding["buyAmount"] * (holding["percentProfit"]);
-                    if (equity <= 0)
-                    {
+                    if (equity <= 0) {
                         equity = this.state.startSize;
                     }
                 }
