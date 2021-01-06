@@ -863,3 +863,5 @@ Worker pmrZGzJ3tH: Starting backtest
 Worker pmrZGzJ3tH: Finished backtest in 247 seconds
 Worker fuV7etNUKR: Starting backtest
 Worker fuV7etNUKR: Finished backtest in 243 seconds
+Worker eM7kQXWrQa: Starting backtest
+Worker eM7kQXWrQa: Finished backtest in 552 seconds

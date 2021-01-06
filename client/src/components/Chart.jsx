@@ -437,7 +437,7 @@ class Chart extends React.Component {
         }
 
         // for swing low
-        if (this.eventsLookup[date]["type"] == "buy") {
+        if (this.eventsLookup[date] && this.eventsLookup[date]["type"] == "buy") {
             let event = this.eventsLookup[date]["event"];
             if (event["risk"]) {
                 stoploss = close * (100 - event["risk"]) / 100;
@@ -472,7 +472,7 @@ class Chart extends React.Component {
         else if (this.props.strategyOptions["riskRewardRatio"]) {
             let stopLoss = low - this.props.strategyOptions["stopLossAtr"] * atr[date];
             // for swing low
-            if (this.eventsLookup[date]["type"] == "buy") {
+            if (this.eventsLookup[date] && this.eventsLookup[date]["type"] == "buy") {
                 let event = this.eventsLookup[date]["event"];
                 if (event["risk"]) {
                     stopLoss = close * (100 - event["risk"]) / 100;

@@ -3770,3 +3770,11 @@ Worker fuV7etNUKR: Finished backtest for tickers DESP to JFKKU in 218 seconds
 Worker fuV7etNUKR: Finished backtest for tickers JFKKW to PYS in 230 seconds
 Worker fuV7etNUKR: Finished backtest for tickers PYT to ZYXI in 232 seconds
 Worker fuV7etNUKR: Finished backtest for tickers A to DEO in 239 seconds
+Worker eM7kQXWrQa: Finding intersections for tickers DESP to JFKKU
+Worker eM7kQXWrQa: Finding intersections for tickers JFKKW to PYS
+Worker eM7kQXWrQa: Finding intersections for tickers A to DEO
+Worker eM7kQXWrQa: Finding intersections for tickers PYT to ZYXI
+Worker eM7kQXWrQa: Finished backtest for tickers DESP to JFKKU in 445 seconds
+Worker eM7kQXWrQa: Finished backtest for tickers PYT to ZYXI in 527 seconds
+Worker eM7kQXWrQa: Finished backtest for tickers A to DEO in 528 seconds
+Worker eM7kQXWrQa: Finished backtest for tickers JFKKW to PYS in 541 seconds
