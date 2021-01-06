@@ -8,7 +8,8 @@ const SET_INDICATOR_ON = "SET_INDICATOR_ON";
 const CLEAR_INDICATORS = "CLEAR_INDICATORS";
 const SET_SAVED_RESULTS = "SET_SAVED_RESULTS";
 const SET_PAGE_INDEX = "SET_PAGE_INDEX";
-const SET_CHART_SETTINGS = "";
+const SET_CHART_SETTINGS = "SET_CHART_SETTINGS";
+const SET_SIMULATION_TRANSACTIONS = "SET_SIMULATION_TRANSACTIONS";
 
 const initialState = {
     id: "",
@@ -20,7 +21,8 @@ const initialState = {
     eventIndex: -1,
     boughtSymbols:{},
     pageIndex: 1,
-    chartSettings: {}
+    chartSettings: {},
+    simulationTransactions: {}
 };
 
 // Reducer
@@ -36,7 +38,7 @@ export default function reducer(state = initialState, action) {
             return Object.assign({}, state, {
                 selectedSymbol: action.symbol,
                 selectedResults: action.results,
-                eventIndex: -1
+                eventIndex: action.eventIndex
             })
         case VIEW_EVENT:
             return Object.assign({}, state, {
@@ -89,6 +91,11 @@ export default function reducer(state = initialState, action) {
                 ...state,
                 chartSettings: action.chartSettings
             }
+        case SET_SIMULATION_TRANSACTIONS:
+            return {
+                ...state,
+                simulationTransactions: action.simulationTransactions
+            }
         default: return state;
     }
 }
@@ -98,8 +105,8 @@ export function setBacktestResults(id, backtestResults) {
     return { type: SET_BACKTEST_RESULTS, id, backtestResults };
 }
 
-export function viewStock(symbol) {
-    return { type: VIEW_STOCK, symbol };
+export function viewStock(symbol, eventIndex = -1) {
+    return { type: VIEW_STOCK, symbol, eventIndex };
 }
 
 export function viewEvent(eventIndex) {
@@ -132,4 +139,8 @@ export function setPageIndex(pageIndex) {
 
 export function setChartSettings(chartSettings) {
     return { type: SET_CHART_SETTINGS, chartSettings }
+}
+
+export function setSimulationTransactions(simulationTransactions) {
+    return { type: SET_SIMULATION_TRANSACTIONS, simulationTransactions }
 }

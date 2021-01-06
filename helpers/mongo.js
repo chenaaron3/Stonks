@@ -180,7 +180,7 @@ function addResult(id, result) {
 				$set: { "results": result }
 			}, (err, res) => {
 				if (err) console.log(err);
-				resolve(result);
+				resolve(err);
 			});
 	});
 }

@@ -7,6 +7,8 @@ import Indicator from './Indicator';
 import Pusher from 'react-pusher';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
@@ -27,6 +29,7 @@ class CreateBacktest extends React.Component {
             stopLossAtr: 0,
             targetAtr: 0,
             riskRewardRatio: 0,
+            limitOrder: false,
             minVolume: 1000000,
             maxDays: 30
         };
@@ -94,6 +97,9 @@ class CreateBacktest extends React.Component {
             "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
             "targetAtr": this.state.targetAtr == 0 ? undefined : this.state.targetAtr,
             "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
+            "stopLossSwing": this.state.stopLossSwing,
+            "targetSwing": this.state.targetSwing,
+            "limitOrder": this.state.limitOrder,
             "minVolume": this.state.minVolume,
             "maxDays": this.state.maxDays,
             "expiration": 7,
@@ -304,63 +310,111 @@ class CreateBacktest extends React.Component {
                                     <>
                                         {/* <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2> */}
                                         <div className="create-backtest-form-body-split">
-                                            <div className="create-backtest-additional-options">
+                                            <div>
                                                 <h3 className="create-backtest-subtitle">Additional Options</h3>
-                                                <div>
-                                                    <TextField label="Take profit" value={this.state.stopLossHigh}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ stopLossHigh: newValue })
-                                                        }} helperText="20 to sell at 20% profit. 0 to disable." />
-                                                </div>
-                                                {/* <div>
-                                                    <TextField label="Stop Loss" value={this.state.stopLossLow}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ stopLossLow: newValue })
-                                                        }} helperText="20 to sell at 20% loss. 0 to disable." />
-                                                </div> */}
-                                                <div>
-                                                    <TextField label="Stop Loss ATR" value={this.state.stopLossAtr}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ stopLossAtr: newValue })
-                                                        }} helperText="1 to sell at 1 ATR below. 0 to disable." />
-                                                </div>
-                                                <div>
-                                                    <TextField label="Target ATR" value={this.state.targetAtr}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ targetAtr: newValue })
-                                                        }} helperText="1 to sell at 1 ATR above. 0 to disable." />
-                                                </div>
-                                                <div>
-                                                    <TextField label="Risk Reward Ratio" value={this.state.riskRewardRatio}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ riskRewardRatio: newValue })
-                                                        }} helperText="2 for 2:1 ratio. 0 to disable." />
-                                                </div>
-                                                <div>
-                                                    <TextField label="Minimum Volume" value={this.state.minVolume}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ minVolume: newValue })
-                                                        }} helperText="Will only execute buy if above volume." />
-                                                </div>
-                                                <div>
-                                                    <TextField label="Max Days" value={this.state.maxDays}
-                                                        onChange={(e) => {
-                                                            let newValue = parseFloat(e.target.value);
-                                                            if (!newValue) newValue = 0;
-                                                            this.setState({ maxDays: newValue })
-                                                        }} helperText="Will sell if in trade longer than max days." />
+                                                <div className="create-backtest-form-body-split">
+                                                    <div className="create-backtest-additional-options">
+                                                        <div>
+                                                            <TextField label="Take profit" value={this.state.stopLossHigh}
+                                                                onChange={(e) => {
+                                                                    let newValue = parseFloat(e.target.value);
+                                                                    if (!newValue) newValue = 0;
+                                                                    this.setState({ stopLossHigh: newValue })
+                                                                }} helperText="20 to sell at 20% profit. 0 to disable." />
+                                                        </div>
+                                                        {/* <div>
+                                                            <TextField label="Stop Loss" value={this.state.stopLossLow}
+                                                            onChange={(e) => {
+                                                                let newValue = parseFloat(e.target.value);
+                                                                if (!newValue) newValue = 0;
+                                                                this.setState({ stopLossLow: newValue })
+                                                            }} helperText="20 to sell at 20% loss. 0 to disable." />
+                                                        </div> */}
+                                                        <div>
+                                                            <TextField label="Stop Loss ATR" value={this.state.stopLossAtr}
+                                                                onChange={(e) => {
+                                                                    let newValue = parseFloat(e.target.value);
+                                                                    if (!newValue) newValue = 0;
+                                                                    this.setState({ stopLossAtr: newValue })
+                                                                }} helperText="1 to sell at 1 ATR below. 0 to disable." />
+                                                        </div>
+                                                        <div>
+                                                            <TextField label="Minimum Volume" value={this.state.minVolume}
+                                                                onChange={(e) => {
+                                                                    let newValue = parseFloat(e.target.value);
+                                                                    if (!newValue) newValue = 0;
+                                                                    this.setState({ minVolume: newValue })
+                                                                }} helperText="Execute buy if above volume." />
+                                                        </div>
+                                                        <div>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        checked={this.state.targetSwing}
+                                                                        onChange={(e) => {
+                                                                            this.setState({ targetSwing: e.target.checked });
+                                                                        }}
+                                                                        color="primary"
+                                                                    />
+                                                                }
+                                                                label="Stop Above Swing High"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        checked={this.state.stopLossSwing}
+                                                                        onChange={(e) => {
+                                                                            this.setState({ stopLossSwing: e.target.checked });
+                                                                        }}
+                                                                        color="primary"
+                                                                    />
+                                                                }
+                                                                label="Stop Below Swing Low"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        checked={this.state.limitOrder}
+                                                                        onChange={(e) => {
+                                                                            this.setState({ limitOrder: e.target.checked });
+                                                                        }}
+                                                                        color="primary"
+                                                                    />
+                                                                }
+                                                                label="Use Limit Order"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="create-backtest-additional-options">
+                                                        <div>
+                                                            <TextField label="Target ATR" value={this.state.targetAtr}
+                                                                onChange={(e) => {
+                                                                    let newValue = parseFloat(e.target.value);
+                                                                    if (!newValue) newValue = 0;
+                                                                    this.setState({ targetAtr: newValue })
+                                                                }} helperText="1 to sell at 1 ATR above. 0 to disable." />
+                                                        </div>
+                                                        <div>
+                                                            <TextField label="Risk Reward Ratio" value={this.state.riskRewardRatio}
+                                                                onChange={(e) => {
+                                                                    let newValue = parseFloat(e.target.value);
+                                                                    if (!newValue) newValue = 0;
+                                                                    this.setState({ riskRewardRatio: newValue })
+                                                                }} helperText="2 for 2:1 ratio. 0 to disable." />
+                                                        </div>
+                                                        <div>
+                                                            <TextField label="Max Days" value={this.state.maxDays}
+                                                                onChange={(e) => {
+                                                                    let newValue = parseFloat(e.target.value);
+                                                                    if (!newValue) newValue = 0;
+                                                                    this.setState({ maxDays: newValue })
+                                                                }} helperText="Sell if held longer than max days." />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="create-backtest-review-criterias">

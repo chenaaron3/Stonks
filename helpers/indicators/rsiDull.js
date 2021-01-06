@@ -31,7 +31,7 @@ class RSIDull extends Indicator {
         return res;
     }
 
-    getAction(date, dateIndex) {
+    getAction(date, dateIndex, isMain) {
         let todayIndex = dateIndex;
         let firstDayIndex = Math.max(0, todayIndex - this.minDuration);
         let buy = true;

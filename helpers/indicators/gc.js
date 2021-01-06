@@ -26,7 +26,7 @@ class GC extends Indicator {
 		return normalizeRange(data);
 	}
 
-	getAction(date, dateIndex) {
+	getAction(date, dateIndex, isMain) {
 		let yesterday = this.dates[dateIndex - 1];
 
 		let yesterdayMA1 = this.ma1[yesterday];

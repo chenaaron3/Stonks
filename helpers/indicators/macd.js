@@ -47,7 +47,7 @@ class MACD extends Indicator {
 		// return normalizeRange(data);
 	}
 
-	getAction(date, dateIndex) {
+	getAction(date, dateIndex, isMain) {
 		let yesterday = this.dates[dateIndex - 1];
 
 		let yesterdayMACD = this.graph[yesterday];
@@ -57,7 +57,7 @@ class MACD extends Indicator {
 
 		let isCrossedUp = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, true); // green to red
 		let isCrossedDown = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, false); // red to green
-		if (isCrossedUp || this.histogram[date] > 0) {
+		if (isCrossedUp || (!isMain && this.histogram[date] > 0)) {
 			return Indicator.BUY;
 		}
 		else if (isCrossedDown) {

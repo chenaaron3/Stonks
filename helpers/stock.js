@@ -1,7 +1,12 @@
 var yahooFinance = require('yahoo-finance');
+var path = require('path');
+var fs = require('fs');
 var { updateStockInfo, getDocument, getCollection, setStockInfo } = require("./mongo");
 let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual } = require('./utils');
 let { getIndicator } = require('./backtest');
+
+let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
+let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
 
 // update a price document if needed
 function updateStock(doc, updateDate) {
@@ -122,7 +127,7 @@ function getPrices(symbol) {
 async function checkSplit(doc) {
     let today = new Date();
     let baseDate = new Date("1/1/1500");
-    
+
     // get symbol and first entry
     let symbol = doc["_id"];
     let entry = doc["prices"][0];
@@ -155,13 +160,60 @@ async function checkSplit(doc) {
     delete updatedEntry["date"];
     valid = valid && shallowEqual(entry, updatedEntry);
     if (!valid) {
-        // get full update
-        let updatedEntry = await getUpdatedPrices(symbol, baseDate, today);
-        // update mongo document
-        setStockInfo(symbol, updatedEntry, today);
+        resetSymbol(symbol, baseDate, today);
         return 1;
     }
     return 0;
+}
+
+// reset the data for a symbol
+async function resetSymbol(symbol, baseDate, today) {
+    let updatedEntry = await getUpdatedPrices(symbol, baseDate, today);
+    // update mongo document
+    await setStockInfo(symbol, updatedEntry, today);
+}
+
+// fix faulty data
+async function fixFaulty() {
+    let results = { "fixed": 0, "blacklisted": 0 };
+    if (fs.existsSync(PATH_TO_FAULTY)) {
+        let faulty = JSON.parse(fs.readFileSync(PATH_TO_FAULTY, { encoding: "utf-8" }));
+        let blacklist = JSON.parse(fs.readFileSync(PATH_TO_BLACKLIST, { encoding: "utf-8" }));
+        let today = new Date();
+        let baseDate = new Date("1/1/1500");
+
+        // go through faulty list
+        for (let i = 0; i < faulty.length; ++i) {
+            let symbol = faulty[i];
+            // fix the data
+            await resetSymbol(symbol, baseDate, today);
+
+            // check if fixed
+            let symbolData = (await getDocument("prices", symbol))["prices"];
+            let fixed = true;
+            for (let j = 0; j < symbolData.length; ++j) {
+                // not fixed, add to blacklist
+                if (!symbolData[j]["close"]) {
+                    blacklist.push(symbol);
+                    fixed = false;
+                    break;
+                }
+            }
+
+            // tally stats
+            if (fixed) {
+                results["fixed"] += 1;
+            }
+            else {
+                results["blacklisted"] += 1;
+            }
+        }
+
+        // by the end, symbols should be fixed or blacklisted
+        fs.writeFileSync(PATH_TO_FAULTY, "[]", { encoding: "utf-8" });
+        fs.writeFileSync(PATH_TO_BLACKLIST, JSON.stringify(blacklist), { encoding: "utf-8" });
+    }
+    return results;
 }
 
 // used for ml dataset
@@ -256,4 +308,4 @@ async function gatherData(symbols, result, window) {
     return { features, labels };
 }
 
-module.exports = { updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit }
+module.exports = { updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, resetSymbol, fixFaulty }

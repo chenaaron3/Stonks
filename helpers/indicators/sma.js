@@ -26,7 +26,7 @@ class SMA extends Indicator {
         return clampRange(data);
     }
 
-    getAction(date, dateIndex) {
+    getAction(date, dateIndex, isMain) {
         let todayIndex = dateIndex;
         let firstDayIndex = Math.max(1, todayIndex - this.minDuration + 1);
         let buy = true;
@@ -52,7 +52,9 @@ class SMA extends Indicator {
         }
 
         let isCrossedDown = isCrossed(yesterdayPrice, todayPrice, yesterdaySMA, todaySMA, false);
-        if (buy) {
+        let isCrossedUp = isCrossed(yesterdayPrice, todayPrice, yesterdaySMA, todaySMA, true);
+
+        if ((isMain && isCrossedUp) || (!isMain && buy)) {
             return Indicator.BUY;
         }
         else if (isCrossedDown) {

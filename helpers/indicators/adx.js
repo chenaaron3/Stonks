@@ -77,7 +77,7 @@ class ADX extends Indicator {
         return res;
     }
 
-    getAction(date, dateIndex) {
+    getAction(date, dateIndex, isMain) {
         let yesterday = this.dates[dateIndex - 1];
 
         let yesterdayPDI = this.pdi[yesterday];

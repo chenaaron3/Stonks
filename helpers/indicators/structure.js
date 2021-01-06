@@ -42,7 +42,7 @@ class Structure extends Indicator {
                 // different slope
                 if (previousSlope != slope) {
                     if (sleep <= 0) {
-                        sleep = 7;
+                        sleep = 0//7;
                         // if slope up, is support
                         if (slope == "P") {
                             level = { price: this.prices[this.dates[minIndex]], date: new Date(this.dates[minIndex]) };
@@ -131,7 +131,7 @@ class Structure extends Indicator {
         return data;
     }
 
-    getAction(date, dateIndex) {
+    getAction(date, dateIndex, isMain) {
         let todayIndex = dateIndex;
         let yesterday = this.dates[todayIndex - 1];
         let beforeYesterday = this.dates[todayIndex - 2];

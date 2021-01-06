@@ -30,7 +30,7 @@ class RSI extends Indicator {
         return res;
     }
 
-	getAction(date, dateIndex) {
+	getAction(date, dateIndex, isMain) {
 		let yesterday = this.dates[dateIndex - 1];
 
 		let yesterdayRSI = this.graph[yesterday];
@@ -39,7 +39,7 @@ class RSI extends Indicator {
 		if (todayRSI > this.underbought && yesterdayRSI <= this.underbought) {
 			return Indicator.BUY;
 		}
-		else if (todayRSI > this.overbought && yesterdayRSI >= this.overbought) {
+		else if (todayRSI < this.overbought && yesterdayRSI >= this.overbought) {
 			return Indicator.SELL;
 		}
 		else {

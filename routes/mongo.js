@@ -7,7 +7,7 @@ const { fork } = require('child_process');
 let { getCollection, addDocument, getDocument, deleteDocument } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
 let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
-let { getUpdatedPrices } = require('../helpers/stock');
+let { getUpdatedPrices, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
 const NUM_THREADS = 4;
@@ -208,5 +208,12 @@ async function checkSplit() {
 		})
 	});
 }
+
+// try to fix faulty data
+router.get("/fixFaulty", async function (req, res) {
+	res.send("Fixing faulty data");
+	let results = await fixFaulty();
+	console.log(results);
+});
 
 module.exports = router;

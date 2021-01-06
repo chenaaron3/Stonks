@@ -174,22 +174,18 @@ router.post("/priceGraph", async (req, res) => {
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo[0]["prices"];
         let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
+        let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes).getGraph();
 
         let indicatorGraphs = {};
         Object.keys(indicators).forEach(indicatorName => {
             let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
             indicatorGraphs[indicatorName] = indicator.getGraph();
-            if (indicatorName == "Structure" || indicatorName == "SMA") {
-                dates.forEach(day => {
-                    indicator.getAction(day);
-                })
-            }
         })
 
-        res.json({ price: pricesJSON, volumes: volumes, indicators: indicatorGraphs });
+        res.json({ price: pricesJSON, atr: atr, volumes: volumes, indicators: indicatorGraphs });
     }
     else {
-        res.json({ price: [], indicators: {} });
+        res.json({ price: [], volumes: [], indicators: {} });
     }
 });
 

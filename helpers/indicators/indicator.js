@@ -19,7 +19,7 @@ class Indicator {
 		console.log("THIS SHOULD NOT BE PRINTED -- UH OH");
 	}
 
-	getAction(date, dateIndex) {
+	getAction(date, dateIndex, isMain) {
 
 	}
 }

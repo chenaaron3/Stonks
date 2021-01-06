@@ -80,6 +80,7 @@
 
 .create-backtest-additional-options > * {
     margin-bottom: 1vh;
+    margin-right: 1vw;
 }
 
 .create-backtest-review-criterias {}

@@ -718,3 +718,148 @@ Worker 6vqqwtcrx2: Starting backtest
 Worker 6vqqwtcrx2: Finished backtest in 307 seconds
 Worker 1e7dmdFL8B: Starting backtest
 Worker 1e7dmdFL8B: Finished backtest in 236 seconds
+Worker TKGPeWKKD0: Starting backtest
+Worker TKGPeWKKD0: Finished backtest in 182 seconds
+Worker KnnzLeaxD2: Starting backtest
+Worker KnnzLeaxD2: Finished backtest in 94 seconds
+Worker KnnzLeaxD2: Starting backtest
+Worker OQ2P34NtaK: Starting backtest
+Worker OQ2P34NtaK: Finished backtest in 92 seconds
+Worker TKGPeWKKD0: Starting backtest
+Worker TKGPeWKKD0: Finished backtest in 130 seconds
+Worker 8Q7YFkwGlU: Starting backtest
+Worker 8Q7YFkwGlU: Finished backtest in 642 seconds
+Worker TOOrmcGlME: Starting backtest
+Worker qC7gu0AGEb: Starting backtest
+Worker cG51IzJwqt: Starting backtest
+Worker cG51IzJwqt: Finished backtest in 263 seconds
+Worker 2PiBQZv0r1: Starting backtest
+Worker 2PiBQZv0r1: Finished backtest in 256 seconds
+Worker BJfnogrLVw: Starting backtest
+Worker BJfnogrLVw: Finished backtest in 242 seconds
+Worker WRFnnLm2d7: Starting backtest
+Worker WRFnnLm2d7: Finished backtest in 284 seconds
+Worker rBaq68y0lE: Starting backtest
+Worker rBaq68y0lE: Finished backtest in 217 seconds
+Worker c4Lu1ZvZRW: Starting backtest
+Worker c4Lu1ZvZRW: Finished backtest in 657 seconds
+Worker RrcQxbBMyr: Starting backtest
+Worker 0ZFdOobPBy: Starting backtest
+Worker 0ZFdOobPBy: Finished backtest in 322 seconds
+Worker dUA0NdDaxt: Starting backtest
+Worker dUA0NdDaxt: Finished backtest in 278 seconds
+Worker 2iwIabgHNC: Starting backtest
+Worker 2iwIabgHNC: Finished backtest in 282 seconds
+Worker EyTpBHZx9I: Starting backtest
+Worker EyTpBHZx9I: Finished backtest in 250 seconds
+Worker jUcXm7P14V: Starting backtest
+Worker jUcXm7P14V: Finished backtest in 286 seconds
+Worker EaGEqMtnRo: Starting backtest
+Worker EaGEqMtnRo: Finished backtest in 304 seconds
+Worker Vf1HAZ454h: Starting backtest
+Worker Vf1HAZ454h: Finished backtest in 354 seconds
+Worker sccmRGzWOM: Starting backtest
+Worker sccmRGzWOM: Finished backtest in 349 seconds
+Worker Q1gPI7CFz1: Starting backtest
+Worker Q1gPI7CFz1: Finished backtest in 282 seconds
+Worker 1iOw1Lf7o4: Starting backtest
+Worker 1iOw1Lf7o4: Finished backtest in 293 seconds
+Worker GpmVeWz1U4: Starting backtest
+Worker GpmVeWz1U4: Finished backtest in 281 seconds
+Worker DPEVxqUNcn: Starting backtest
+Worker DPEVxqUNcn: Finished backtest in 338 seconds
+Worker 4ZQhTkE79H: Starting backtest
+Worker 4ZQhTkE79H: Finished backtest in 305 seconds
+Worker 8OPFz4sd0Y: Starting backtest
+Worker 8OPFz4sd0Y: Finished backtest in 541 seconds
+Worker hFlbCzSk0z: Starting backtest
+Worker hFlbCzSk0z: Finished backtest in 423 seconds
+Worker vtj5gGAwNY: Starting backtest
+Worker vtj5gGAwNY: Finished backtest in 409 seconds
+Worker ZFWZq0o9pn: Starting backtest
+Worker ZFWZq0o9pn: Finished backtest in 374 seconds
+Worker 7KV1JjvsgL: Starting backtest
+Worker 7KV1JjvsgL: Finished backtest in 346 seconds
+Worker hDrkdnDcun: Starting backtest
+Worker hDrkdnDcun: Finished backtest in 436 seconds
+Worker D28WtWT5Li: Starting backtest
+Worker D28WtWT5Li: Finished backtest in 421 seconds
+Worker PUP6YKjdYa: Starting backtest
+Worker PUP6YKjdYa: Finished backtest in 439 seconds
+Worker xMADZQqiPh: Starting backtest
+Worker xMADZQqiPh: Finished backtest in 433 seconds
+Worker GtrnYfouiI: Starting backtest
+Worker GtrnYfouiI: Finished backtest in 487 seconds
+Worker ZnfUoQm6F3: Starting backtest
+Worker SZoHRzCF4D: Starting backtest
+Worker X5HvSRn4Oy: Starting backtest
+Worker 3xDyktSnTw: Starting backtest
+Worker 3xDyktSnTw: Finished backtest in 353 seconds
+Worker cvIZErlfDN: Starting backtest
+Worker cvIZErlfDN: Finished backtest in 367 seconds
+Worker vx5AUzR5K6: Starting backtest
+Worker vx5AUzR5K6: Finished backtest in 328 seconds
+Worker hxRjk3hWQk: Starting backtest
+Worker hxRjk3hWQk: Finished backtest in 249 seconds
+Worker XGY6p3gbiz: Starting backtest
+Worker XGY6p3gbiz: Finished backtest in 376 seconds
+Worker DWcvDRYFaV: Starting backtest
+Worker H0qxlGiIde: Starting backtest
+Worker rLLe2Og2T7: Starting backtest
+Worker rLLe2Og2T7: Finished backtest in 406 seconds
+Worker Y4yzpdRopD: Starting backtest
+Worker Y4yzpdRopD: Finished backtest in 412 seconds
+Worker AlKznSyWtV: Starting backtest
+Worker AlKznSyWtV: Finished backtest in 459 seconds
+Worker A3fpxRo1di: Starting backtest
+Worker A3fpxRo1di: Finished backtest in 481 seconds
+Worker h1W7VrblEV: Starting backtest
+Worker h1W7VrblEV: Finished backtest in 353 seconds
+Worker 9EGkPymAlJ: Starting backtest
+Worker 9EGkPymAlJ: Finished backtest in 302 seconds
+Worker QadgLxHFYv: Starting backtest
+Worker QadgLxHFYv: Finished backtest in 347 seconds
+Worker IfztJmtB0G: Starting backtest
+Worker IfztJmtB0G: Finished backtest in 279 seconds
+Worker wr2wjeYOXa: Starting backtest
+Worker wr2wjeYOXa: Finished backtest in 408 seconds
+Worker DbDuM1qZAr: Starting backtest
+Worker No53zY3OjG: Starting backtest
+Worker BHhRS2QKiH: Starting backtest
+Worker BHhRS2QKiH: Finished backtest in 205 seconds
+Worker mThPpNX5Ca: Starting backtest
+Worker mThPpNX5Ca: Finished backtest in 264 seconds
+Worker 3YHVHH2qQr: Starting backtest
+Worker 3YHVHH2qQr: Finished backtest in 254 seconds
+Worker DX7iI1Wa4T: Starting backtest
+Worker DX7iI1Wa4T: Finished backtest in 204 seconds
+Worker G4NwwLOLWO: Starting backtest
+Worker G4NwwLOLWO: Finished backtest in 216 seconds
+Worker T2Oi83JYIJ: Starting backtest
+Worker T2Oi83JYIJ: Finished backtest in 250 seconds
+Worker czt8BIMVUa: Starting backtest
+Worker w1FUrZ5ufk: Starting backtest
+Worker w1FUrZ5ufk: Finished backtest in 231 seconds
+Worker FuXuxjPqzq: Starting backtest
+Worker FuXuxjPqzq: Finished backtest in 430 seconds
+Worker a9PBVBFSrp: Starting backtest
+Worker a9PBVBFSrp: Finished backtest in 360 seconds
+Worker AeX468jaPW: Starting backtest
+Worker AeX468jaPW: Finished backtest in 347 seconds
+Worker kgGpoX8oUB: Starting backtest
+Worker kgGpoX8oUB: Finished backtest in 257 seconds
+Worker XAS3QgJT7e: Starting backtest
+Worker 4iyrSUoU2W: Starting backtest
+Worker 4iyrSUoU2W: Finished backtest in 270 seconds
+Worker aLZkTqXbjN: Starting backtest
+Worker aLZkTqXbjN: Finished backtest in 203 seconds
+Worker ORtuAa7Elz: Starting backtest
+Worker ORtuAa7Elz: Finished backtest in 193 seconds
+Worker DJ0tVZf7RI: Starting backtest
+Worker DJ0tVZf7RI: Finished backtest in 227 seconds
+Worker x5nJBuu5YY: Starting backtest
+Worker x5nJBuu5YY: Finished backtest in 221 seconds
+Worker pmrZGzJ3tH: Starting backtest
+Worker pmrZGzJ3tH: Finished backtest in 247 seconds
+Worker fuV7etNUKR: Starting backtest
+Worker fuV7etNUKR: Finished backtest in 243 seconds

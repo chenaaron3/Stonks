@@ -17,7 +17,7 @@ class Indicators extends React.Component {
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
             "ADX": { "fields": ["period"], "default": [12] },
             "Structure": {"fields": ["period", "volatility"], "default": [75, .05]},
-            "ATR": {"fields": ["period"], "default": [12]}
+            "ATR": {"fields": ["period"], "default": [12]},
         }
     }
 

@@ -1,13 +1,13 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewStock, setBacktestResults, setChartSettings } from '../redux';
+import { viewStock, viewEvent, setBacktestResults, setChartSettings } from '../redux';
 import './Results.css';
 import 'react-tabs/style/react-tabs.css';
 import eye from "../eye.svg";
 import buy from "../buy.svg";
 import bought from "../bought.svg";
 import sell from "../sell.svg";
-import { formatDate, daysBetween } from "../helpers/utils";
+import { formatDate, daysBetween, displayDelta } from "../helpers/utils";
 import Pusher from 'react-pusher';
 
 import TextField from '@material-ui/core/TextField';
@@ -27,16 +27,24 @@ import Switch from '@material-ui/core/Switch';
 import IconButton from '@material-ui/core/IconButton';
 import SettingsIcon from '@material-ui/icons/Settings';
 import ImportExportIcon from '@material-ui/icons/ImportExport';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 class Results extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
             sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
+            scoreBy: "Win Rate",
             chartSettings: {}, ready: false
         }
         this.supportedExports = ["StocksTracker", "Finviz"];
+        this.scoreTypes = ["Percent Profit", "Dollar Profit", "Win Rate"];
     }
 
     // when clicking on an item
@@ -46,23 +54,36 @@ class Results extends React.Component {
 
     // statistical analysis (win/loss)
     analyze() {
-        let sortBy = "percentProfit";
+        this.score();
         // get the sorted symbols
         let sortedSymbols = Object.keys(this.props.results["symbolData"]);
-        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b][sortBy] - this.props.results["symbolData"][a][sortBy]);
+        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["score"] - this.props.results["symbolData"][a]["score"]);
         this.setState({ sortedSymbols });
+        this.setState({ ready: true });
+    }
 
+    score() {
         let symbols = Object.keys(this.props.results["symbolData"]);
         symbols.forEach(symbol => {
             let score = 0;
-            let localityWeight = .8;
-            this.props.results["symbolData"][symbol]["events"].forEach(event => {
-                let newScore = event["percentProfit"] > 0 ? 1 : 0;
-                score = (newScore * localityWeight + score * (1 - localityWeight)) / 2;
-            });
+            if (this.state.scoreBy == "Percent Profit") {
+                score = this.props.results["symbolData"][symbol]["percentProfit"];
+            }
+            else if (this.state.scoreBy == "Dollar Profit") {
+                score = this.props.results["symbolData"][symbol]["profit"];
+            }
+            else if (this.state.scoreBy == "Win Rate") {
+                let wins = 0;
+                let events = this.props.results["symbolData"][symbol]["events"];
+                events.forEach(e => {
+                    if (e["profit"] > 0) {
+                        wins += 1;
+                    }
+                });
+                score = wins / events.length;
+            }
             this.props.results["symbolData"][symbol]["score"] = score;
         });
-        this.setState({ ready: true });
     }
 
     componentDidMount() {
@@ -214,6 +235,24 @@ class Results extends React.Component {
             /></Box>
         </div>
 
+        let scoreBy = <Box mx="1vw" mt="1vh">
+            <FormControl style={{ minWidth: "5vw" }}>
+                <InputLabel id="results-score-type">Sort By</InputLabel>
+                <Select
+                    value={this.scoreTypes.indexOf(this.state.scoreBy)}
+                    onChange={(e) => {
+                        this.setState({ scoreBy: this.scoreTypes[e.target.value] }, () => this.analyze())
+                    }}
+                >
+                    {
+                        this.scoreTypes.map((value, index) => {
+                            return <MenuItem key={`results-score-${index}`} value={index}>{value}</MenuItem>
+                        })
+                    }
+                </Select>
+            </FormControl>
+        </Box>;
+
         let buySymbols = [];
         for (let i = 0; i < this.state.sortedSymbols.length; ++i) {
             let symbol = this.state.sortedSymbols[i];
@@ -231,12 +270,14 @@ class Results extends React.Component {
                     Results {<SettingsMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
                 </h2>
                 <div>{searchBar}</div>
+                {scoreBy}
                 {/* <Paper square> */}
                 <Tabs value={this.state.tabIndex} onChange={this.setTab} indicatorColor="primary" centered aria-label="simple tabs example">
-                    <Tab style={{ minWidth: "3vw" }} label="All" {...a11yProps(0)} />
-                    <Tab style={{ minWidth: "3vw" }} label="Buys" {...a11yProps(1)} />
-                    <Tab style={{ minWidth: "3vw" }} label="Sells" {...a11yProps(2)} />
-                    <Tab style={{ minWidth: "3vw" }} label="Watch" {...a11yProps(3)} />
+                    <Tab style={{ minWidth: "0vw" }} label="All" {...a11yProps(0)} />
+                    <Tab style={{ minWidth: "0vw" }} label="Buy" {...a11yProps(1)} />
+                    <Tab style={{ minWidth: "0vw" }} label="Sell" {...a11yProps(2)} />
+                    <Tab style={{ minWidth: "0vw" }} label="Watch" {...a11yProps(3)} />
+                    <Tab style={{ minWidth: "0vw" }} label="Sim" {...a11yProps(4)} />
                 </Tabs>
                 {/* </Paper> */}
                 <TabPanel value={this.state.tabIndex} index={0} style={tabPanelStyle}>
@@ -329,6 +370,24 @@ class Results extends React.Component {
                         </>
                     </div>
                 </TabPanel>
+                <TabPanel value={this.state.tabIndex} index={4} style={tabPanelStyle}>
+                    <div className="results-list">
+                        {
+                            Object.keys(this.props.simulationTransactions).length == 0 && (<span>
+                                Start a simulation to view transactions.
+                            </span>)
+                        }
+                        <>
+                            {Object.keys(this.props.simulationTransactions).length != 0 && (
+                                // sort years from recent to old
+                                Object.keys(this.props.simulationTransactions).sort((a, b) => b - a).map((year) => {
+                                    return <Transactions year={year} transactions={this.props.simulationTransactions[year]} {...this.props} />
+                                })
+                            )
+                            }
+                        </>
+                    </div>
+                </TabPanel>
             </div>
         );
     }
@@ -346,10 +405,19 @@ class Result extends React.Component {
     }
 
     render() {
+        let displayName = this.props.symbol;
+        let color = this.props.result["percentProfit"] > 0 ? "green" : "red";
+        if (this.props.transaction) {
+            let pp = this.props.result["events"][this.props.eventIndex]["percentProfit"] * 100;
+            displayName += ` (${displayDelta(pp)}%)`;
+            color = pp > 0 ? "green" : "red";
+        }
         return (<div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
-            <img className={`result-icon result-hover`} width="25px" height="25px" src={eye} alt="Eye" onClick={() => this.props.handleGetResult(this.props.symbol)} />
-            <span className="result-text" style={{ color: `${this.props.result["percentProfit"] > 0 ? "green" : "red"}` }} onClick={() => this.props.handleGetResult(this.props.symbol)} >{
-                `${this.props.index + 1}. ${this.props.symbol}`}
+            <img className={`result-icon result-hover`} width="25px" height="25px" src={eye} alt="Eye"
+                onClick={() => this.props.handleGetResult(this.props.symbol)} />
+            <span className="result-text" style={{ color: color }}
+                onClick={() => this.props.handleGetResult(this.props.symbol)} >{
+                    `${this.props.index + 1}. ${displayName}`}
             </span>
             {
                 this.props.buy && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
@@ -373,6 +441,33 @@ class Result extends React.Component {
             }
 
         </div>);
+    }
+}
+
+class Transactions extends React.Component {
+    render() {
+        return <Accordion>
+            <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1a-content"
+                id="panel1a-header"
+            >
+                {this.props.year}
+            </AccordionSummary>
+            <AccordionDetails>
+                <div className="results-list">
+                    {
+                        this.props.transactions.map((transaction, index) => {
+                            return <Result transaction key={index} symbol={transaction["symbol"]} index={index} result={this.props.results["symbolData"][transaction["symbol"]]}
+                                eventIndex={transaction["index"]}
+                                handleGetResult={(symbol) => {
+                                    this.props.viewStock(symbol, transaction["index"]);
+                                }} />
+                        })
+                    }
+                </div>
+            </AccordionDetails>
+        </Accordion>
     }
 }
 
@@ -497,7 +592,7 @@ function ExportMenu(props) {
 
 let mapStateToProps = (state) => {
     let results = state.backtestResults;
-    return { results, id: state.id };
+    return { results, id: state.id, simulationTransactions: state.simulationTransactions };
 };
 
-export default connect(mapStateToProps, { viewStock, setBacktestResults, setChartSettings })(Results);
+export default connect(mapStateToProps, { viewStock, viewEvent, setBacktestResults, setChartSettings })(Results);

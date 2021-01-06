@@ -16,20 +16,20 @@ class ATR extends Indicator {
         newDates.shift();
         let atr = getSimpleMovingAverage(newDates, tr["data"], this.period);
 
-        let sma = getSimpleMovingAverage(newDates, this.prices, 180);
-        this.offset1 = {};
-        this.offset2 = {};
-        this.offset3 = {};
-        Object.keys(atr).forEach(d => {
-            this.offset1[d] = sma[d] + atr[d];
-            // this.offset2[d] = sma[d] + 2 * atr[d];
-            this.offset3[d] = sma[d] - atr[d];
-        })
+        // let sma = getSimpleMovingAverage(newDates, this.prices, 180);
+        // this.offset1 = {};
+        // this.offset2 = {};
+        // this.offset3 = {};
+        // Object.keys(atr).forEach(d => {
+        //     this.offset1[d] = sma[d] + atr[d];
+        //     // this.offset2[d] = sma[d] + 2 * atr[d];
+        //     this.offset3[d] = sma[d] - atr[d];
+        // })
         return atr;
     }
 
     getGraph() {
-        return { ATR1: this.offset1, ATR2: this.offset2, ATR3: this.offset3 }
+        return { ATR: this.graph }
     }
 
     getValue(date, dateIndex) {

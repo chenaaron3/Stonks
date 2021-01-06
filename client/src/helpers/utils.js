@@ -1,16 +1,21 @@
 // format date to api needs
 function formatDate(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
+    if (typeof date == "string") {
+        date = new Date(date);
+    }
 
-    if (month.length < 2)
-        month = '0' + month;
-    if (day.length < 2)
-        day = '0' + day;
+    // add 1 day, data is off
+    date.setDate(date.getDate() + 1);
 
-    return [month, day, year].join('-');
+    var year = date.getFullYear();
+
+    var month = (1 + date.getMonth()).toString();
+    month = month.length > 1 ? month : '0' + month;
+
+    var day = date.getDate().toString();
+    day = day.length > 1 ? day : '0' + day;
+
+    return month + '/' + day + '/' + year % 100;
 }
 
 function daysBetween(date1, date2) {
@@ -37,4 +42,8 @@ function camelToDisplay(s) {
         .replace(/^./, function (str) { return str.toUpperCase(); });
 }
 
-module.exports = { formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay };
+function displayDelta(p) {
+    return (p >= 0 ? "+" : "") + p.toFixed(2);
+}
+
+module.exports = { formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay, displayDelta };

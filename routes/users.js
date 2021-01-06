@@ -2,11 +2,13 @@ var express = require('express');
 var router = express.Router();
 var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
+let { resetSymbol } = require('../helpers/stock');
 let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
 let { getIndicator, getActionsToday } = require('../helpers/backtest');
 let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
+let sizeof = require('object-sizeof')
 
 let watchlistFunctions = {
     "StocksTracker": addToStocksTrackerWatchlist,
@@ -43,12 +45,11 @@ router.get('/job', async function (req, res) {
 })
 
 router.get("/test", async function (req, res) {
-    let activeResults = await getDocument("results", "activeResults");
-    activeResults = activeResults["activeResults"];
-    for (let i = 0; i < activeResults.length; ++i) {
-        let { id, email, sessionID } = activeResults[i];
-        getActionsToday(id, email, sessionID);
-    }
+    let symbol = req.query.symbol;
+    let doc = await getDocument("results", "2iwIabgHNC");
+    console.log(sizeof(doc["results"]));
+    console.log(sizeof(doc["results"]["symbolData"]["AAPL"]["events"][0]));
+    resetSymbol(symbol, new Date("1/1/1500"), new Date())
     res.send("ok")
 });
 
@@ -73,7 +74,7 @@ router.post('/watchlist', async function (req, res) {
 
 router.get('/indicator', async function (req, res) {
     let symbol = req.query["symbol"];
-    let indicatorName = "ATR";
+    let indicatorName = "Swing";
     let indicatorOptions = { period: 12, volatility: .10 };
 
     console.log(symbol, indicatorName, indicatorOptions);

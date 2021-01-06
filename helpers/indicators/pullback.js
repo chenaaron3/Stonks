@@ -46,7 +46,7 @@ class Pullback extends Indicator {
         return todayClose > yesterdayHigh;
     }
 
-    getAction(date, dateIndex) {
+    getAction(date, dateIndex, isMain) {
         let todayIndex = dateIndex;
         let yesterday = this.dates[todayIndex - 1];
 

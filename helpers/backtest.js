@@ -1,6 +1,7 @@
 let fetch = require('node-fetch');
 var path = require('path');
 var fs = require('fs');
+let sizeof = require('object-sizeof')
 const { fork } = require('child_process');
 const sgMail = require('@sendgrid/mail');
 
@@ -26,6 +27,7 @@ let Structure = require('../helpers/indicators/structure');
 let ATR = require('../helpers/indicators/atr');
 let Pullback = require('../helpers/indicators/pullback');
 let Breakout = require('../helpers/indicators/breakout');
+let Swing = require('../helpers/indicators/swing');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -40,11 +42,14 @@ let INDICATOR_OBJECTS = {
     "Structure": Structure,
     "ATR": ATR,
     "Pullback": Pullback,
-    "Breakout": Breakout
+    "Breakout": Breakout,
+    "Swing": Swing
 }
 
 // paths to resources
 let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
+let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
+let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
 
 // only get symbols from these exchanges
 let EXCHANGES = ["amex", "nasdaq", "nyse"];
@@ -52,7 +57,7 @@ let EXCHANGES = ["amex", "nasdaq", "nyse"];
 const NUM_THREADS = 4;
 
 // cache settings
-const useCache = false;
+const useCache = true;
 
 // queues a backtest
 function backtest(id, strategyOptions) {
@@ -192,9 +197,26 @@ function conductBacktest(strategyOptions, id) {
                         Object.assign(intersections, msg.intersections);
                         // if all worker threads are finished
                         if (++finishedWorkers == NUM_THREADS) {
+                            // check for faulty data
+                            let faulty = [];
+                            if (fs.existsSync(PATH_TO_FAULTY)) {
+                                faulty = JSON.parse(fs.readFileSync(PATH_TO_FAULTY, { encoding: "utf-8" }));
+                                Object.keys(intersections).forEach(symbol => {
+                                    if (intersections[symbol]["faulty"] && !faulty.includes(symbol)) {
+                                        faulty.push(symbol);
+                                    }
+                                })
+                            }
+                            // save faulty list
+                            fs.writeFileSync(PATH_TO_FAULTY, JSON.stringify(faulty), { encoding: "utf-8" });
+
                             let results = { strategyOptions, symbolData: intersections, lastUpdated: new Date() };
                             // add result to database
-                            await addResult(id, results);
+                            let err = await addResult(id, results);
+                            // todo deal with oversized results by trimming
+                            if (err) {
+                                console.log(sizeof(results));
+                            }
                             resolve();
                         }
                     }
@@ -212,10 +234,17 @@ function conductBacktest(strategyOptions, id) {
 // gets the symbols from cache or from csv
 function getSymbols() {
     return new Promise((resolve, reject) => {
+        // read blacklist symbols (faulty data)
+        let blacklist = [];
+        if (fs.existsSync(PATH_TO_BLACKLIST)) {
+            blacklist = JSON.parse(fs.readFileSync(PATH_TO_BLACKLIST, { encoding: "utf-8" }));
+        }
         // read from cache
         if (fs.existsSync(PATH_TO_SYMBOLS) && useCache) {
             console.log("Loading Symbols from Cache...");
             let symbols = JSON.parse(fs.readFileSync(PATH_TO_SYMBOLS, { encoding: "utf-8" }));
+            // filter out blacklist symbols
+            symbols = symbols.filter(s => !blacklist.includes(s));
             resolve(symbols);
         }
         // parse info from csv
@@ -238,8 +267,8 @@ function getSymbols() {
                     output.forEach(stock => {
                         let symbol = stock[0];
                         // exclude index and sub stocks
-                        if (!stock[0].includes(".") && !stock[0].includes("^"))
-                            symbols.push(stock[0].trim());
+                        if (!symbol.includes(".") && !symbol.includes("^") && !blacklist.includes(symbol))
+                            symbols.push(symbol.trim());
                     })
 
                     // if all exchanges are finished
@@ -296,10 +325,15 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     let stopLossIndicator = undefined; //getIndicator("SMA", { period: 180, minDuration: 3 }, symbol, dates, prices, opens, highs, lows, closes);
                     let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes);
 
+                    // if this symbol contains faulty data
+                    let faulty = false;
+
+                    // maps a buy date to its stoploss/target
+                    let stoplossTarget = {};
+
                     // store buy/sell information
                     let buyPrices = [];
                     let buyDates = [];
-                    let stopLosses = [];
                     let buySignal;
                     let sellSignal;
                     let expiration = strategyOptions["expiration"];
@@ -313,7 +347,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                     // accumulators
                     let profit = 0;
-                    let count = 0;
                     let percentProfit = 0;
 
                     // load data from previous results
@@ -326,13 +359,11 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             previousResults["holdings"].forEach(holding => {
                                 buyDates.push(holding);
                                 buyPrices.push(prices[holding]);
-                                stopLosses.push(lows[holding] - (strategyOptions["stopLossAtr"] ? strategyOptions["stopLossAtr"] : 1) * atr.getValue(holding));
                             })
 
                             // carry over profits
                             profit = previousResults["profit"];
-                            count = events.length;
-                            percentProfit = previousResults["percentProfit"] * count;
+                            percentProfit = previousResults["percentProfit"] * events.length;
                         }
 
                         // start from the date after the last update
@@ -353,8 +384,15 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     // loops over dates and checks for buy signal
                     for (let i = startIndex; i < dates.length; ++i) {
                         let day = dates[i];
+
+                        // check for faulty data
+                        if (!prices[day]) {
+                            faulty = true;
+                            break;
+                        }
+
                         // if main buy indicator goes off and enough volume
-                        if (mainBuyIndicator.getAction(day, i) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
+                        if (mainBuyIndicator.getAction(day, i, true) == Indicator.BUY && volumes[day] > strategyOptions["minVolume"]) {
                             buySignal = true;
                         }
                         if (buySignal) {
@@ -377,7 +415,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
                                 buyPrices.push(prices[day]);
                                 buyDates.push(day);
-                                stopLosses.push(lows[day] - (strategyOptions["stopLossAtr"] ? strategyOptions["stopLossAtr"] : 1) * atr.getValue(day));
+                                setStoplossTarget(stoplossTarget, strategyOptions, prices[day], day, atr, lows, highs, dates, i);
                                 buySignal = false;
                                 buyExpiration = expiration;
                                 Object.keys(buyMap).forEach(indicator => {
@@ -397,14 +435,17 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             }
                         }
 
-                        let stopLossTrades = getStopLossTrades(strategyOptions, prices, dates, i, buyPrices, buyDates, stopLosses, atr, lows);
+                        let earlyTrades = getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, dates, i);
                         // if stoploss indicator goes off, sell all
                         if (stopLossIndicator && stopLossIndicator.shouldStop(day) == Indicator.STOP) {
-                            stopLossTrades = buyPrices;
+                            earlyTrades = {};
+                            buyDates.forEach((bd, buyIndex) => {
+                                earlyTrades[bd] = prices[bd];
+                            })
                         }
 
                         // if stoploss triggered or main seller indicator goes off and has stocks to sell
-                        if (stopLossTrades.length > 0 || (mainSellIndicator.getAction(day, i) == Indicator.SELL && buyPrices.length > 0)) {
+                        if (Object.keys(earlyTrades).length > 0 || (mainSellIndicator.getAction(day, i, true) == Indicator.SELL && buyPrices.length > 0)) {
                             sellSignal = true;
                         }
                         if (sellSignal) {
@@ -423,36 +464,51 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                 }
                             });
 
-                            // if all supports agree or stoploss triggered, sell the stock
-                            if (allIndicatorsSell || stopLossTrades.length > 0) {
+                            // if all supports agree or stoploss/taret triggered, sell the stock
+                            if (allIndicatorsSell || Object.keys(earlyTrades).length > 0) {
                                 let newBuyPrices = [];
                                 let newBuyDates = [];
-                                let newStopLosses = [];
+                                let newStoplossTarget = {};
 
                                 // sell all stocks that were bought
                                 for (let i = 0; i < buyPrices.length; ++i) {
                                     let buyPrice = buyPrices[i];
                                     let buyDate = buyDates[i];
+                                    let sellPrice = prices[day];
 
-                                    // dont sell if stoploss not met
-                                    if (stopLossTrades.length > 0 && !stopLossTrades.includes(buyPrice)) {
-                                        newBuyPrices.push(buyPrice);
-                                        newBuyDates.push(buyDate);
-                                        newStopLosses.push(stopLosses[i]);
-                                        continue;
+                                    // if early trades exist
+                                    if (Object.keys(earlyTrades).length > 0) {
+                                        // dont sell if stoploss/target not met
+                                        if (!earlyTrades.hasOwnProperty(buyDate)) {
+                                            if (mainSellIndicator.getAction(day, i, true) != Indicator.SELL) {
+                                                newBuyPrices.push(buyPrice);
+                                                newBuyDates.push(buyDate);
+                                                newStoplossTarget[buyDate] = stoplossTarget[buyDate];
+                                                continue;
+                                            }
+                                        }
+                                        // adjust the sell price to stoploss/target
+                                        else {
+                                            if (strategyOptions["limitOrder"]) {
+                                                sellPrice = earlyTrades[buyDate];
+                                            }
+                                        }
                                     }
 
                                     // populate transaction information
                                     event["buyDate"] = buyDate;
                                     event["sellDate"] = day;
-                                    event["profit"] = prices[day] - buyPrice;
-                                    event["percentProfit"] = (prices[day] - buyPrice) / buyPrice
+                                    event["profit"] = sellPrice - buyPrice;
+                                    event["percentProfit"] = (sellPrice - buyPrice) / buyPrice
                                     event["span"] = daysBetween(new Date(buyDate), new Date(day));
+                                    if (stoplossTarget.hasOwnProperty(buyDate)) {
+                                        let stoploss = stoplossTarget[buyDate]["stoploss"];
+                                        event["risk"] = (buyPrice - stoploss) / buyPrice * 100;
+                                    }
 
                                     // calculate stats
                                     profit += event["profit"];
                                     percentProfit += event["percentProfit"];
-                                    count += 1;
 
                                     // add and create new event
                                     events.push(event);
@@ -461,7 +517,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                                 buyPrices = newBuyPrices;
                                 buyDates = newBuyDates;
-                                stopLosses = newStopLosses;
+                                stoplossTarget = newStoplossTarget;
                                 sellSignal = false;
                                 sellExpiration = expiration;
                                 Object.keys(sellMap).forEach(indicator => {
@@ -482,7 +538,19 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                     };
 
-                    resolve({ "profit": profit, "percentProfit": percentProfit / count, "events": events, "holdings": buyDates });
+                    // if too many results, truncate old ones
+                    if (events.length > 500) {
+                        events = events.slice(events.length - 500, events.length);
+                        // recalculate profit
+                        profit = 0;
+                        percentProfit = 0;
+                        for (let i = 0; i < events.length; ++i) {
+                            profit += events[i]["profit"];
+                            percentProfit += events[i]["percentProfit"];
+                        }
+                    }
+
+                    resolve({ "profit": profit, "percentProfit": percentProfit / events.length, "events": events, "holdings": buyDates, "faulty": faulty });
                 }
             });
     })
@@ -556,73 +624,116 @@ function getIndicatorObjects(strategyOptions, type, symbol, dates, prices, opens
     return [mainIndicator, supportingIndicators, map];
 }
 
-// sell stocks prematurely
-function getStopLossTrades(strategyOptions, prices, dates, dateIndex, buyPrices, buyDates, stopLosses, atr, lows) {
-    let stopLossTrades = [];
-    let day = dates[dateIndex];
+// calculate stoplosses and targets
+function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, atr, lows, highs, dates, dateIndex) {
+    let stoploss = undefined;
+    let target = undefined;
 
     // find static stoploss trades (deprecated in front-end)
     if (strategyOptions["stopLossLow"]) {
-        stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossLow"] > prices[day]))
+        stoploss = buyPrice * strategyOptions["stopLossLow"];
     }
     if (strategyOptions["stopLossHigh"]) {
-        stopLossTrades = stopLossTrades.concat(buyPrices.filter(bp => bp * strategyOptions["stopLossHigh"] < prices[day]))
-    }
-
-    // overdue stocks
-    if (strategyOptions["maxDays"]) {
-        stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, index) => {
-            return daysBetween(new Date(buyDates[index]), new Date(day)) > strategyOptions["maxDays"]
-        }));
+        target = buyPrice * strategyOptions["stopLossHigh"];
     }
 
     if (strategyOptions["targetAtr"]) {
         let multiplier = strategyOptions["targetAtr"];
-        stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
-            let target = bp + multiplier * atr.getValue(buyDates[i]);
-            return target < prices[day];
-        }));
+        target = buyPrice + multiplier * atr.getValue(buyDate);
     }
 
-    // use ATR for stoploss and targets
+    // use ATR for stoploss
     if (strategyOptions["stopLossAtr"]) {
         let multiplier = strategyOptions["stopLossAtr"];
-        // below buy date's low - atr * multiplyer 
-        stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
-            let stopLoss = lows[buyDates[i]] - multiplier * atr.getValue(buyDates[i]);
-            return stopLoss > prices[day];
-        }));
+        let low = lows[buyDate];
 
-        // above custom target based on risk reward ratio 
-        let ratio = strategyOptions["riskRewardRatio"];
-        if (ratio) {
-            stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
-                let stopLoss = lows[buyDates[i]] - multiplier * atr.getValue(buyDates[i]);
-                let margin = bp - stopLoss;
-                return bp + ratio * margin < prices[day];
-            }));
-        }
-        // use trailing stop loss
-        else {
-            let yesterdayPrice = prices[dates[dateIndex - 1]];
-            let todayPrice = prices[day];
+        // use swing lows
+        if (strategyOptions["stopLossSwing"]) {
+            // price of a swing low
+            let swingRange = 7;
 
-            // update trailing stop loss
-            for (let i = 0; i < stopLosses.length; ++i) {
-                let newStopLoss = todayPrice - multiplier * atr.getValue(buyDates[i]);
-                if (newStopLoss > buyPrices[i] && newStopLoss > stopLosses[i]) {
-                    stopLosses[i] = newStopLoss;
+            // find swing low within range
+            for (let i = dateIndex - 1; i >= Math.max(0, dateIndex - swingRange); --i) {
+                let l = lows[dates[i]];
+                if (l < low) {
+                    low = l;
                 }
             }
+        }
 
-            // see if went below
-            stopLossTrades = stopLossTrades.concat(buyPrices.filter((bp, i) => {
-                return stopLosses[i] > prices[day];
-            }));
+        // below low - atr * multiplyer 
+        let sl = low - multiplier * atr.getValue(buyDate);
+        stoploss = sl;
+    }
+
+    // set target based on stoploss
+    if (stoploss && strategyOptions["riskRewardRatio"]) {
+        let ratio = strategyOptions["riskRewardRatio"];
+        target = buyPrice + ratio * (buyPrice - stoploss);
+    }
+
+    // use swing high instead if target is too high
+    if (strategyOptions["targetSwing"]) {
+        let swingRange = 26;
+        let high = highs[buyDate];
+        
+        // find swing high within range
+        for (let i = dateIndex - 1; i >= Math.max(0, dateIndex - swingRange); --i) {
+            let h = highs[dates[i]];
+            if (h > high) {
+                high = h;
+            }
+        }
+
+        // take the smaller of two targets
+        if (target) {
+            target = Math.min(target, high);
+        }
+        else {
+            target = high;
         }
     }
 
-    return stopLossTrades;
+    if (stoploss || target) {
+        stoplossTarget[buyDate] = {};
+        stoplossTarget[buyDate]["stoploss"] = stoploss;
+        stoplossTarget[buyDate]["target"] = target;
+    }
+}
+
+// sell stocks prematurely
+function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, dates, dateIndex) {
+    // map buy date to sell price
+    let earlyTrades = {};
+    let day = dates[dateIndex];
+    let price = prices[day];
+    let high = highs[day];
+    let low = lows[day];
+
+    // check if prices breach stoploss/targets
+    Object.keys(stoplossTarget).forEach((bd) => {
+        // cannot sell on the same day as buy
+        if (bd == day) return;
+        let stoploss = stoplossTarget[bd]["stoploss"];
+        let target = stoplossTarget[bd]["target"];
+        if (stoploss && low < stoploss) {
+            earlyTrades[bd] = stoploss;
+        }
+        if (target && high > target) {
+            earlyTrades[bd] = target;
+        }
+    });
+
+    // overdue stocks
+    if (strategyOptions["maxDays"]) {
+        Object.keys(stoplossTarget).forEach((bd) => {
+            if (daysBetween(new Date(bd), new Date(day)) > strategyOptions["maxDays"]) {
+                earlyTrades[bd] = price;
+            }
+        });
+    }
+
+    return earlyTrades;
 }
 
 // get buy or sell conditions

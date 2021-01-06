@@ -10,7 +10,7 @@ import './Chart.css';
 import RSI from "./indicators/RSI";
 import MACD from "./indicators/MACD";
 import ADX from "./indicators/ADX";
-import { formatDate } from '../helpers/utils';
+import { formatDate, numberWithCommas, displayDelta } from '../helpers/utils';
 
 class Chart extends React.Component {
     constructor(props) {
@@ -18,7 +18,7 @@ class Chart extends React.Component {
 
         // constants
         this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
-        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR"];
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR", "Swing"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -27,6 +27,11 @@ class Chart extends React.Component {
         this.startIndex = 0;
         this.minThreshold = Math.floor(this.chunkSize * this.scrollThreshold);
         this.maxThreshold = Math.floor(this.chunkSize * (1 - this.scrollThreshold));
+
+        // maps a buy date to its stoploss/target 
+        this.stoplossTarget = {};
+        // map a buy/sell date to its event 
+        this.eventsLookup = {};
 
         this.state = {
             priceGraph: [],
@@ -88,11 +93,15 @@ class Chart extends React.Component {
         let buyDates = new Set();
         let sellDates = new Set();
         let holdings = new Set(results["holdings"]);
+        this.eventsLookup = {};
         events.forEach(event => {
             buyDates.add(event["buyDate"]);
             sellDates.add(event["sellDate"]);
+            this.eventsLookup[event["buyDate"]] = { type: "buy", event: event };
+            this.eventsLookup[event["sellDate"]] = { type: "sell", event: event };
         });
         this.setState({ buyDates, sellDates, holdings });
+        this.stoplossTarget = {};
     }
 
     fetchData = () => {
@@ -154,7 +163,7 @@ class Chart extends React.Component {
                         this.setState({ startBrushIndex: 0, endBrushIndex: graphs["price"].length - 1 });
                         this.startIndex = 0;
                     }
-                    this.loadChunk();
+                    this.goToEvent();
                 }
                 // if updating indicators
                 else {
@@ -225,11 +234,40 @@ class Chart extends React.Component {
         }
         this.setState({ startBrushIndex, endBrushIndex }, () => {
             this.refreshGraph();
-        });        
+        });
     }
 
     xAxisTickFormatter = (value) => {
-        return getFormattedDate(new Date(value));
+        return formatDate(new Date(value));
+    }
+
+    labelFormatter = (label) => {
+        let stoploss = undefined;
+        let target = undefined;
+        let profit = undefined;
+        // show stoploss/target on buy events
+        if (this.stoplossTarget[label]) {
+            stoploss = this.stoplossTarget[label]["stoploss"];
+            target = this.stoplossTarget[label]["target"];
+        }
+        // show profit on sell events
+        if (this.eventsLookup.hasOwnProperty(label) && this.eventsLookup[label]["type"] == "sell") {
+            profit = this.eventsLookup[label]["event"]["profit"];
+        }
+        let volume = this.graphs["volumes"][label];
+        if (volume) {
+            volume = ` (${numberWithCommas(volume)})`
+        }
+        else {
+            volume = "";
+        }
+        return <>
+            {formatDate(label) + volume}
+            <br />
+            {target ? (<>{`🎯: $${target.toFixed(2)} (${this.stoplossTarget[label]["target%"].toFixed(2)}%)`}<br /></>) : ""}
+            {stoploss ? (<>{`🛑: $${stoploss.toFixed(2)} (${this.stoplossTarget[label]["stoploss%"].toFixed(2)}%)`}<br /></>) : ""}
+            {profit ? (<>{`💸: $${profit.toFixed(2)} (${displayDelta(this.eventsLookup[label]["event"]["percentProfit"] * 100)}%)`}<br /></>) : ""}
+        </>
     }
 
     tooltipFormatter = (value, name, props) => {
@@ -248,7 +286,7 @@ class Chart extends React.Component {
     }
 
     brushFormatter = (value) => {
-        return getFormattedDate(value);
+        return formatDate(value);
     }
 
     onBrushChange = (newRange) => {
@@ -343,9 +381,15 @@ class Chart extends React.Component {
                 let open = day["open"] * adjScale;
                 let low = day["low"] * adjScale;
                 let high = day["high"] * adjScale;
+                // candles
                 let greenCandleBody = close >= open ? [close - open, 0] : undefined;
                 let redCandleBody = close < open ? [0, open - close] : undefined;
-                let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick: [close - low, high - close] };
+                let candleWick = [close - low, high - close];
+                // stoploss/target
+                let atr = this.graphs["atr"]["ATR"];
+                let stoploss = this.getStoploss(date, atr, close, low);
+                let target = this.getTarget(date, atr, close, low);
+                let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick, stoploss, target };
 
                 // for indicators
                 Object.keys(indicatorGraphs).forEach(indicatorName => {
@@ -378,6 +422,77 @@ class Chart extends React.Component {
         });
     }
 
+    getStoploss = (date, atr, close, low) => {
+        // only show for buy dates
+        if (!this.state.buyDates.has(date) && !this.state.holdings.has(date)) {
+            return undefined;
+        }
+
+        let stoploss = undefined;
+        if (this.props.strategyOptions["stopLossLow"]) {
+            stoploss = this.props.strategyOptions["stopLossLow"] * close;
+        }
+        else if (this.props.strategyOptions["stopLossAtr"]) {
+            stoploss = low - this.props.strategyOptions["stopLossAtr"] * atr[date];
+        }
+
+        // for swing low
+        if (this.eventsLookup[date]["type"] == "buy") {
+            let event = this.eventsLookup[date]["event"];
+            if (event["risk"]) {
+                stoploss = close * (100 - event["risk"]) / 100;
+            }
+        }
+
+        if (stoploss) {
+            // cache stoploss
+            if (!this.stoplossTarget.hasOwnProperty(date)) {
+                this.stoplossTarget[date] = {};
+            }
+            this.stoplossTarget[date]["stoploss"] = stoploss;
+            this.stoplossTarget[date]["stoploss%"] = (close - stoploss) / close * 100;
+            // return error bar format
+            return [close - stoploss, 0];
+        }
+    }
+
+    getTarget = (date, atr, close, low) => {
+        // only show for buy dates
+        if (!this.state.buyDates.has(date) && !this.state.holdings.has(date)) {
+            return undefined;
+        }
+
+        let target = undefined;
+        if (this.props.strategyOptions["stopLossHigh"]) {
+            target = this.props.strategyOptions["stopLossHigh"] * close;
+        }
+        else if (this.props.strategyOptions["targetAtr"]) {
+            target = close + this.props.strategyOptions["targetAtr"] * atr[date];
+        }
+        else if (this.props.strategyOptions["riskRewardRatio"]) {
+            let stopLoss = low - this.props.strategyOptions["stopLossAtr"] * atr[date];
+            // for swing low
+            if (this.eventsLookup[date]["type"] == "buy") {
+                let event = this.eventsLookup[date]["event"];
+                if (event["risk"]) {
+                    stopLoss = close * (100 - event["risk"]) / 100;
+                }
+            }
+            target = close + this.props.strategyOptions["riskRewardRatio"] * (close - stopLoss);
+        }
+
+        if (target) {
+            // cache target
+            if (!this.stoplossTarget.hasOwnProperty(date)) {
+                this.stoplossTarget[date] = {};
+            }
+            this.stoplossTarget[date]["target"] = target;
+            this.stoplossTarget[date]["target%"] = (target - close) / close * 100;
+            // return error bar format
+            return [0, target - close];
+        }
+    }
+
     refreshGraph = () => {
         let priceGraph = [...this.state.priceGraph];
         let missing = priceGraph.pop();
@@ -398,7 +513,7 @@ class Chart extends React.Component {
 
     getSupportResistance = () => {
         return new Promise((resolve, reject) => {
-            // let data = { indicatorName: "Structure", indicatorOptions: { "period": 75, "volatility": .05 }, symbol: this.props.symbol };
+            // let data = { indicatorName: "Structure", indicatorOptions: { "period": 12, "volatility": .05 }, symbol: this.props.symbol };
             // fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
             //     method: 'POST',
             //     headers: {
@@ -579,6 +694,16 @@ class Chart extends React.Component {
             </AreaChart>
         </Brush>;
         let hiddenBrush = <Brush gap={1} width={0} height={0.00001} dataKey="date" startIndex={this.state.startBrushIndex} endIndex={this.state.endBrushIndex} />;
+        let simpleTooltip = <Tooltip
+            wrapperStyle={{
+                borderColor: 'white',
+                boxShadow: '2px 2px 3px 0px rgb(204, 204, 204)',
+            }}
+            contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+            labelStyle={{ fontWeight: 'bold', color: '#666666' }}
+            formatter={this.tooltipFormatter}
+            labelFormatter={(label) => formatDate(label)}
+        />;
         let tooltip = <Tooltip
             wrapperStyle={{
                 borderColor: 'white',
@@ -587,7 +712,7 @@ class Chart extends React.Component {
             contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
             labelStyle={{ fontWeight: 'bold', color: '#666666' }}
             formatter={this.tooltipFormatter}
-            labelFormatter={label => getFormattedDate(label) + "\n" + this.graphs["volumes"][label]}
+            labelFormatter={this.labelFormatter}
         />;
 
         // Main Line
@@ -595,9 +720,14 @@ class Chart extends React.Component {
             <ErrorBar dataKey="greenCandleBody" width={0} strokeWidth={5} stroke="green" direction="y" />
             <ErrorBar dataKey="redCandleBody" width={0} strokeWidth={5} stroke="red" direction="y" />
             <ErrorBar dataKey="candleWick" width={1} strokeWidth={1} stroke="black" direction="y" />
+            <ErrorBar dataKey="stoploss" width={15} strokeWidth={1} stroke="red" direction="y" />
+            <ErrorBar dataKey="target" width={15} strokeWidth={1} stroke="green" direction="y" />
         </Line>;
         if (!this.props.chartSettings["Candles"]) {
-            mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />} />;
+            mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />}>
+                <ErrorBar dataKey="stoploss" width={15} strokeWidth={1} stroke="red" direction="y" />
+                <ErrorBar dataKey="target" width={15} strokeWidth={1} stroke="green" direction="y" />
+            </Line>;
         }
 
         // Support Resistance Lines
@@ -645,7 +775,7 @@ class Chart extends React.Component {
                         }
                         let ChartClass = this.indicatorCharts[indicatorName];
                         let chart = <ChartClass graph={this.state[indicatorName]} xAxisTickFormatter={this.xAxisTickFormatter}
-                            options={this.props.indicatorOptions[indicatorName]} brush={hiddenBrush} tooltip={tooltip} />
+                            options={this.props.indicatorOptions[indicatorName]} brush={hiddenBrush} tooltip={simpleTooltip} />
 
                         return <ResponsiveContainer width="100%" height={`${sideChartHeight}%`} key={`${this.props.symbol}-chart-${index}`} >
                             {chart}
@@ -680,14 +810,24 @@ class Chart extends React.Component {
 
         // if is a buy date
         if (this.state.buyDates.has(payload["date"])) {
+            let color = "green";
+            // make circle larger if selected this event
+            if (this.props.eventIndex >= 0 && payload["date"] == this.props.results["events"][this.props.eventIndex]["buyDate"]) {
+                return <rect x={cx - dotRadius} y={cy - dotRadius} width={dotRadius * 2} height={dotRadius * 2} stroke="black" strokeWidth={0} fill={color} />;
+            }
             return (
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="green" />
             );
         }
         // if is a sell date
         else if (this.state.sellDates.has(payload["date"])) {
+            let color = "red";
+            // make circle larger if selected this event
+            if (this.props.eventIndex >= 0 && payload["date"] == this.props.results["events"][this.props.eventIndex]["sellDate"]) {
+                return <rect x={cx - dotRadius} y={cy - dotRadius} width={dotRadius * 2} height={dotRadius * 2} stroke="black" strokeWidth={0} fill={color} />;
+            }
             return (
-                <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="red" />
+                <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill={color} />
             );
         }
         // if holding
@@ -701,30 +841,11 @@ class Chart extends React.Component {
     };
 }
 
-function getFormattedDate(date) {
-    if (typeof date == "string") {
-        date = new Date(date);
-    }
-
-    // add 1 day, data is off
-    date.setDate(date.getDate() + 1);
-
-    var year = date.getFullYear();
-
-    var month = (1 + date.getMonth()).toString();
-    month = month.length > 1 ? month : '0' + month;
-
-    var day = date.getDate().toString();
-    day = day.length > 1 ? day : '0' + day;
-
-    return month + '/' + day + '/' + year % 100;
-}
-
 let mapStateToProps = (state) => {
     console.log("new props in chart");
     return {
         symbol: state.selectedSymbol, results: state.backtestResults["symbolData"][state.selectedSymbol],
-        activeIndicators: [...state.activeIndicators], indicatorOptions: state.indicatorOptions,
+        activeIndicators: [...state.activeIndicators], indicatorOptions: state.indicatorOptions, strategyOptions: state.backtestResults["strategyOptions"],
         eventIndex: state.eventIndex, chartSettings: state.chartSettings
     }
 };
