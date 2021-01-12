@@ -2,6 +2,8 @@
 res/priceCache.json
 res/supported_tickers.csv
 res/metadata.json
+res/blacklist.json
+res/faulty.json
 logs/
 
 # OS X
