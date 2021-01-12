@@ -50,7 +50,7 @@ function getBacktestDisplayName(options) {
     let indicatorsUsed = new Set();
     Object.keys(options["buyIndicators"]).forEach(i => indicatorsUsed.add(i));
     Object.keys(options["sellIndicators"]).forEach(i => indicatorsUsed.add(i));
-    indicatorsUsed = [...indicatorsUsed];
+    indicatorsUsed = Array.from(indicatorsUsed);
     indicatorsUsed.sort();
     return indicatorsUsed.join("/");
 }
