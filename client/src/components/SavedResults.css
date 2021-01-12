@@ -1,7 +1,8 @@
 .saved-results {
     overflow: auto;
     max-height: 100vh;
-    /* overflow-x: hidden; */
+    background-color: #34495e;
+    color: white;
 }
 
 .saved-results-title {

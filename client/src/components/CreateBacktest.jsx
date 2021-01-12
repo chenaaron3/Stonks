@@ -1,7 +1,7 @@
 import React, { createRef } from 'react';
 import "./CreateBacktest.css";
 import { connect } from 'react-redux';
-import { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedResults, setBacktestResults, viewStock } from '../redux';
+import { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedResults, setBacktestResults, setDrawer } from '../redux';
 // import Stepper from 'react-stepper-horizontal';
 import Indicator from './Indicator';
 import Pusher from 'react-pusher';
@@ -14,6 +14,9 @@ import { makeStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
+import MenuIcon from '@material-ui/icons/Menu';
+import IconButton from '@material-ui/core/IconButton';
+import MediaQuery from 'react-responsive'
 
 class CreateBacktest extends React.Component {
     constructor(props) {
@@ -31,7 +34,8 @@ class CreateBacktest extends React.Component {
             riskRewardRatio: 0,
             limitOrder: false,
             minVolume: 1000000,
-            maxDays: 30
+            maxDays: 30,
+            errors: {}
         };
         this.indicators = {
             "SMA": { "fields": ["period", "minDuration"], "default": [180, 1] },
@@ -40,11 +44,12 @@ class CreateBacktest extends React.Component {
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
             "MACD2": { "fields": ["ema1", "ema2", "signalPeriod", "buyThreshold"], "default": [12, 26, 9, -.01] },
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
-            "ADX": { "fields": ["period"], "default": [12] },
+            "ADX": { "fields": ["period", "threshold"], "default": [14, 20] },
             "Hammer": { "fields": ["headRatio", "legRatio", "expiration"], "default": [1, 2, 0] },
             "Structure": { "fields": ["period", "volatility", "minCount"], "default": [75, .05, 1] },
             "Pullback": { "fields": ["period", "length"], "default": [180, 12] },
-            "Breakout": { "fields": ["period", "tests"], "default": [180, 3] }
+            "Divergence": { "fields": ["period", "lookback"], "default": [10, 3] },
+            "Stochastic": { "fields": ["period", "underbought", "overbought"], "default": [14, 20, 80] },
         }
 
         // for each indicator
@@ -77,6 +82,7 @@ class CreateBacktest extends React.Component {
 
     // get results from api
     getResults = () => {
+        // secret pass for production
         if (process.env.NODE_ENV == "production") {
             let pass = prompt('Enter the secret code.');
             if (pass != "stonks") {
@@ -84,66 +90,84 @@ class CreateBacktest extends React.Component {
             }
         }
 
-        // go back to first step as confirmation
-        this.setStep(0);
+        // check for valid values
+        let fieldsToCheck = ["stopLossLow", "stopLossHigh", "stopLossAtr", "targetAtr", "riskRewardRatio", "minVolume", "maxDays"];
+        let numericalFields = {};
+        let errors = {};
+        for (let i = 0; i < fieldsToCheck.length; ++i) {
+            let f = fieldsToCheck[i];
+            let newValue = parseFloat(this.state[f]);
+            // error fields
+            if (typeof this.state[f] != "number" && !newValue) {
+                errors[f] = true;
+                numericalFields[f] = 0;
+            }
+            else {
+                errors[f] = false;
+                numericalFields[f] = newValue;
+            }
+        }
 
-        let strategyOptions = {
-            "buyIndicators": this.state.buyOptions,
-            "sellIndicators": this.state.sellOptions,
-            "mainBuyIndicator": this.state.mainBuyIndicator,
-            "mainSellIndicator": this.state.mainSellIndicator,
-            "stopLossLow": this.state.stopLossLow == 0 ? undefined : 1 - this.state.stopLossLow / 100,
-            "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
-            "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
-            "targetAtr": this.state.targetAtr == 0 ? undefined : this.state.targetAtr,
-            "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
-            "stopLossSwing": this.state.stopLossSwing,
-            "targetSwing": this.state.targetSwing,
-            "limitOrder": this.state.limitOrder,
-            "minVolume": this.state.minVolume,
-            "maxDays": this.state.maxDays,
-            "expiration": 7,
-            "multipleBuys": true
-        };
+        if (Object.keys(errors).length > 0) {
+            alert("Invalid fields");
+            this.setState({ ...numericalFields, errors });
+            return;
+        }
 
-        // fetch("/fakeBacktest?id=p9GPvWKBA6")
-        //     .then(res => res.json())
-        //     .then(results => {
-        //         let id = results["id"];
-        //         console.log(`Getting id ${id} from server!`);
-        //         this.props.setID(id);
-        //     });
+        this.setState({ ...numericalFields, errors }, () => {
+            // go back to first step as confirmation
+            this.setStep(0);
 
-        // fetch results here        
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/backtest`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(strategyOptions)
+            let strategyOptions = {
+                "buyIndicators": this.state.buyOptions,
+                "sellIndicators": this.state.sellOptions,
+                "mainBuyIndicator": this.state.mainBuyIndicator,
+                "mainSellIndicator": this.state.mainSellIndicator,
+                "stopLossLow": this.state.stopLossLow == 0 ? undefined : 1 - this.state.stopLossLow / 100,
+                "stopLossHigh": this.state.stopLossHigh == 0 ? undefined : 1 + this.state.stopLossHigh / 100,
+                "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
+                "targetAtr": this.state.targetAtr == 0 ? undefined : this.state.targetAtr,
+                "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
+                "stopLossSwing": this.state.stopLossSwing,
+                "targetSwing": this.state.targetSwing,
+                "limitOrder": this.state.limitOrder,
+                "minVolume": this.state.minVolume,
+                "maxDays": this.state.maxDays,
+                "expiration": 7,
+                "multipleBuys": true
+            };
+
+            // fetch results here        
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/backtest`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(strategyOptions)
+            })
+                .then(res => res.json())
+                .then(results => {
+                    console.log("STATUS:", results["status"]);
+                    setTimeout(() => { alert(results["status"]); }, 1000);
+
+                    let id = results["id"];
+                    console.log(`Getting id ${id} from server!`);
+                    this.props.setID(id);
+
+                    // cache id immediately
+                    let indicatorsUsed = new Set();
+                    Object.keys(this.state.buyOptions).forEach(i => indicatorsUsed.add(i));
+                    Object.keys(this.state.sellOptions).forEach(i => indicatorsUsed.add(i));
+                    indicatorsUsed = [...indicatorsUsed];
+                    indicatorsUsed.sort();
+                    let displayName = indicatorsUsed.join("/");
+
+                    // save the results
+                    let newSave = [...this.props.savedResults, { id, display: displayName }];
+                    this.props.setSavedResults(newSave);
+                    localStorage.setItem("savedResults", JSON.stringify(newSave));
+                });
         })
-            .then(res => res.json())
-            .then(results => {
-                console.log("STATUS:", results["status"]);
-                setTimeout(() => { alert(results["status"]); }, 1000);
-
-                let id = results["id"];
-                console.log(`Getting id ${id} from server!`);
-                this.props.setID(id);
-
-                // cache id immediately
-                let indicatorsUsed = new Set();
-                Object.keys(this.state.buyOptions).forEach(i => indicatorsUsed.add(i));
-                Object.keys(this.state.sellOptions).forEach(i => indicatorsUsed.add(i));
-                indicatorsUsed = [...indicatorsUsed];
-                indicatorsUsed.sort();
-                let displayName = indicatorsUsed.join("/");
-
-                // save the results
-                let newSave = [...this.props.savedResults, { id, display: displayName }];
-                this.props.setSavedResults(newSave);
-                localStorage.setItem("savedResults", JSON.stringify(newSave));
-            });
     }
 
     previousStep = () => {
@@ -238,8 +262,18 @@ class CreateBacktest extends React.Component {
                     event="onResultsFinished"
                     onUpdate={this.onResultFinished}
                 />
+                <MediaQuery maxWidth="600px">
+                    <IconButton
+                        aria-label="more"
+                        aria-controls="long-menu"
+                        aria-haspopup="true"
+                        onClick={() => { this.props.setDrawer("left", true) }}
+                        style={{ position: "absolute", top: "1vh", left: "1vh" }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                </MediaQuery>
                 <h1 className="create-backtest-title">New Backtest</h1>
-
                 <div className="create-backtest-form">
                     <div className="create-backtest-stepper">
                         <Stepper alternativeLabel activeStep={this.state.step} style={{ width: "100%", height: "100%", backgroundColor: "#dee4ec" }}>
@@ -309,18 +343,18 @@ class CreateBacktest extends React.Component {
                                 this.state.step == 2 && (
                                     <>
                                         {/* <h2 className="create-backtest-form-body-title">Confirm your strategy.</h2> */}
-                                        <div className="create-backtest-form-body-split">
+                                        <div className="create-backtest-form-body-split create-backtest-confirmation">
                                             <div>
                                                 <h3 className="create-backtest-subtitle">Additional Options</h3>
                                                 <div className="create-backtest-form-body-split">
                                                     <div className="create-backtest-additional-options">
                                                         <div>
-                                                            <TextField label="Take profit" value={this.state.stopLossHigh}
+                                                            <TextField label="Target Pips" value={this.state.stopLossHigh}
                                                                 onChange={(e) => {
-                                                                    let newValue = parseFloat(e.target.value);
-                                                                    if (!newValue) newValue = 0;
-                                                                    this.setState({ stopLossHigh: newValue })
-                                                                }} helperText="20 to sell at 20% profit. 0 to disable." />
+                                                                    this.setState({ stopLossHigh: e.target.value })
+                                                                }}
+                                                                helperText="20 to sell at 20% profit. 0 to disable."
+                                                                error={this.state.errors["stopLossHigh"]} />
                                                         </div>
                                                         {/* <div>
                                                             <TextField label="Stop Loss" value={this.state.stopLossLow}
@@ -333,18 +367,18 @@ class CreateBacktest extends React.Component {
                                                         <div>
                                                             <TextField label="Stop Loss ATR" value={this.state.stopLossAtr}
                                                                 onChange={(e) => {
-                                                                    let newValue = parseFloat(e.target.value);
-                                                                    if (!newValue) newValue = 0;
-                                                                    this.setState({ stopLossAtr: newValue })
-                                                                }} helperText="1 to sell at 1 ATR below. 0 to disable." />
+                                                                    this.setState({ stopLossAtr: e.target.value })
+                                                                }}
+                                                                helperText="1 to sell at 1 ATR below. 0 to disable."
+                                                                error={this.state.errors["stopLossAtr"]} />
                                                         </div>
                                                         <div>
                                                             <TextField label="Minimum Volume" value={this.state.minVolume}
                                                                 onChange={(e) => {
-                                                                    let newValue = parseFloat(e.target.value);
-                                                                    if (!newValue) newValue = 0;
-                                                                    this.setState({ minVolume: newValue })
-                                                                }} helperText="Execute buy if above volume." />
+                                                                    this.setState({ minVolume: e.target.value })
+                                                                }}
+                                                                helperText="Buy if above volume."
+                                                                error={this.state.errors["minVolume"]} />
                                                         </div>
                                                         <div>
                                                             <FormControlLabel
@@ -393,26 +427,26 @@ class CreateBacktest extends React.Component {
                                                         <div>
                                                             <TextField label="Target ATR" value={this.state.targetAtr}
                                                                 onChange={(e) => {
-                                                                    let newValue = parseFloat(e.target.value);
-                                                                    if (!newValue) newValue = 0;
-                                                                    this.setState({ targetAtr: newValue })
-                                                                }} helperText="1 to sell at 1 ATR above. 0 to disable." />
+                                                                    this.setState({ targetAtr: e.target.value })
+                                                                }}
+                                                                helperText="1 to sell at 1 ATR above. 0 to disable."
+                                                                error={this.state.errors["targetAtr"]} />
                                                         </div>
                                                         <div>
                                                             <TextField label="Risk Reward Ratio" value={this.state.riskRewardRatio}
                                                                 onChange={(e) => {
-                                                                    let newValue = parseFloat(e.target.value);
-                                                                    if (!newValue) newValue = 0;
-                                                                    this.setState({ riskRewardRatio: newValue })
-                                                                }} helperText="2 for 2:1 ratio. 0 to disable." />
+                                                                    this.setState({ riskRewardRatio: e.target.value })
+                                                                }}
+                                                                helperText="2 for 2:1 ratio. 0 to disable."
+                                                                error={this.state.errors["riskRewardRatio"]} />
                                                         </div>
                                                         <div>
                                                             <TextField label="Max Days" value={this.state.maxDays}
                                                                 onChange={(e) => {
-                                                                    let newValue = parseFloat(e.target.value);
-                                                                    if (!newValue) newValue = 0;
-                                                                    this.setState({ maxDays: newValue })
-                                                                }} helperText="Sell if held longer than max days." />
+                                                                    this.setState({ maxDays: e.target.value })
+                                                                }}
+                                                                helperText="Sell if held longer than max days."
+                                                                error={this.state.errors["maxDays"]} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -465,4 +499,4 @@ let mapStateToProps = (state) => {
     return { indicatorOptions: state.indicatorOptions, activeIndicators: state.activeIndicators, id: state.id, savedResults: state.savedResults };
 };
 
-export default connect(mapStateToProps, { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedResults, setBacktestResults, viewStock })(CreateBacktest);
+export default connect(mapStateToProps, { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedResults, setBacktestResults, setDrawer })(CreateBacktest);

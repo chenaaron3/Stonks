@@ -3,7 +3,10 @@ import "./SavedResults.css";
 import SavedResult from './SavedResult';
 import Loading from './Loading';
 import { connect } from 'react-redux';
-import { setBacktestResults, setSavedResults, viewStock, setPageIndex } from '../redux';
+import { setBacktestResults, setSavedResults, viewStock, setPageIndex, setDrawer } from '../redux';
+
+import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
+import MediaQuery from 'react-responsive'
 
 class SavedResults extends React.Component {
     constructor(props) {
@@ -84,7 +87,7 @@ class SavedResults extends React.Component {
 
         this.props.setSavedResults(newSave);
         localStorage.setItem("savedResults", JSON.stringify(newSave));
-        
+
         // remove result from database
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/deleteResults/${id}`, {
             method: 'DELETE'
@@ -92,10 +95,8 @@ class SavedResults extends React.Component {
     }
 
     render() {
-        return <div className="saved-results">
-            {this.state.loading &&
-                <Loading />
-            }
+        let desktopVersion = <div className="saved-results">
+            <Loading loading={this.state.loading} />
             <h1 className="saved-results-title">Saved Results</h1>
             <div className="saved-results-list">
                 {this.props.savedResults.length == 0 && (<span>
@@ -103,7 +104,7 @@ class SavedResults extends React.Component {
                 </span>)
                 }
                 {this.props.savedResults.length != 0 && (
-                    this.props.savedResults.map((save, index) => {
+                    this.props.savedResults.reverse().map((save, index) => {
                         return <SavedResult id={save["id"]} display={save["display"]} fetchBacktestResults={this.fetchBacktestResults}
                             editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${save["id"]}`} />
                     })
@@ -111,11 +112,30 @@ class SavedResults extends React.Component {
                 }
             </div>
         </div>
+
+        let mobileVersion = <SwipeableDrawer
+            anchor="left"
+            open={this.props.drawer["left"]}
+            onClose={() => this.props.setDrawer("left", false)}
+            onOpen={() => this.props.setDrawer("left", true)}
+        >
+            {desktopVersion}
+        </SwipeableDrawer>
+
+        return <>
+            <MediaQuery maxWidth={600}>
+                {mobileVersion}
+            </MediaQuery>
+            <MediaQuery minWidth={600}>
+                {desktopVersion}
+            </MediaQuery>
+        </>;
     }
 }
 
 let mapStateToProps = (state) => {
-    return { savedResults: state.savedResults };
+    console.log(state)
+    return { savedResults: state.savedResults, drawer: state.drawer };
 };
 
-export default connect(mapStateToProps, { setBacktestResults, setSavedResults, viewStock, setPageIndex })(SavedResults);
+export default connect(mapStateToProps, { setBacktestResults, setSavedResults, viewStock, setPageIndex, setDrawer })(SavedResults);

@@ -9,7 +9,7 @@ let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveR
 let { makeid, daysBetween } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { backtest, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
-let { getLatestPrice } = require('../helpers/stock');
+let { getLatestPrice, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
 router.post("/autoUpdate", async (req, res) => {

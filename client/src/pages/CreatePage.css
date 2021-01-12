@@ -1,17 +1,29 @@
-.create-page{
+.create-page {
     width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: row;
 }
 
-.create-page-recents{
+.create-page-recents {
     flex: 1;
     background-color: #34495e;
     color: white;
 }
 
-.create-page-new{
+.create-page-new {
     flex: 5;
     background-color: #c1cddc;
+}
+
+@media only screen and (max-width: 600px) {    
+    .create-page-recents {
+        position: absolute;
+        width: 75vw;
+    }
+    
+    .create-page-new {
+        width: 100%;
+        height: 100%;
+    }
 }

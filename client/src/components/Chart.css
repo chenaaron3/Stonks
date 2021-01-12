@@ -11,3 +11,9 @@
  .chart-missing {
      font-size: 2em;
  }
+
+ @media only screen and (max-width: 600px) {
+    .chart-container {
+        overflow: scroll;
+    }
+}

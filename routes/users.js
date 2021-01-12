@@ -75,7 +75,7 @@ router.post('/watchlist', async function (req, res) {
 router.get('/indicator', async function (req, res) {
     let symbol = req.query["symbol"];
     let indicatorName = "Swing";
-    let indicatorOptions = { period: 12, volatility: .10 };
+    let indicatorOptions = { period: 10, volatility: .10 };
 
     console.log(symbol, indicatorName, indicatorOptions);
 

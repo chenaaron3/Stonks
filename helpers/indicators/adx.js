@@ -1,9 +1,10 @@
-let { isCrossed, getTrueRange, getDirectionalMovement, getExponentialMovingAverage, getSimpleMovingAverage } = require('../utils');
+let { isCrossed, getTrueRange, getDirectionalMovement, getWilderSmoothing } = require('../utils');
 let Indicator = require('./indicator');
 
 class ADX extends Indicator {
     initialize(options) {
         this.period = options["period"];
+        this.threshold = options["threshold"];
         this.name = "ADX";
         this.graph = this.calculate();
     }
@@ -19,9 +20,9 @@ class ADX extends Indicator {
         // smoothed versions
         let newDates = [...this.dates];
         newDates.shift();
-        let atr = getSimpleMovingAverage(newDates, tr["data"], this.period);
-        let apdm = getSimpleMovingAverage(newDates, pdm["data"], this.period);
-        let andm = getSimpleMovingAverage(newDates, ndm["data"], this.period);
+        let atr = getWilderSmoothing(newDates, tr["data"], this.period)["data"];
+        let apdm = getWilderSmoothing(newDates, pdm["data"], this.period)["data"];
+        let andm = getWilderSmoothing(newDates, ndm["data"], this.period)["data"];
 
         // calculate +/-DI
         let pdi = {};
@@ -87,7 +88,8 @@ class ADX extends Indicator {
 
         let isCrossedUp = isCrossed(yesterdayPDI, todayPDI, yesterdayNDI, todayNDI, true);
         let isCrossedDown = isCrossed(yesterdayPDI, todayPDI, yesterdayNDI, todayNDI, false);
-        if (todayPDI > todayNDI && this.graph[date] > 25) {
+        let shouldBuy = isMain ? isCrossedUp : todayPDI > todayNDI;
+        if (this.graph[date] > this.threshold && shouldBuy) {
             return Indicator.BUY;
         }
         else if (isCrossedDown) {

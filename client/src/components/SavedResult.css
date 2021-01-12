@@ -39,3 +39,9 @@
 .saved-result-trailer.saved-result-hover {
     visibility: visible;
 }
+
+@media only screen and (max-width: 600px) {    
+    .saved-result {
+        height: 8vh;
+    }
+}

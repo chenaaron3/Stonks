@@ -1,6 +1,7 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
 import { setSimulationTransactions } from '../redux';
+import Loading from './Loading';
 import "./Simulate.css";
 
 import {
@@ -26,7 +27,8 @@ class Simulate extends React.Component {
         this.state = {
             equityData: [], returnsData: [],
             range: 25, startSize: 1000, maxPositions: 10, positionSize: 10, maxRisk: 15,
-            scoreBy: "Win Rate"
+            scoreBy: "Win Rate",
+            loading: true
         }
 
         this.holdings = [];
@@ -221,7 +223,7 @@ class Simulate extends React.Component {
             last["returns"] = (equityData[equityData.length - 1]["equity"] - last["startingEquity"]) / last["startingEquity"] * 100;
         }
 
-        this.setState({ equityData, returnsData });
+        this.setState({ equityData, returnsData, loading: false });
         this.props.setSimulationTransactions(transactions);
     }
 
@@ -251,6 +253,7 @@ class Simulate extends React.Component {
         let winLossColor = ["#2ecc71", "#FFCCCB"];
         return <div className="simulate">
             <div className="simulate-header">
+                <Loading loading = {this.state.loading}/>
                 <h3 className="simulate-title">Equity Chart</h3>
                 <div className="simulate-settings">
                     <Box mx="1vw" mt="1vh">

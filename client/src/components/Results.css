@@ -69,3 +69,13 @@
 .result-trailer.result-hover {
     visibility: visible;
 }
+
+@media only screen and (max-width: 600px) {
+    .result {
+        height: 7vh;
+        padding-left: 3vw;
+    }
+    .result-text{
+        padding-left: 3vw;
+    }
+}

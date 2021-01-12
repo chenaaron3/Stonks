@@ -10,6 +10,7 @@ const SET_SAVED_RESULTS = "SET_SAVED_RESULTS";
 const SET_PAGE_INDEX = "SET_PAGE_INDEX";
 const SET_CHART_SETTINGS = "SET_CHART_SETTINGS";
 const SET_SIMULATION_TRANSACTIONS = "SET_SIMULATION_TRANSACTIONS";
+const SET_DRAWER = "SET_DRAWER";
 
 const initialState = {
     id: "",
@@ -22,7 +23,8 @@ const initialState = {
     boughtSymbols:{},
     pageIndex: 1,
     chartSettings: {},
-    simulationTransactions: {}
+    simulationTransactions: {},
+    drawer: {}
 };
 
 // Reducer
@@ -96,6 +98,14 @@ export default function reducer(state = initialState, action) {
                 ...state,
                 simulationTransactions: action.simulationTransactions
             }
+        case SET_DRAWER:
+            return {
+                ...state,
+                drawer: {
+                    ...state.drawer,
+                    [action.anchor]: action.open
+                }
+            }
         default: return state;
     }
 }
@@ -143,4 +153,8 @@ export function setChartSettings(chartSettings) {
 
 export function setSimulationTransactions(simulationTransactions) {
     return { type: SET_SIMULATION_TRANSACTIONS, simulationTransactions }
+}
+
+export function setDrawer(anchor, open) {
+    return { type: SET_DRAWER, anchor, open }
 }

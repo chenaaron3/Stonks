@@ -7,6 +7,7 @@ const sgMail = require('@sendgrid/mail');
 
 // own helpers
 const csv = require('csv');
+let { fixFaulty } = require('../helpers/stock');
 let { addResult, getDocument, setDocumentField, containsID } = require('../helpers/mongo');
 let { daysBetween, sameDay } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
@@ -28,6 +29,8 @@ let ATR = require('../helpers/indicators/atr');
 let Pullback = require('../helpers/indicators/pullback');
 let Breakout = require('../helpers/indicators/breakout');
 let Swing = require('../helpers/indicators/swing');
+let Divergence = require('../helpers/indicators/divergence');
+let Stochastic = require('../helpers/indicators/stochastic');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -43,7 +46,9 @@ let INDICATOR_OBJECTS = {
     "ATR": ATR,
     "Pullback": Pullback,
     "Breakout": Breakout,
-    "Swing": Swing
+    "Swing": Swing,
+    "Divergence": Divergence,
+    "Stochastic": Stochastic
 }
 
 // paths to resources
@@ -66,11 +71,16 @@ function backtest(id, strategyOptions) {
             // spawn child to do work
             let child = fork(path.join(__dirname, "../helpers/worker.js"));
             child.send({ type: "startBacktest", strategyOptions, id });
-            child.on('message', function (message) {
+            child.on('message', async function (message) {
                 console.log(message);
                 if (message.status == "finished") {
                     console.log("Trigger client", id);
                     triggerChannel(id, "onResultsFinished", { id: `${id}` });
+
+                    // fix faulty data if any
+                    let results = await fixFaulty();
+                    console.log(results);
+
                     resolveJob();
                 }
             });
@@ -676,7 +686,7 @@ function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, a
     if (strategyOptions["targetSwing"]) {
         let swingRange = 26;
         let high = highs[buyDate];
-        
+
         // find swing high within range
         for (let i = dateIndex - 1; i >= Math.max(0, dateIndex - swingRange); --i) {
             let h = highs[dates[i]];

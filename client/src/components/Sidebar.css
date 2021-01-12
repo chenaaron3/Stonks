@@ -34,3 +34,17 @@
     display: inline-block;
     margin-bottom: 1vh;
 }
+
+@media only screen and (max-width: 600px) {
+    .sidebar {
+        width: 100%;
+        height: 10vh;
+    }
+
+    .sidebar-icon-list{
+        display: flex;
+        flex-direction: row;
+        margin-top: 1vh;
+        justify-content: space-evenly;
+    }
+}

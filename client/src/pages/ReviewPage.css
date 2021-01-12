@@ -8,8 +8,6 @@
 }
 
 .review-page {
-    width: 100vw;
-    height: 100vh;
     display: flex;
     flex-direction: row;
     overflow: hidden;
@@ -25,6 +23,7 @@
     flex: 8;
     display: flex;
     flex-direction: column;
+    height: 100vh;
 }
 
 .review-page-chart {
@@ -32,10 +31,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.review-page-missing-chart {
-    font-size: 2em;
 }
 
 /* Right side of page */
@@ -46,10 +41,18 @@
     flex-direction: column;
 }
 
-.review-page-result {
+.review-page-result, .review-page-indicators {
     flex: 1;
 }
 
-.review-page-indicators {
-    flex: 1;
+@media only screen and (max-width: 600px) {
+    .review-page {
+        flex-direction: column;
+        overflow: auto;
+    }
+    .review-page-backtest-results {
+        z-index: 1000;
+        position: relative;
+        flex: 0;
+    }
 }

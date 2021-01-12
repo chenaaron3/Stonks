@@ -52,9 +52,24 @@ function getSimpleMovingAverage(dates, prices, period) {
 
 function getRSI(dates, prices, period) {
     let res = {};
+    let uts = {};
+    let dts = {};
+    for (let i = 1; i < dates.length; ++i) {
+        let yesterday = dates[i - 1];
+        let day = dates[i];
+        let ut = prices[day] - prices[yesterday];
+        let dt = prices[yesterday] - prices[day];
+        ut = ut > 0 ? ut : 0;
+        dt = dt > 0 ? dt : 0;
+        uts[day] = ut;
+        dts[day] = dt;
+    }
+    let newDates = [...dates];
+    newDates.shift();
+
     // get wilder averages
-    let avgU = getWilderSmoothing(dates, prices, period, true);
-    let avgD = getWilderSmoothing(dates, prices, period, false);
+    let avgU = getWilderSmoothing(newDates, uts, period);
+    let avgD = getWilderSmoothing(newDates, dts, period);
 
     // if both valid
     if (avgU["valid"] && avgD["valid"]) {
@@ -71,27 +86,18 @@ function getRSI(dates, prices, period) {
 }
 
 // gets a list of points (date, price) for Wilder's smoothing average
-function getWilderSmoothing(dates, prices, period, up) {
+function getWilderSmoothing(dates, prices, period) {
     let res = {};
     let sum = 0;
     let start = undefined;
     let avg = 0;
     // go through each date
-    for (let i = 1; i < dates.length; ++i) {
-        let yesterday = dates[i - 1];
+    for (let i = 0; i < dates.length; ++i) {
         let day = dates[i];
-        let ut = prices[day] - prices[yesterday];
-        let dt = prices[yesterday] - prices[day];
-        ut = ut > 0 ? ut : 0;
-        dt = dt > 0 ? dt : 0;
+        let price = prices[day];
         // if not enough for moving sum, keep adding
         if (i < period) {
-            if (up) {
-                sum += ut;
-            }
-            else {
-                sum += dt;
-            }
+            sum += price;
         }
         // start saving moving sum
         else {
@@ -99,12 +105,7 @@ function getWilderSmoothing(dates, prices, period, up) {
                 start = day;
                 avg = sum / period;
             }
-            if (up) {
-                avg = avg * ((period - 1) / period) + ut * (1 / period);
-            }
-            else {
-                avg = avg * ((period - 1) / period) + dt * (1 / period);
-            }
+            avg = avg * ((period - 1) / period) + price * (1 / period);
             res[day] = avg;
         }
     }
@@ -206,6 +207,110 @@ function getDirectionalMovement(dates, highs, lows, positive) {
     }
 
     return { valid: start != undefined, start: start, data: res };
+}
+
+function getSwingPivots(dates, prices, period) {
+    let pivots = {};
+    let mode = "low";
+    let swingDate = dates[0];
+
+    for (let i = 0; i < dates.length; ++i) {
+        let highLow = isHighLow(dates, prices, period, i);
+        // if is a high
+        if (highLow["high"]) {
+            // mark previous low as official
+            if (mode == "low") {
+                // pivot is realized 1 day after
+                pivots[swingDate] = { type: "low", price: prices[swingDate], realized: dates[Math.min(i + 1, dates.length - 1)] };
+                swingDate = dates[i];
+                // switch mode
+                mode = "high";
+            }
+            // continuation of a high
+            else {
+                // update swing
+                swingDate = dates[i];
+            }
+        }
+        // if is a low
+        if (highLow["low"]) {
+            // mark previous high as official
+            if (mode == "high") {
+                // pivot is realized 1 day after
+                pivots[swingDate] = { type: "high", price: prices[swingDate], realized: dates[Math.min(i + 1, dates.length - 1)] };
+                swingDate = dates[i];
+                // switch mode
+                mode = "low";
+            }
+            // continuation of a low
+            else {
+                // update swing
+                swingDate = dates[i];
+            }
+        }
+    }
+
+    return pivots;
+}
+
+function isHighLow(dates, prices, period, dateIndex) {
+    let currentPrice = prices[dates[dateIndex]];
+    let res = { high: true, low: true };
+
+    // check if any prices above current price
+    let stopIndex = Math.max(0, dateIndex - period);
+    for (let i = dateIndex - 1; i >= stopIndex; --i) {
+        let price = prices[dates[i]]
+        if (price > currentPrice) {
+            res["high"] = false;
+        }
+        else if (price < currentPrice) {
+            res["low"] = false;
+        }
+    }
+    return res;
+}
+
+function getStochasticOscillator(dates, lows, prices, highs, period) {
+    let res = {};
+
+    for (let i = 0; i < dates.length; ++i) {
+        let low = getLow(dates, lows, period, i);
+        let high = getHigh(dates, highs, period, i);
+        res[dates[i]] = ((prices[dates[i]] - low) / (high - low)) * 100;
+    }
+
+    return res;
+}
+
+function getHigh(dates, prices, period, dateIndex) {
+    let res = prices[dates[dateIndex]];
+
+    // check if any prices above current price
+    let stopIndex = Math.max(0, dateIndex - period + 1);
+    for (let i = dateIndex - 1; i >= stopIndex; --i) {
+        let price = prices[dates[i]]
+        if (price > res) {
+            res = price;
+        }
+    }
+
+    return res;
+}
+
+function getLow(dates, prices, period, dateIndex) {
+    let res = prices[dates[dateIndex]];
+
+    // check if any prices below current price
+    let stopIndex = Math.max(0, dateIndex - period + 1);
+    for (let i = dateIndex - 1; i >= stopIndex; --i) {
+        let price = prices[dates[i]]
+        if (price < res) {
+            res = price;
+        }
+    }
+    
+    return res;
 }
 
 // format date to api needs
@@ -314,6 +419,6 @@ function shallowEqual(object1, object2) {
 }
 
 module.exports = {
-    isCrossed, getSimpleMovingAverage, getRSI, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement,
+    isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, getStochasticOscillator,
     formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual
 };

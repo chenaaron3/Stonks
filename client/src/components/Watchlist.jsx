@@ -95,7 +95,7 @@ EnhancedTableHead.propTypes = {
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: '80%',
+        width: '100%',
         height: '100%',
         // margin: 'auto',
         marginTop: theme.spacing(2),

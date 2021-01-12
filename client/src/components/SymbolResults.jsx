@@ -69,8 +69,8 @@ class SymbolResults extends React.Component {
                     <h3 className="symbol-results-subtitle">Events</h3>
                     <div className="symbol-results-events">
                         {
-                            this.props.results["events"].map((event, index) => {
-                                return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(index) }}
+                            this.props.results["events"].reverse().map((event, index) => {
+                                return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { this.props.viewEvent(this.props.results["events"].length - 1 - index) }}
                                     style={{ color: `${event["percentProfit"] > 0 ? "green" : "red"}` }}>
                                     <span>{formatDate(event["buyDate"])}</span>
                                     <ArrowForwardSharpIcon />

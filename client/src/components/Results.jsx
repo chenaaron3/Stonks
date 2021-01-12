@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewStock, viewEvent, setBacktestResults, setChartSettings } from '../redux';
+import { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer } from '../redux';
 import './Results.css';
 import 'react-tabs/style/react-tabs.css';
 import eye from "../eye.svg";
@@ -34,6 +34,9 @@ import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import MenuIcon from '@material-ui/icons/Menu';
+import MediaQuery from 'react-responsive'
+import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 
 class Results extends React.Component {
     constructor(props) {
@@ -264,132 +267,167 @@ class Results extends React.Component {
 
         let tabPanelStyle = { overflow: "auto" };
 
-        return (
-            <div className="results">
-                <h2 className="results-title">
-                    Results {<SettingsMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
-                </h2>
-                <div>{searchBar}</div>
-                {scoreBy}
-                {/* <Paper square> */}
-                <Tabs value={this.state.tabIndex} onChange={this.setTab} indicatorColor="primary" centered aria-label="simple tabs example">
-                    <Tab style={{ minWidth: "0vw" }} label="All" {...a11yProps(0)} />
-                    <Tab style={{ minWidth: "0vw" }} label="Buy" {...a11yProps(1)} />
-                    <Tab style={{ minWidth: "0vw" }} label="Sell" {...a11yProps(2)} />
-                    <Tab style={{ minWidth: "0vw" }} label="Watch" {...a11yProps(3)} />
-                    <Tab style={{ minWidth: "0vw" }} label="Sim" {...a11yProps(4)} />
-                </Tabs>
-                {/* </Paper> */}
-                <TabPanel value={this.state.tabIndex} index={0} style={tabPanelStyle}>
-                    <div className="results-list">
-                        {this.state.sortedSymbols.length == 0 && (<span>
-                            There are no results...
-                        </span>)
-                        }
-                        {this.state.sortedSymbols.length != 0 && (
-                            <>
-                                {
-                                    this.state.sortedSymbols.map((symbol, index) => {
-                                        if (searchResults.includes(symbol)) {
-                                            return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+        let desktopVersion = (
+            <>
+                <div className="results">
+                    <h2 className="results-title">
+                        Results {<SettingsMenu items={["Candles", "Support Lines", "Test Mode"]} options={this.state.chartSettings} onChange={this.onSettingChanged} />}
+                    </h2>
+                    <div>{searchBar}</div>
+                    {scoreBy}
+                    {/* <Paper square> */}
+                    <Tabs value={this.state.tabIndex} onChange={this.setTab} indicatorColor="primary" centered aria-label="simple tabs example">
+                        <Tab style={{ minWidth: "0vw" }} label="All" {...a11yProps(0)} />
+                        <Tab style={{ minWidth: "0vw" }} label="Buy" {...a11yProps(1)} />
+                        <Tab style={{ minWidth: "0vw" }} label="Sell" {...a11yProps(2)} />
+                        <Tab style={{ minWidth: "0vw" }} label="Watch" {...a11yProps(3)} />
+                        <Tab style={{ minWidth: "0vw" }} label="Sim" {...a11yProps(4)} />
+                    </Tabs>
+                    {/* </Paper> */}
+                    <TabPanel value={this.state.tabIndex} index={0} style={tabPanelStyle}>
+                        <div className="results-list">
+                            {this.state.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
+                            {this.state.sortedSymbols.length != 0 && (
+                                <>
+                                    {
+                                        this.state.sortedSymbols.map((symbol, index) => {
+                                            if (searchResults.includes(symbol)) {
+                                                return <Result buy key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                    handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                    boughtSymbols={this.state.boughtSymbols} />
+                                            }
+                                        })
+                                    }
+                                </>
+                            )
+                            }
+                        </div>
+                    </TabPanel>
+                    <TabPanel value={this.state.tabIndex} index={1} style={tabPanelStyle}>
+                        <div className="results-list">
+                            {this.state.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
+                            {this.state.sortedSymbols.length != 0 && (
+                                <>
+                                    <ExportMenu items={this.supportedExports} onClick={this.onExportClicked} />
+                                    {dayFilter}
+                                    {this.state.sortedSymbols.length != 0 && (
+                                        buySymbols.map(({ symbol, index }) =>
+                                            <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
                                                 handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
-                                                boughtSymbols={this.state.boughtSymbols} />
-                                        }
-                                    })
-                                }
-                            </>
-                        )
-                        }
-                    </div>
-                </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={1} style={tabPanelStyle}>
-                    <div className="results-list">
-                        {this.state.sortedSymbols.length == 0 && (<span>
-                            There are no results...
-                        </span>)
-                        }
-                        {this.state.sortedSymbols.length != 0 && (
+                                                boughtSymbols={this.state.boughtSymbols} />)
+                                    )
+                                    }
+                                </>
+                            )
+                            }
+                        </div>
+                    </TabPanel>
+                    <TabPanel value={this.state.tabIndex} index={2} style={tabPanelStyle}>
+                        <div className="results-list">
+                            {this.state.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
                             <>
-                                <ExportMenu items={this.supportedExports} onClick={this.onExportClicked} />
                                 {dayFilter}
                                 {this.state.sortedSymbols.length != 0 && (
-                                    buySymbols.map(({ symbol, index }) =>
-                                        <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
-                                            handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
-                                            boughtSymbols={this.state.boughtSymbols} />)
+                                    this.state.sortedSymbols.map((symbol, index) => {
+                                        // only show if there are recent events
+                                        let events = this.props.results["symbolData"][symbol]["events"];
+                                        let numEvents = events.filter(e => daysBetween(lastRecentDate, new Date(e["sellDate"])) == 0).length;
+                                        if (numEvents > 0) {
+                                            if (searchResults.includes(symbol)) {
+                                                return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
+                                                    handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
+                                                    boughtSymbols={this.state.boughtSymbols} />
+                                            }
+                                        }
+                                    })
                                 )
                                 }
                             </>
-                        )
-                        }
-                    </div>
-                </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={2} style={tabPanelStyle}>
-                    <div className="results-list">
-                        {this.state.sortedSymbols.length == 0 && (<span>
-                            There are no results...
-                        </span>)
-                        }
-                        <>
-                            {dayFilter}
-                            {this.state.sortedSymbols.length != 0 && (
-                                this.state.sortedSymbols.map((symbol, index) => {
-                                    // only show if there are recent events
-                                    let events = this.props.results["symbolData"][symbol]["events"];
-                                    let numEvents = events.filter(e => daysBetween(lastRecentDate, new Date(e["sellDate"])) == 0).length;
-                                    if (numEvents > 0) {
-                                        if (searchResults.includes(symbol)) {
+                        </div>
+                    </TabPanel>
+                    <TabPanel value={this.state.tabIndex} index={3} style={tabPanelStyle}>
+                        <div className="results-list">
+                            {this.state.sortedSymbols.length == 0 && (<span>
+                                There are no results...
+                            </span>)
+                            }
+                            <>
+                                {this.state.sortedSymbols.length != 0 && (
+                                    this.state.sortedSymbols.map((symbol, index) => {
+                                        if (this.state.boughtSymbols.hasOwnProperty(symbol)) {
                                             return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
                                                 handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
                                                 boughtSymbols={this.state.boughtSymbols} />
                                         }
-                                    }
-                                })
-                            )
+                                    })
+                                )
+                                }
+                            </>
+                        </div>
+                    </TabPanel>
+                    <TabPanel value={this.state.tabIndex} index={4} style={tabPanelStyle}>
+                        <div className="results-list">
+                            {
+                                Object.keys(this.props.simulationTransactions).length == 0 && (<span>
+                                    Start a simulation to view transactions.
+                                </span>)
                             }
-                        </>
-                    </div>
-                </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={3} style={tabPanelStyle}>
-                    <div className="results-list">
-                        {this.state.sortedSymbols.length == 0 && (<span>
-                            There are no results...
-                        </span>)
-                        }
-                        <>
-                            {this.state.sortedSymbols.length != 0 && (
-                                this.state.sortedSymbols.map((symbol, index) => {
-                                    if (this.state.boughtSymbols.hasOwnProperty(symbol)) {
-                                        return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
-                                            handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
-                                            boughtSymbols={this.state.boughtSymbols} />
-                                    }
-                                })
-                            )
-                            }
-                        </>
-                    </div>
-                </TabPanel>
-                <TabPanel value={this.state.tabIndex} index={4} style={tabPanelStyle}>
-                    <div className="results-list">
-                        {
-                            Object.keys(this.props.simulationTransactions).length == 0 && (<span>
-                                Start a simulation to view transactions.
-                            </span>)
-                        }
-                        <>
-                            {Object.keys(this.props.simulationTransactions).length != 0 && (
-                                // sort years from recent to old
-                                Object.keys(this.props.simulationTransactions).sort((a, b) => b - a).map((year) => {
-                                    return <Transactions year={year} transactions={this.props.simulationTransactions[year]} {...this.props} />
-                                })
-                            )
-                            }
-                        </>
-                    </div>
-                </TabPanel>
-            </div>
+                            <>
+                                {Object.keys(this.props.simulationTransactions).length != 0 && (
+                                    // sort years from recent to old
+                                    Object.keys(this.props.simulationTransactions).sort((a, b) => b - a).map((year) => {
+                                        return <Transactions year={year} transactions={this.props.simulationTransactions[year]} {...this.props} />
+                                    })
+                                )
+                                }
+                            </>
+                        </div>
+                    </TabPanel>
+                </div>
+            </>
         );
+
+        console.log(this.props.drawer)
+
+        let mobileVersion = <>
+            <div className="results-mobile">
+                <IconButton
+                    aria-label="more"
+                    aria-controls="long-menu"
+                    aria-haspopup="true"
+                    onClick={() => { this.props.setDrawer("left", true) }}
+                    style={{ position: "absolute", top: "1vh", left: "1vh" }}
+                >
+                    <MenuIcon />
+                </IconButton>
+            </div>
+            <SwipeableDrawer
+                anchor="left"
+                open={this.props.drawer["left"]}
+                onClose={() => this.props.setDrawer("left", false)}
+                onOpen={() => this.props.setDrawer("left", true)}
+            >
+                {desktopVersion}
+            </SwipeableDrawer>
+        </>
+
+        return <>
+            <MediaQuery maxWidth={600}>
+                {mobileVersion}
+            </MediaQuery>
+            <MediaQuery minWidth={600}>
+                {desktopVersion}
+            </MediaQuery>
+        </>
     }
 }
 
@@ -412,35 +450,36 @@ class Result extends React.Component {
             displayName += ` (${displayDelta(pp)}%)`;
             color = pp > 0 ? "green" : "red";
         }
-        return (<div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
-            <img className={`result-icon result-hover`} width="25px" height="25px" src={eye} alt="Eye"
-                onClick={() => this.props.handleGetResult(this.props.symbol)} />
-            <span className="result-text" style={{ color: color }}
-                onClick={() => this.props.handleGetResult(this.props.symbol)} >{
-                    `${this.props.index + 1}. ${displayName}`}
-            </span>
-            {
-                this.props.buy && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
-                    <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
-                        onClick={this.buySymbol} />)
-            }
-            {
-                this.props.buy && this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
-                    <img className={`result-trailer result-hover`} width="35px" height="35px" src={bought} alt="Bought"
-                        onClick={this.sellSymbol} />)
-            }
-            {
-                this.props.sell && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
-                    <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
-                        onClick={this.buySymbol} />)
-            }
-            {
-                this.props.sell && this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
-                    <img className={`result-trailer result-hover`} width="35px" height="35px" src={sell} alt="Sell"
-                        onClick={this.sellSymbol} />)
-            }
+        return (
+            <div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
+                <img className={`result-icon result-hover`} width="25px" height="25px" src={eye} alt="Eye"
+                    onClick={() => this.props.handleGetResult(this.props.symbol)} />
+                <span className="result-text" style={{ color: color }}
+                    onClick={() => this.props.handleGetResult(this.props.symbol)} >{
+                        `${this.props.index + 1}. ${displayName}`}
+                </span>
+                {
+                    this.props.buy && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                        <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
+                            onClick={this.buySymbol} />)
+                }
+                {
+                    this.props.buy && this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                        <img className={`result-trailer result-hover`} width="35px" height="35px" src={bought} alt="Bought"
+                            onClick={this.sellSymbol} />)
+                }
+                {
+                    this.props.sell && !this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                        <img className={`result-trailer ${this.state.hovered ? "result-hover" : ""}`} width="35px" height="35px" src={buy} alt="Buy"
+                            onClick={this.buySymbol} />)
+                }
+                {
+                    this.props.sell && this.props.boughtSymbols.hasOwnProperty(this.props.symbol) && (
+                        <img className={`result-trailer result-hover`} width="35px" height="35px" src={sell} alt="Sell"
+                            onClick={this.sellSymbol} />)
+                }
 
-        </div>);
+            </div>);
     }
 }
 
@@ -592,7 +631,7 @@ function ExportMenu(props) {
 
 let mapStateToProps = (state) => {
     let results = state.backtestResults;
-    return { results, id: state.id, simulationTransactions: state.simulationTransactions };
+    return { results, id: state.id, simulationTransactions: state.simulationTransactions, drawer: state.drawer };
 };
 
-export default connect(mapStateToProps, { viewStock, viewEvent, setBacktestResults, setChartSettings })(Results);
+export default connect(mapStateToProps, { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer })(Results);

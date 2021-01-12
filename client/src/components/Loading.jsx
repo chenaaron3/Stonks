@@ -4,10 +4,15 @@ import './Loading.css';
 
 class Loading extends React.Component {
     render() {
-        return <div className="loading">
-            <h1 className="loading-text">Loading...</h1>
-            <LinearProgress style={{ width: "50vw" }}/>
-        </div>
+        if (this.props.loading) {
+            return <div className="loading">
+                <h1 className="loading-text">Loading...</h1>
+                <LinearProgress style={{ width: "50vw" }} />
+            </div>
+        }
+        else {
+            return <></>
+        }
     }
 }
 

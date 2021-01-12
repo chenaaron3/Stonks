@@ -164,7 +164,6 @@ class Dashboard extends React.Component {
             let yearData = [];
             let years = Object.keys(yearlyData);
             years.sort((a, b) => {
-                console.log(new Date(parseInt(a)), new Date(parseInt(b)));
                 return new Date(parseInt(a)) - new Date(parseInt(b))
             });
             let profit = 0;
@@ -254,7 +253,7 @@ class Dashboard extends React.Component {
     }
 
     keydownHandler = (e) => {
-        if (e.keyCode == 17) {
+        if (e.keyCode == 16 || e.keyCode == 17) {
             this.setState({ ctrl: !this.state.ctrl });
         }
     }

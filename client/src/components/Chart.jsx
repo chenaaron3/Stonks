@@ -10,6 +10,8 @@ import './Chart.css';
 import RSI from "./indicators/RSI";
 import MACD from "./indicators/MACD";
 import ADX from "./indicators/ADX";
+import Stochastic from "./indicators/Stochastic";
+import Loading from './Loading';
 import { formatDate, numberWithCommas, displayDelta } from '../helpers/utils';
 
 class Chart extends React.Component {
@@ -17,8 +19,8 @@ class Chart extends React.Component {
         super(props);
 
         // constants
-        this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX };
-        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR", "Swing"];
+        this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX, "Stochastic": Stochastic };
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR", "Swing", "Divergence"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;
@@ -43,7 +45,8 @@ class Chart extends React.Component {
             endBrushIndex: this.chunkSize - 1,
             supportLevels: [],
             resistanceLevels: [],
-            supportResistanceLevels: []
+            supportResistanceLevels: [],
+            loading: true
         }
     }
 
@@ -279,7 +282,9 @@ class Chart extends React.Component {
                 return value.toFixed(4);
             }
             catch {
-                console.log(value, typeof (value));
+                if (typeof value == "object") {
+                    return "";
+                }
                 return value;
             }
         }
@@ -417,7 +422,8 @@ class Chart extends React.Component {
 
             this.setState(myindicatorGraphs);
             this.setState({ priceGraph }, () => {
-                res()
+                res();
+                this.setState({ loading: false });
             });
         });
     }
@@ -513,7 +519,7 @@ class Chart extends React.Component {
 
     getSupportResistance = () => {
         return new Promise((resolve, reject) => {
-            // let data = { indicatorName: "Structure", indicatorOptions: { "period": 12, "volatility": .05 }, symbol: this.props.symbol };
+            // let data = { indicatorName: "Swing", indicatorOptions: { "period": 3, "volatility": .05 }, symbol: this.props.symbol };
             // fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/indicatorGraph`, {
             //     method: 'POST',
             //     headers: {
@@ -524,7 +530,7 @@ class Chart extends React.Component {
             //     .then(res => res.json())
             //     .then(pivots => {
             //         try {
-            //             this.pivots = Object.keys(pivots["pivots"]);
+            //             this.setState({ pivots: Object.keys(pivots["pivots"]) });
             //         }
             //         catch {
 
@@ -740,6 +746,7 @@ class Chart extends React.Component {
 
         return (
             <div className="chart-container" onWheel={this.wheelHandler}>
+                <Loading loading={this.state.loading} />
                 {/* Main Chart */}
                 <ResponsiveContainer width="100%" height={`${mainChartHeight}%`}>
                     <LineChart data={this.state.priceGraph} syncId="graph" margin={margins}>
@@ -802,7 +809,7 @@ class Chart extends React.Component {
         let dotRadius = props.size;
 
         // debug pivots
-        if (this.pivots && this.pivots.includes(payload["date"])) {
+        if (this.state.pivots && this.state.pivots.includes(payload["date"]) || payload["pivots"]) {
             return (
                 <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="blue" />
             );

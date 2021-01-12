@@ -13,7 +13,7 @@
 }
 
 .indicator-box {
-    width: 15px;
+    min-width: 15px;
     height: 15px;
 }
 
@@ -75,5 +75,11 @@
     }
     100% {
         transform: rotateX(0deg)
+    }
+}
+
+@media only screen and (max-width: 600px) {    
+    .indicator {
+        width: 35vw;
     }
 }

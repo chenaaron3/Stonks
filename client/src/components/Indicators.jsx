@@ -15,9 +15,11 @@ class Indicators extends React.Component {
             "RSI": { "fields": ["period", "underbought", "overbought"], "default": [14, 30, 70] },
             "MACD": { "fields": ["ema1", "ema2", "signalPeriod"], "default": [12, 26, 9] },
             "GC": { "fields": ["ma1Period", "ma2Period"], "default": [15, 50] },
-            "ADX": { "fields": ["period"], "default": [12] },
-            "Structure": {"fields": ["period", "volatility"], "default": [75, .05]},
-            "ATR": {"fields": ["period"], "default": [12]},
+            "ADX": { "fields": ["period", "threshold"], "default": [14, 20] },
+            "Structure": { "fields": ["period", "volatility"], "default": [75, .05] },
+            "ATR": { "fields": ["period"], "default": [12] },
+            "Divergence": { "fields": ["period"], "default": [10] },
+            "Stochastic": { "fields": ["period", "underbought", "overbought"], "default": [14, 20, 80] },
         }
     }
 
@@ -41,6 +43,14 @@ class Indicators extends React.Component {
                 })
             }
         })
+
+        // Special Cases
+        if (this.props.backtestIndicatorOptions.hasOwnProperty("Divergence")) {
+            this.props.setIndicatorOption("RSI", this.indicators["RSI"]["fields"][0], this.indicators["RSI"]["default"][0]);
+            this.props.setIndicatorOption("RSI", this.indicators["RSI"]["fields"][1], 0);
+            this.props.setIndicatorOption("RSI", this.indicators["RSI"]["fields"][2], 100);
+            this.props.setIndicatorOn("RSI", true);
+        }
     }
 
     render() {
