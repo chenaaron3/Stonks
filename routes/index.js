@@ -133,8 +133,32 @@ router.get("/results", async (req, res) => {
 // delete backtest results
 router.delete("/deleteResults/:id", async (req, res) => {
     let id = req.params.id;
-    deleteDocument("results", id);
-    res.json({ status: "Deleted" });
+
+    let found = false;
+    let activeResults;
+    try {
+        activeResults = await getDocument("results", "activeResults");
+        activeResults = activeResults["activeResults"];
+        for (let i = 0; i < activeResults.length; ++i) {
+            let activeResult = activeResults[i];
+            if (activeResult["id"] == id) {
+                found = true;
+                break;
+            }
+        }
+    }
+    catch (e) {
+        // no active results with id
+        found = false;
+    }
+
+    if (found) {
+        res.json({ status: "Cannot be deleted. Being used by others." });
+    }
+    else {
+        deleteDocument("results", id);
+        res.json({ status: "Deleted" });
+    }
 })
 
 // start fake backtesting for testing

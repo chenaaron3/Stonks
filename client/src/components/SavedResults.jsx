@@ -4,6 +4,7 @@ import SavedResult from './SavedResult';
 import Loading from './Loading';
 import { connect } from 'react-redux';
 import { setBacktestResults, setSavedResults, viewStock, setPageIndex, setDrawer } from '../redux';
+import { getBacktestDisplayName } from '../helpers/utils';
 
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 import MediaQuery from 'react-responsive'
@@ -34,6 +35,7 @@ class SavedResults extends React.Component {
             this.fetchBacktestResults(this.props.match.params.backtestID);
             this.state.loading = true;
         }
+
     }
 
     fetchBacktestResults = (id) => {
@@ -47,6 +49,14 @@ class SavedResults extends React.Component {
                     alert(results["error"]);
                 }
                 else {
+                    // save to local storage if not alreay in there
+                    let savedResults = JSON.parse(localStorage.getItem("savedResults"));
+                    if (!savedResults.some(r => r["id"] == id)) {
+                        savedResults.push({ id, display: getBacktestDisplayName(results["strategyOptions"]) });
+                        this.props.setSavedResults(savedResults);
+                        localStorage.setItem("savedResults", JSON.stringify(savedResults));
+                    }
+
                     // store results in global state
                     this.props.setBacktestResults(id, results);
                     // preview first stock

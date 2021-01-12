@@ -46,4 +46,13 @@ function displayDelta(p) {
     return (p >= 0 ? "+" : "") + p.toFixed(2);
 }
 
-module.exports = { formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay, displayDelta };
+function getBacktestDisplayName(options) {
+    let indicatorsUsed = new Set();
+    Object.keys(options["buyIndicators"]).forEach(i => indicatorsUsed.add(i));
+    Object.keys(options["sellIndicators"]).forEach(i => indicatorsUsed.add(i));
+    indicatorsUsed = [...indicatorsUsed];
+    indicatorsUsed.sort();
+    return indicatorsUsed.join("/");
+}
+
+module.exports = { formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay, displayDelta, getBacktestDisplayName };

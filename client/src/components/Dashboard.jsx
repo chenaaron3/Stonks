@@ -24,6 +24,9 @@ import Slider from '@material-ui/core/Slider';
 import LinkIcon from '@material-ui/icons/Link';
 import IconButton from '@material-ui/core/IconButton';
 import IconTooltip from '@material-ui/core/Tooltip';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import MediaQuery from 'react-responsive';
 
 let winLossColor = ["#2ecc71", "#FFCCCB"];
 
@@ -196,18 +199,21 @@ class Dashboard extends React.Component {
     setAutoUpdate = () => {
         // get the email to notify
         let email = prompt("Enter email to notify.");
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id: this.props.id, email, subscribe: !this.state.active })
-        })
-            .then(res => res.json())
-            .then(json => {
-                alert(json["status"]);
-                this.updateActiveStatus();
-            });
+        let emailRegex = /.*@.*/
+        if (emailRegex.test(email)) {
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: this.props.id, email, subscribe: !this.state.active })
+            })
+                .then(res => res.json())
+                .then(json => {
+                    alert(json["status"]);
+                    this.updateActiveStatus();
+                });
+        }
     }
 
     updateActiveStatus = () => {
@@ -371,6 +377,18 @@ class Dashboard extends React.Component {
                                 )}
                             </>
                         }
+                        <MediaQuery maxWidth="600px">
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={this.state.ctrl}
+                                        onChange={(e) => { this.setState({ ctrl: !this.state.ctrl }) }}
+                                        color="primary"
+                                    />
+                                }
+                                style={{ minWidth: "5vw" }}
+                            />
+                        </MediaQuery>
                     </div>
                 </div>
                 <div className="dashboard-body">

@@ -2,6 +2,7 @@ import React, { createRef } from 'react';
 import "./CreateBacktest.css";
 import { connect } from 'react-redux';
 import { setIndicatorOption, setIndicatorOn, setID, clearIndicators, setSavedResults, setBacktestResults, setDrawer } from '../redux';
+import { getBacktestDisplayName } from '../helpers/utils'
 // import Stepper from 'react-stepper-horizontal';
 import Indicator from './Indicator';
 import Pusher from 'react-pusher';
@@ -94,6 +95,7 @@ class CreateBacktest extends React.Component {
         let fieldsToCheck = ["stopLossLow", "stopLossHigh", "stopLossAtr", "targetAtr", "riskRewardRatio", "minVolume", "maxDays"];
         let numericalFields = {};
         let errors = {};
+        let errored = false;
         for (let i = 0; i < fieldsToCheck.length; ++i) {
             let f = fieldsToCheck[i];
             let newValue = parseFloat(this.state[f]);
@@ -101,6 +103,7 @@ class CreateBacktest extends React.Component {
             if (typeof this.state[f] != "number" && !newValue) {
                 errors[f] = true;
                 numericalFields[f] = 0;
+                errored = true;
             }
             else {
                 errors[f] = false;
@@ -108,7 +111,7 @@ class CreateBacktest extends React.Component {
             }
         }
 
-        if (Object.keys(errors).length > 0) {
+        if (errored) {
             alert("Invalid fields");
             this.setState({ ...numericalFields, errors });
             return;
@@ -155,12 +158,7 @@ class CreateBacktest extends React.Component {
                     this.props.setID(id);
 
                     // cache id immediately
-                    let indicatorsUsed = new Set();
-                    Object.keys(this.state.buyOptions).forEach(i => indicatorsUsed.add(i));
-                    Object.keys(this.state.sellOptions).forEach(i => indicatorsUsed.add(i));
-                    indicatorsUsed = [...indicatorsUsed];
-                    indicatorsUsed.sort();
-                    let displayName = indicatorsUsed.join("/");
+                    let displayName = getBacktestDisplayName(strategyOptions);
 
                     // save the results
                     let newSave = [...this.props.savedResults, { id, display: displayName }];

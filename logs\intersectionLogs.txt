@@ -4074,3 +4074,7 @@ Worker 3VQGPcPMmk: Finished backtest for tickers DEO to JFKKR in 271 seconds
 Worker 3VQGPcPMmk: Finished backtest for tickers A to DENN in 275 seconds
 Worker 3VQGPcPMmk: Finished backtest for tickers JFKKU to PYZ in 281 seconds
 Worker 3VQGPcPMmk: Finished backtest for tickers PZC to ZYXI in 284 seconds
+Worker sTAroYvKCv: Finding intersections for tickers DESP to JFKKU
+Worker sTAroYvKCv: Finding intersections for tickers A to DEO
+Worker sTAroYvKCv: Finding intersections for tickers JFKKW to PZC
+Worker sTAroYvKCv: Finding intersections for tickers PZG to ZYXI
