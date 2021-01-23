@@ -3,12 +3,13 @@ var router = express.Router();
 var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
 let { resetSymbol } = require('../helpers/stock');
-let { getStockInfo, containsID, addID, getDocument, setDocumentField } = require('../helpers/mongo');
+let { containsID, getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
 let { getIndicator, getActionsToday } = require('../helpers/backtest');
 let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
-let sizeof = require('object-sizeof')
+const bson = require('bson');
+const DOC_LIMIT = 16777216;
 
 let watchlistFunctions = {
     "StocksTracker": addToStocksTrackerWatchlist,
@@ -46,10 +47,24 @@ router.get('/job', async function (req, res) {
 
 router.get("/test", async function (req, res) {
     let symbol = req.query.symbol;
-    let doc = await getDocument("results", "2iwIabgHNC");
-    console.log(sizeof(doc["results"]));
-    console.log(sizeof(doc["results"]["symbolData"]["AAPL"]["events"][0]));
-    resetSymbol(symbol, new Date("1/1/1500"), new Date())
+
+    if (!await containsID("results", "test")) {
+        await addDocument("results", { _id: "test" });
+    }
+
+    let data = [];
+    for (i = 0; i < 1000000; ++i) {
+        data.push("1234567890");
+    }
+    try {
+        await setDocumentField("results", "test", "data", { subField: data }, { subField: "subField" });
+    }
+    catch (Exception) {
+        console.log(Exception)
+    }
+
+    console.log(await getDocument("results", "test"));
+
     res.send("ok")
 });
 
@@ -79,8 +94,7 @@ router.get('/indicator', async function (req, res) {
 
     console.log(symbol, indicatorName, indicatorOptions);
 
-    let stockInfo = await getStockInfo(symbol);
-    stockInfo = await stockInfo.toArray();
+    let stockInfo = await getDocument(symbol);
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo[0]["prices"];
         let prices = {};

@@ -8,7 +8,7 @@ const sgMail = require('@sendgrid/mail');
 // own helpers
 const csv = require('csv');
 let { fixFaulty } = require('../helpers/stock');
-let { addResult, getDocument, setDocumentField, containsID } = require('../helpers/mongo');
+let { getDocument, setDocumentField } = require('../helpers/mongo');
 let { daysBetween, sameDay } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
@@ -104,7 +104,7 @@ function updateBacktest(id) {
                 return;
             }
             else {
-                setDocumentField(id, "status", "updating");
+                setDocumentField("results", id, "status", "updating");
             }
             let strategyOptions = doc.results["strategyOptions"];
 
@@ -114,7 +114,7 @@ function updateBacktest(id) {
             child.on('message', function (message) {
                 console.log(message);
                 if (message.status == "finished") {
-                    setDocumentField(id, "status", "ready");
+                    setDocumentField("results", id, "status", "ready");
                     console.log("Trigger client", id);
                     triggerChannel(id, "onUpdateFinished", { id: `${id}` });
                     resolveJob();
@@ -222,8 +222,8 @@ function conductBacktest(strategyOptions, id) {
 
                             let results = { strategyOptions, symbolData: intersections, lastUpdated: new Date() };
                             // add result to database
-                            let err = await addResult(id, results);
-                            // todo deal with oversized results by trimming
+                            let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
+                            // todo deal with oversized results by splitting document
                             if (err) {
                                 console.log(sizeof(results));
                             }
@@ -548,18 +548,6 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                     };
 
-                    // if too many results, truncate old ones
-                    if (events.length > 500) {
-                        events = events.slice(events.length - 500, events.length);
-                        // recalculate profit
-                        profit = 0;
-                        percentProfit = 0;
-                        for (let i = 0; i < events.length; ++i) {
-                            profit += events[i]["profit"];
-                            percentProfit += events[i]["percentProfit"];
-                        }
-                    }
-
                     resolve({ "profit": profit, "percentProfit": percentProfit / events.length, "events": events, "holdings": buyDates, "faulty": faulty });
                 }
             });
@@ -723,7 +711,7 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
     // check if prices breach stoploss/targets
     Object.keys(stoplossTarget).forEach((bd) => {
         // cannot sell on the same day as buy
-        if (bd == day) return;
+        if (bd == day || !stoplossTarget[bd]) return;
         let stoploss = stoplossTarget[bd]["stoploss"];
         let target = stoplossTarget[bd]["target"];
         if (stoploss && low < stoploss) {

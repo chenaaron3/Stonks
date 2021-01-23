@@ -5,7 +5,7 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { getStockInfo, containsID, addID, getDocument, setDocumentField, addActiveResult, deleteActiveResult, deleteDocument } = require('../helpers/mongo');
+let { containsID, addDocument, getDocument, addActiveResult, deleteActiveResult, deleteDocument } = require('../helpers/mongo');
 let { makeid, daysBetween } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { backtest, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
@@ -121,12 +121,17 @@ router.get("/sellSymbol", (req, res) => {
 // get backtest results
 router.get("/results", async (req, res) => {
     let id = req.query.id;
-    let doc = await getDocument("results", id);
-    if (typeof (doc["results"]) == "string") {
-        res.json({ error: "Results are not ready yet!" });
+    try {
+        let doc = await getDocument("results", id);
+        if (typeof (doc["results"]) == "string") {
+            res.json({ error: "Results are not ready yet!" });
+        }
+        else {
+            res.json(doc["results"]);
+        }
     }
-    else {
-        res.json(doc["results"]);
+    catch {
+        res.json({ error: "Backtest does not exist!" });
     }
 })
 
@@ -175,10 +180,9 @@ router.post("/indicatorGraph", async (req, res) => {
     let indicatorName = req.body["indicatorName"];
     let indicatorOptions = req.body["indicatorOptions"];
 
-    let stockInfo = await getStockInfo(symbol);
-    stockInfo = await stockInfo.toArray();
+    let stockInfo = await getDocument("prices", symbol);
     if (stockInfo.length != 0) {
-        let pricesJSON = stockInfo[0]["prices"];
+        let pricesJSON = stockInfo["prices"];
         let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
 
         let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
@@ -193,10 +197,9 @@ router.post("/priceGraph", async (req, res) => {
     let indicators = req.body["indicators"];
 
     // get prices from database
-    let stockInfo = await getStockInfo(symbol);
-    stockInfo = await stockInfo.toArray();
+    let stockInfo = await getDocument("prices", symbol);
     if (stockInfo.length != 0) {
-        let pricesJSON = stockInfo[0]["prices"];
+        let pricesJSON = stockInfo["prices"];
         let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
         let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes).getGraph();
 
@@ -216,7 +219,7 @@ router.post("/priceGraph", async (req, res) => {
 router.get("/updateBacktest", async (req, res) => {
     // get backtest id
     let id = req.query.id;
-    if (!await containsID(id)) {
+    if (!await containsID("results", id)) {
         res.send("Backtest ID is not valid!");
         return;
     }
@@ -238,12 +241,15 @@ router.post("/backtest", async (req, res) => {
 
     // create unique id
     let id = makeid(10);
-    while (await containsID(id)) {
+    while (await containsID("results", id)) {
         id = makeid(10);
     }
 
     // add id to the database
-    addID(id);
+    addDocument("results", {
+        "_id": id,
+        "results": 'Results are not ready yet!'
+    });
 
     let position = backtest(id, strategyOptions);
 

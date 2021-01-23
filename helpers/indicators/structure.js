@@ -1,4 +1,4 @@
-let { isCrossed, getExponentialMovingAverage, daysBetween } = require('../utils');
+let { isCrossed, getExponentialMovingAverage, daysBetween, getSwingPivots } = require('../utils');
 let Indicator = require('./indicator');
 
 class Structure extends Indicator {
@@ -13,111 +13,91 @@ class Structure extends Indicator {
 
     calculate() {
         let graph = {};
-        let smoothedGraph = getExponentialMovingAverage(this.dates, this.prices, this.period)["data"];
-        let previousPrice = smoothedGraph[this.dates[0]];
-        let previousSlope = "P";
+        let pivots = getSwingPivots(this.dates, this.prices, this.period);
+        this.pivots = pivots;
+        let realizedPivots = {}
+        let keys = Object.keys(pivots);
+        for (let i = 0; i < keys.length; ++i) {
+            let pivotDate = keys[i];
+            let pivot = pivots[pivotDate];
+            pivot["date"] = pivotDate;
+            realizedPivots[pivot["realized"]] = pivot; 
+        }
+
         let merged = {};
-        let minIndex = 0;
-        let maxIndex = 0;
-        let sleep = 0;
-        for (let i = 1; i < this.dates.length; ++i) {
-            sleep -= 1;
-            // console.log(i, "/", this.dates.length);
+        for (let i = 0; i < this.dates.length; ++i) {
             let date = this.dates[i];
             let price = this.prices[date];
-            let difference = smoothedGraph[date] - previousPrice;
 
-            // keep track of min/max
-            if (this.prices[this.dates[minIndex]] > price) {
-                minIndex = i;
-            }
-            if (this.prices[this.dates[maxIndex]] < price) {
-                maxIndex = i;
-            }
+            // is a pivot, update merged dict
+            if (realizedPivots.hasOwnProperty(date)) {
+                let pivot = realizedPivots[date];
+                let groupMatch = undefined;
+                let groupAverages = Object.keys(merged);
 
-            // if has a direction, check for possible reversal
-            if (difference != 0) {
-                let slope = difference > 0 ? "P" : "N";
-                let level = undefined;
-                // different slope
-                if (previousSlope != slope) {
-                    if (sleep <= 0) {
-                        sleep = 0//7;
-                        // if slope up, is support
-                        if (slope == "P") {
-                            level = { price: this.prices[this.dates[minIndex]], date: new Date(this.dates[minIndex]) };
-                        }
-                        // if slope down, is support
-                        else if (slope == "N") {
-                            level = { price: this.prices[this.dates[maxIndex]], date: new Date(this.dates[maxIndex]) };
-                        }
-                        this.pivots[level["date"].toISOString()] = level["price"];
-                        minIndex = i;
-                        maxIndex = i;
+                // look for a group that is close to this pivot
+                for (let i = 0; i < groupAverages.length; ++i) {
+                    let groupAverage = groupAverages[i];
+                    if (groupAverage * (1 + this.volatility) > pivot["price"] && groupAverage * (1 - this.volatility) < pivot["price"]) {
+                        groupMatch = groupAverage;
+                        break;
                     }
                 }
 
-                if (level) {
-                    let groupMatch = undefined;
-                    let groupAverages = Object.keys(merged);
-
-                    // look for a group that is close to this level
-                    for (let i = 0; i < groupAverages.length; ++i) {
-                        let groupAverage = groupAverages[i];
-                        if (groupAverage * (1 + this.volatility) > level["price"] && groupAverage * (1 - this.volatility) < level["price"]) {
-                            groupMatch = groupAverage;
-                            break;
-                        }
-                    }
-
-                    // if found a group, add to group
-                    if (groupMatch) {
-                        let oldStart = merged[groupMatch]["start"];
-                        let oldCount = merged[groupMatch]["count"];
-                        let newCount = oldCount + 1;
-                        let newAverage = (groupMatch * oldCount + level["price"]) / newCount;
-                        // newAverage = groupMatch;
-                        let newSupport = merged[groupMatch]["support"] || slope == "P";
-                        let newResistance = merged[groupMatch]["resistance"] || slope == "N";
-                        delete merged[groupMatch];
-                        merged[newAverage] = {
-                            count: newCount, end: level["date"], start: oldStart,
-                            support: newSupport, resistance: newResistance
-                        };
-                    }
-
-                    // if not found, create a group
-                    else {
-                        merged[level["price"]] = {
-                            count: 1, end: level["date"], start: level["date"],
-                            support: slope == "P", resistance: slope == "N"
-                        };
-                    }
+                // if found a group, add to group
+                if (groupMatch) {
+                    let oldStart = merged[groupMatch]["start"];
+                    let oldCount = merged[groupMatch]["count"];
+                    let newCount = oldCount + 1;
+                    let newAverage = (groupMatch * oldCount + pivot["price"]) / newCount;
+                    let newSupport = merged[groupMatch]["support"] || pivot["type"] == "low";
+                    let newResistance = merged[groupMatch]["resistance"] || pivot["type"] == "high";
+                    delete merged[groupMatch];
+                    merged[newAverage] = {
+                        count: newCount, end: pivot["date"], start: oldStart,
+                        support: newSupport, resistance: newResistance,
+                        freshness: 720
+                    };
                 }
-
-                // each date has a copy of lines
-                graph[date] = { ...merged };
-                previousSlope = slope;
+                // if not found, create a group
+                else {
+                    merged[pivot["price"]] = {
+                        count: 1, end: price["date"], start: price["date"],
+                        support: pivot["type"] == "low", resistance: pivot["type"] == "high", 
+                        freshness: 720
+                    };
+                }
             }
-            previousPrice = smoothedGraph[date];
+
+            // trim merge dict of irrelevant levels
+            keys = Object.keys(merged);
+            for(let i = 0; i < keys.length; ++i) {
+                let key = keys[i];
+                merged[key]["freshness"] -= 1;
+                if (merged[key]["freshness"] <= 0) {
+                    delete merged[key];
+                }
+            }
+
+            let levels = Object.keys(merged);
+            graph[date] = {
+                support: Math.max(...levels.filter(level => level < price)),
+                resistance: Math.min(...levels.filter(level => level > this.prices[date]))
+            }
         }
         return graph;
     }
 
     getGraph() {
-        // return { pivots: this.pivots };
-
         // greatest level below price
         let support = {};
         // smallest level above price 
         let resistance = {};
 
+        // transform data
         Object.keys(this.graph).forEach(date => {
-            let relevantDate = new Date(date);
-            relevantDate.setDate(relevantDate.getDate() - 360 * 2)
-            let levels = Object.keys(this.graph[date]).filter(level => this.graph[date][level]["end"] >= relevantDate);            
-            support[date] = Math.max(...levels.filter(level => level < this.prices[date]));
-            resistance[date] = Math.min(...levels.filter(level => level > this.prices[date]));
+            support[date] = this.graph[date]["support"];
+            resistance[date] = this.graph[date]["resistance"];
         })
 
         return { support, resistance, pivots: this.pivots };

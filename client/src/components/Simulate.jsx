@@ -27,6 +27,7 @@ class Simulate extends React.Component {
         this.state = {
             equityData: [], returnsData: [],
             range: 25, startSize: 1000, maxPositions: 10, positionSize: 10, maxRisk: 15,
+            sizeOnRisk: false, risk: 3,
             scoreBy: "Win Rate",
             loading: true
         }
@@ -45,29 +46,40 @@ class Simulate extends React.Component {
         }
     }
 
-    score = (events, index) => {
-        let score = { "Percent Profit": 0, "Dollar Profit": 0, "Win Rate": 0 };
+    score = (events, index, scoreData) => {
         let mainEvent = events[index];
-        let wins = 0;
-        let count = 0;
-        for (let i = 0; i < index; ++i) {
+        let wins = scoreData["wins"];
+        let count = scoreData["count"];
+        let score = { "Percent Profit": scoreData["percentProfit"] * count, "Dollar Profit": scoreData["dollarProfit"] * count, "Win Rate": 0 };
+
+        // new stock
+        if (index == 0) return score;
+
+        let newRealizedIndex = scoreData["realizedIndex"];
+        for (let i = scoreData["realizedIndex"] + 1; i < index; ++i) {
             let event = events[i];
             if (new Date(event["sellDate"]) > new Date(mainEvent["buyDate"])) {
                 break;
             }
 
+            newRealizedIndex = i;
             score["Percent Profit"] += event["percentProfit"];
             score["Dollar Profit"] += event["profit"];
-            score["Custom"] += event["percentProfit"] > 0 ? 1 : 0;
 
             if (event["percentProfit"] > 0) {
                 wins += 1;
             }
             count += 1;
         }
-
-        score["Custom"] /= (index + 1);
+        score["Percent Profit"] /= count;
+        score["Dollar Profit"] /= count;
         score["Win Rate"] = wins / count;
+
+        scoreData["realizedIndex"] = newRealizedIndex;
+        scoreData["count"] = count;
+        scoreData["wins"] = wins;
+        scoreData["percentProfit"] = score["Percent Profit"];
+        scoreData["dollarProfit"] = score["Dollar Profit"];
 
         return score;
     }
@@ -81,6 +93,7 @@ class Simulate extends React.Component {
             let score = 0;
             let localityWeight = .8;
             let events = this.props.results["symbolData"][symbol]["events"];
+            let scoreData = { realizedIndex: -1, count: 0, wins: 0, percentProfit: 0, dollarProfit: 0 };
             for (let i = 0; i < events.length; ++i) {
                 let event = events[i];
                 // store symbol and index for future reference
@@ -88,7 +101,7 @@ class Simulate extends React.Component {
                 event["index"] = i;
                 // only score 1 time
                 if (!event.hasOwnProperty("score")) {
-                    event["score"] = this.score(events, i);
+                    event["score"] = this.score(events, i, scoreData);
                 }
                 let newScore = event["percentProfit"] > 0 ? 1 : -1;
                 score = newScore * localityWeight + score * (1 - localityWeight);
@@ -115,6 +128,7 @@ class Simulate extends React.Component {
 
         // start simulation
         let equity = this.state.startSize;
+        let buyingPower = equity;
         let equityData = []; // equity after reach trade
         let returnsData = []; // percent annual returns
         let transactions = {}; // maps year to list of events
@@ -159,10 +173,26 @@ class Simulate extends React.Component {
                         }
                         transactions[y].push(event);
 
+                        // Calculate buy amount
+                        // Metho1: calculate buy amount by account size
+                        if (!this.state.sizeOnRisk || !event["risk"]) {
+                            event["buyAmount"] = equity * (this.state.positionSize / 100);
+                        }
+                        // Method2: calculate buy amount by risk
+                        else {
+                            event["buyAmount"] = equity * (this.state.risk / 100) / (event["risk"] / 100);
+                        }
+
+                        // check if have enough money to buy
+                        event["buyAmount"] = Math.min(event["buyAmount"], buyingPower);
+                        // deduct from buying power
+                        buyingPower -= event["buyAmount"];
+
                         // add to holdings
                         this.holdings.push(event);
-                        event["buyAmount"] = equity * (this.state.positionSize / 100);
-                        if (this.holdings.length >= this.state.maxPositions) {
+
+                        // stop buying if max out on holdings or ran out of money
+                        if (this.holdings.length >= this.state.maxPositions || buyingPower == 0) {
                             break;
                         }
                     }
@@ -177,6 +207,7 @@ class Simulate extends React.Component {
                 if (date == sellDate.getTime()) {
                     sold.push(holding);
                     equity += holding["buyAmount"] * (holding["percentProfit"]);
+                    buyingPower += holding["buyAmount"] * (1 + holding["percentProfit"]);
 
                     // start over in case we bust account
                     if (equity <= 0) {
@@ -253,7 +284,7 @@ class Simulate extends React.Component {
         let winLossColor = ["#2ecc71", "#FFCCCB"];
         return <div className="simulate">
             <div className="simulate-header">
-                <Loading loading = {this.state.loading}/>
+                <Loading loading={this.state.loading} />
                 <h3 className="simulate-title">Equity Chart</h3>
                 <div className="simulate-settings">
                     <Box mx="1vw" mt="1vh">

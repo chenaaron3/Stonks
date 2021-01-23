@@ -20,6 +20,7 @@ process.on('message', async (msg) => {
 
         // conduct actual backtest
         await conductBacktest(msg.strategyOptions, msg.id);
+        console.log("Conduct Backtest Finished");
         // notify parent
         process.send({ status: "finished" });
 

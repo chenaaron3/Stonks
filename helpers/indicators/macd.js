@@ -59,10 +59,10 @@ class MACD extends Indicator {
 
 		let isCrossedUp = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, true); // green to red
 		let isCrossedDown = isCrossed(yesterdayMACD, todayMACD, yesterdaySignal, todaySignal, false); // red to green
-		if (isCrossedUp || (!isMain && this.histogram[date] > 0)) {
+		if (isCrossedUp && todayMACD < 0) {
 			return Indicator.BUY;
 		}
-		else if (isCrossedDown) {
+		else if (isCrossedDown && todayMACD > 0) {
 			return Indicator.SELL;
 		}
 		else {
