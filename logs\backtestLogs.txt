@@ -980,3 +980,6 @@ Worker cRHrKDZiCP: Starting backtest
 Worker cRHrKDZiCP: Finished backtest in 288 seconds
 Worker AzAMxXxz1a: Starting backtest
 Worker AzAMxXxz1a: Finished backtest in 321 seconds
+Worker ORtuAa7Elz: Starting backtest
+Worker ORtuAa7Elz: Starting backtest
+Worker ORtuAa7Elz: Finished backtest in 315 seconds

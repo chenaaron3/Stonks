@@ -8,8 +8,8 @@ const sgMail = require('@sendgrid/mail');
 // own helpers
 const csv = require('csv');
 let { fixFaulty } = require('../helpers/stock');
-let { getDocument, setDocumentField } = require('../helpers/mongo');
-let { daysBetween, sameDay } = require('../helpers/utils');
+let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
+let { daysBetween, getBacktestSummary } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
 
@@ -32,6 +32,7 @@ let Swing = require('../helpers/indicators/swing');
 let Divergence = require('../helpers/indicators/divergence');
 let Stochastic = require('../helpers/indicators/stochastic');
 let Indicator = require('../helpers/indicators/indicator');
+const { exception } = require('console');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
     "EMA": EMA,
@@ -122,6 +123,40 @@ function updateBacktest(id) {
             });
         });
     });
+}
+
+// queues an optimization
+function optimize(id, optimizeOptions) {
+    let maxResults = 10;
+    let totalRatios = (optimizeOptions["endRatio"] - optimizeOptions["startRatio"]) / optimizeOptions["strideRatio"];
+    let position = undefined;
+    for (let stoploss = optimizeOptions["startStoploss"]; stoploss < optimizeOptions["endStoploss"];) {
+        let end = Math.min(stoploss + optimizeOptions["strideStoploss"] * Math.ceil(maxResults / totalRatios), optimizeOptions["endRatio"]);
+        let optimizeOptionsCopy = { ...optimizeOptions };
+        optimizeOptionsCopy["startStoploss"] = stoploss;
+        optimizeOptionsCopy["endStoploss"] = end;
+        let p = addJob(() => {
+            return new Promise(async resolveJob => {
+                // spawn child to do work
+                let child = fork(path.join(__dirname, "../helpers/worker.js"));
+                child.send({ type: "startOptimization", id, optimizeOptions: optimizeOptionsCopy });
+                child.on('message', async function (message) {
+                    console.log(message);
+                    if (message.status == "finished") {
+                        console.log("Trigger client", id);
+                        triggerChannel(id, "onOptimizeFinished", { id: `${id}` });
+                        resolveJob();
+                    }
+                });
+            });
+        });
+        if (!position) {
+            position = p
+        }
+        stoploss = end;
+    }
+
+    return position;
 }
 
 // get actions today for a backtest
@@ -223,10 +258,8 @@ function conductBacktest(strategyOptions, id) {
                             let results = { strategyOptions, symbolData: intersections, lastUpdated: new Date() };
                             // add result to database
                             let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
-                            // todo deal with oversized results by splitting document
-                            if (err) {
-                                console.log(sizeof(results));
-                            }
+                            if (err) console.log(err);
+                            await setDocumentField("results", id, "summary", getBacktestSummary(results));
                             resolve();
                         }
                     }
@@ -238,6 +271,97 @@ function conductBacktest(strategyOptions, id) {
                 child.send({ type: "startIntersection", strategyOptions, id, previousResults, partition });
             }
         });
+    })
+}
+
+// conduct an optimization with optimize options
+function conductOptimization(id, optimizeOptions) {
+    return new Promise(async (resolve, reject) => {
+        // try to get previous results
+        let previousResults = await getDocument("results", id);
+        if (typeof (previousResults["results"]) == "string") {
+            reject("Optimize Error: Backtest results does not exist!");
+            return;
+        }
+
+        // list of results
+        let results = [];
+        let strategyOptions = previousResults["results"]["strategyOptions"];
+        let newIDs = [];
+        // fill in skeleton
+        for (let stoploss = optimizeOptions["startStoploss"]; stoploss < optimizeOptions["endStoploss"]; stoploss += optimizeOptions["strideStoploss"]) {
+            for (let ratio = optimizeOptions["startRatio"]; ratio < optimizeOptions["endRatio"]; ratio += optimizeOptions["strideRatio"]) {
+                let strategyOptionsCopy = { ...strategyOptions };
+                strategyOptionsCopy["stopLossAtr"] = stoploss;
+                strategyOptionsCopy["riskRewardRatio"] = ratio;
+                results.push({
+                    strategyOptions: strategyOptionsCopy,
+                    symbolData: {},
+                    lastUpdated: previousResults["results"]["lastUpdated"]
+                })
+                newIDs.push(`${id}_optimized_${stoploss.toFixed(2)}_${ratio.toFixed(2)}`);
+            }
+        }
+
+        // create threads that split up the work
+        let finishedWorkers = 0;
+        let symbols = Object.keys(previousResults["results"]["symbolData"]);
+        let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+        let progress = 0;
+        for (let i = 0; i < NUM_THREADS; ++i) {
+            // divy up the symbols for each thread to work on
+            let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
+
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "worker.js"));
+            child.on('message', async (msg) => {
+                if (msg.status == "finished") {
+                    // enter optimized data into results
+                    let optimizedData = msg.optimizedData;
+                    Object.keys(optimizedData).forEach(symbol => {
+                        optimizedData[symbol].forEach((symbolData, i) => {
+                            results[i]["symbolData"][symbol] = symbolData;
+                        });
+                    });
+
+                    // if all worker threads are finished
+                    if (++finishedWorkers == NUM_THREADS) {
+                        console.log("Finished optimization.");
+                        // add result to database
+                        for (let resultsIndex = 0; resultsIndex < results.length; resultsIndex++) {
+                            console.log("Adding result #" + resultsIndex);
+                            let newID = newIDs[resultsIndex];
+                            // create a new document for each combination
+                            await addDocument("results", { _id: newID });
+                            // fill in the document
+                            await setDocumentField("results", newID, "results", results[resultsIndex], { subField: "symbolData" });
+                            await setDocumentField("results", newID, "summary", getBacktestSummary(results[resultsIndex]));
+                            // link optimized to base
+                            await setDocumentField("results", newID, "_optimized", { base: id });
+                        }
+
+                        // store more info in base
+                        let optimizedIDs = [];
+                        if (previousResults["_optimized"] && previousResults["_optimized"]["ids"]) {
+                            optimizedIDs = previousResults["_optimized"]["ids"];
+                        }
+                        newIDs.forEach(newID => {
+                            if (!optimizedIDs.includes(newID)) {
+                                optimizedIDs.push(newID);
+                            }
+                        });
+
+                        await setDocumentField("results", id, "_optimized", { base: id, ids: optimizedIDs });
+                        resolve();
+                    }
+                }
+                if (msg.status == "progress") {
+                    progress += msg.progress;
+                    triggerChannel(id, "onOptimizeProgressUpdate", { progress: 100 * progress / symbols.length });
+                }
+            })
+            child.send({ type: "optimizeStoplossTarget", partition, id, previousResults, optimizeOptions });
+        }
     })
 }
 
@@ -312,6 +436,157 @@ function getPrices(symbol) {
             })
             .catch(err => reject(err));
     });
+}
+
+// given an existing backtest, apply different stoploss/target options
+function optimizeStoplossTarget(strategyOptions, optimizeOptions, symbol, previousResults) {
+    return new Promise((resolve, reject) => {
+        getPrices(symbol)
+            .then(json => {
+                // if error
+                if (json["error"]) {
+                    reject(json["error"]);
+                }
+                // if valid prices
+                else {
+                    // maps date to data
+                    let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, undefined);
+                    let [mainSellIndicator, supportingSellIndicators, sellMap] = getIndicatorObjects(strategyOptions, "sell", symbol, dates, prices, opens, highs, lows, closes)
+                    let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes);
+                    // list of symbol data for each stoploss/target combination  
+                    let results = [];
+                    let count = 0;
+                    let effective = 0;
+
+                    let events = previousResults["events"];
+                    for (let stoploss = optimizeOptions["startStoploss"]; stoploss < optimizeOptions["endStoploss"]; stoploss += optimizeOptions["strideStoploss"]) {
+                        strategyOptions["stopLossAtr"] = stoploss;
+                        // length is equal to number of ratio combinations
+                        let optimizedEvents = [];
+                        let profits = [];
+                        let stoplossTargets = [];
+
+                        // initialization for each ratio combination
+                        for (let ratio = optimizeOptions["startRatio"]; ratio < optimizeOptions["endRatio"]; ratio += optimizeOptions["strideRatio"]) {
+                            optimizedEvents.push([]);
+                            profits.push({ profit: 0, percentProfit: 0 });
+                            stoplossTargets.push({});
+                        }
+
+                        // go through each buy event
+                        for (let eventIndex = 0; eventIndex < events.length; ++eventIndex) {
+                            let event = events[eventIndex];
+                            let date = event["buyDate"];
+                            let dateIndex = dates.indexOf(date);
+                            let price = prices[date];
+                            let buyDate = event["buyDate"];
+                            let buyPrice = prices[buyDate];
+                            count += optimizedEvents.length;
+
+                            if (dateIndex == -1) {
+                                continue;
+                            }
+
+                            // ignore events that were sold because of indicator
+                            if (event["reason"] == "indicator") {
+                                optimizedEvents.forEach(oe => oe.push(event));
+                                continue;
+                            }
+
+                            // set stoploss/target for all ratio combinations
+                            let sold = [];
+                            let soldCount = stoplossTargets.length;
+                            let index = 0;
+                            for (let ratio = optimizeOptions["startRatio"]; ratio < optimizeOptions["endRatio"]; ratio += optimizeOptions["strideRatio"]) {
+                                strategyOptions["riskRewardRatio"] = ratio;
+                                let stoplossTarget = stoplossTargets[index];
+                                setStoplossTarget(stoplossTarget, strategyOptions, price, date, atr, lows, highs, dates, dateIndex);
+                                sold.push(false);
+                                index += 1;
+                            }
+
+                            // keep incrementing date until all sold
+                            for (; dateIndex < dates.length; ++dateIndex) {
+                                // if all sold
+                                if (soldCount == 0) {
+                                    break;
+                                }
+
+                                let day = dates[dateIndex];
+                                // indicator sell signal
+                                if (mainSellIndicator.getAction(day, dateIndex, true) == Indicator.SELL) {
+                                    // reconstruct event
+                                    let sellPrice = prices[day];
+
+                                    // sell all that were not already sold
+                                    soldCount = 0;
+                                    sold.forEach((isSold, i) => {
+                                        if (!isSold) {
+                                            let eventCopy = getOptimizedEvent(event, buyDate, buyPrice, day, sellPrice, stoplossTargets[i], profits[i]);
+                                            optimizedEvents[i].push(eventCopy);
+                                        }
+                                    })
+                                }
+                                else {
+                                    // loop through all combinations to check for sell signal 
+                                    for (let i = 0; i < stoplossTargets.length; ++i) {
+                                        // ignore if already sold
+                                        if (sold[i]) {
+                                            continue;
+                                        }
+
+                                        // add to corresponding events list and mark off as sold
+                                        let earlyTrades = getEarlyTrades(strategyOptions, stoplossTargets[i], prices, highs, lows, dates, dateIndex);
+                                        let hasEarlyTrades = Object.keys(earlyTrades).length > 0;
+                                        if (hasEarlyTrades && earlyTrades.hasOwnProperty(buyDate)) {
+                                            let sellPrice = prices[day];
+                                            if (strategyOptions["limitOrder"]) {
+                                                sellPrice = earlyTrades[buyDate]["price"];
+                                            }
+                                            let eventCopy = getOptimizedEvent(event, buyDate, buyPrice, day, sellPrice, stoplossTargets[i], profits[i]);
+                                            optimizedEvents[i].push(eventCopy);
+                                            sold[i] = true;
+                                            soldCount -= 1;
+                                            effective += 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // append list of symboldata to results 
+                        for (let i = 0; i < optimizedEvents.length; ++i) {
+                            results.push({
+                                "profit": profits[i]["profit"],
+                                "percentProfit": profits[i]["percentProfit"] / optimizedEvents[i].length,
+                                "events": optimizedEvents[i],
+                                "holdings": previousResults["holdings"],
+                                "faulty": false
+                            });
+                        }
+                    }
+                    resolve({ results, effective, count });
+                }
+            })
+    });
+}
+
+function getOptimizedEvent(event, buyDate, buyPrice, sellDate, sellPrice, stoplossTarget, profit) {
+    let eventCopy = { ...event };
+    eventCopy["sellDate"] = sellDate;
+    eventCopy["profit"] = sellPrice - buyPrice;
+    eventCopy["percentProfit"] = (sellPrice - buyPrice) / buyPrice
+    eventCopy["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
+    let stoploss = stoplossTarget[buyDate]["stoploss"];
+    eventCopy["risk"] = (buyPrice - stoploss) / buyPrice * 100;
+
+    // remove from stoplossTarget
+    delete stoplossTarget[buyDate];
+
+    // also record profits
+    profit["profit"] += eventCopy["profit"];
+    profit["percentProfit"] += eventCopy["percentProfit"];
+    return eventCopy;
 }
 
 // given symbol, find intersections
@@ -450,12 +725,16 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         if (stopLossIndicator && stopLossIndicator.shouldStop(day) == Indicator.STOP) {
                             earlyTrades = {};
                             buyDates.forEach((bd, buyIndex) => {
-                                earlyTrades[bd] = prices[bd];
+                                earlyTrades[bd] = {
+                                    price: prices[bd],
+                                    reason: "indicator"
+                                };
                             })
                         }
+                        let hasEarlyTrades = Object.keys(earlyTrades).length > 0;
 
                         // if stoploss triggered or main seller indicator goes off and has stocks to sell
-                        if (Object.keys(earlyTrades).length > 0 || (mainSellIndicator.getAction(day, i, true) == Indicator.SELL && buyPrices.length > 0)) {
+                        if (hasEarlyTrades || (mainSellIndicator.getAction(day, i, true) == Indicator.SELL && buyPrices.length > 0)) {
                             sellSignal = true;
                         }
                         if (sellSignal) {
@@ -475,7 +754,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                             });
 
                             // if all supports agree or stoploss/taret triggered, sell the stock
-                            if (allIndicatorsSell || Object.keys(earlyTrades).length > 0) {
+                            if (allIndicatorsSell || hasEarlyTrades) {
                                 let newBuyPrices = [];
                                 let newBuyDates = [];
                                 let newStoplossTarget = {};
@@ -487,7 +766,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                     let sellPrice = prices[day];
 
                                     // if early trades exist
-                                    if (Object.keys(earlyTrades).length > 0) {
+                                    if (hasEarlyTrades) {
                                         // dont sell if stoploss/target not met
                                         if (!earlyTrades.hasOwnProperty(buyDate)) {
                                             if (mainSellIndicator.getAction(day, i, true) != Indicator.SELL) {
@@ -500,9 +779,13 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                         // adjust the sell price to stoploss/target
                                         else {
                                             if (strategyOptions["limitOrder"]) {
-                                                sellPrice = earlyTrades[buyDate];
+                                                sellPrice = earlyTrades[buyDate]["price"];
                                             }
                                         }
+                                        event["reason"] = earlyTrades[buyDate]["reason"];
+                                    }
+                                    else {
+                                        event["reason"] = "indicator"
                                     }
 
                                     // populate transaction information
@@ -511,7 +794,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                     event["profit"] = sellPrice - buyPrice;
                                     event["percentProfit"] = (sellPrice - buyPrice) / buyPrice
                                     event["span"] = daysBetween(new Date(buyDate), new Date(day));
-                                    if (stoplossTarget.hasOwnProperty(buyDate)) {
+                                    if (stoplossTarget[buyDate] && stoplossTarget[buyDate]["stoploss"]) {
                                         let stoploss = stoplossTarget[buyDate]["stoploss"];
                                         event["risk"] = (buyPrice - stoploss) / buyPrice * 100;
                                     }
@@ -628,20 +911,20 @@ function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, a
     let target = undefined;
 
     // find static stoploss trades (deprecated in front-end)
-    if (strategyOptions["stopLossLow"]) {
+    if (strategyOptions["stopLossLow"] != undefined) {
         stoploss = buyPrice * strategyOptions["stopLossLow"];
     }
-    if (strategyOptions["stopLossHigh"]) {
+    if (strategyOptions["stopLossHigh"] != undefined) {
         target = buyPrice * strategyOptions["stopLossHigh"];
     }
 
-    if (strategyOptions["targetAtr"]) {
+    if (strategyOptions["targetAtr"] != undefined) {
         let multiplier = strategyOptions["targetAtr"];
         target = buyPrice + multiplier * atr.getValue(buyDate);
     }
 
     // use ATR for stoploss
-    if (strategyOptions["stopLossAtr"]) {
+    if (strategyOptions["stopLossAtr"] != undefined) {
         let multiplier = strategyOptions["stopLossAtr"];
         let low = lows[buyDate];
 
@@ -665,7 +948,7 @@ function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, a
     }
 
     // set target based on stoploss
-    if (stoploss && strategyOptions["riskRewardRatio"]) {
+    if (stoploss && strategyOptions["riskRewardRatio"] != undefined) {
         let ratio = strategyOptions["riskRewardRatio"];
         target = buyPrice + ratio * (buyPrice - stoploss);
     }
@@ -715,10 +998,16 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
         let stoploss = stoplossTarget[bd]["stoploss"];
         let target = stoplossTarget[bd]["target"];
         if (stoploss && low < stoploss) {
-            earlyTrades[bd] = stoploss;
+            earlyTrades[bd] = {
+                price: stoploss,
+                reason: "stoploss"
+            }
         }
         if (target && high > target) {
-            earlyTrades[bd] = target;
+            earlyTrades[bd] = {
+                price: target,
+                reason: "target"
+            };
         }
     });
 
@@ -726,7 +1015,10 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
     if (strategyOptions["maxDays"]) {
         Object.keys(stoplossTarget).forEach((bd) => {
             if (daysBetween(new Date(bd), new Date(day)) > strategyOptions["maxDays"]) {
-                earlyTrades[bd] = price;
+                earlyTrades[bd] = {
+                    price: price,
+                    reason: "overdue"
+                };
             }
         });
     }
@@ -744,4 +1036,4 @@ function getConditions(mainIndicator, supportingIndicators, date) {
     return conditions
 }
 
-module.exports = { backtest, updateBacktest, getActionsToday, conductBacktest, findIntersections, getSymbols, getAdjustedData, getIndicator };
+module.exports = { backtest, optimize, updateBacktest, getActionsToday, conductBacktest, conductOptimization, findIntersections, optimizeStoplossTarget, getSymbols, getAdjustedData, getIndicator };

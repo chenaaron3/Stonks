@@ -5,10 +5,10 @@ const { fork } = require('child_process');
 
 // own helpers
 const csv = require('csv');
-let { containsID, addDocument, getDocument, addActiveResult, deleteActiveResult, deleteDocument } = require('../helpers/mongo');
-let { makeid, daysBetween } = require('../helpers/utils');
+let { containsID, addDocument, getDocument, addActiveResult, deleteActiveResult, deleteDocument, getDocumentField, setDocumentField } = require('../helpers/mongo');
+let { makeid, daysBetween, getBacktestSummary } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
-let { backtest, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
+let { backtest, optimize, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
 let { getLatestPrice, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
@@ -135,6 +135,35 @@ router.get("/results", async (req, res) => {
     }
 })
 
+// get optimization results
+router.get("/optimizedStoplossTarget", async (req, res) => {
+    let id = req.query.id;
+    let doc = await getDocument("results", id);
+    let optimized = doc["_optimized"];
+    if (optimized) {
+        if (id != optimized["base"]) {
+            doc = await getDocument("results", optimized["base"]);
+        }
+        let results = {};
+        // fetch all docs
+        for (let i = 0; i < optimized["ids"].length; ++i) {
+            let optimizedID = optimized["ids"][i];
+            let summary = await getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"]);
+            if (!summary["summary"]) {
+                console.log("Upating summary for " + optimizedID);
+                let d = await getDocument("results", optimizedID);
+                summary = getBacktestSummary(d["results"]);
+                await setDocumentField("results", optimizedID, "summary", summary);
+            }
+            results[optimizedID] = { summary: summary["summary"]};
+        }
+        res.json(results);
+    }
+    else {
+        res.json({ error: "Backtest not optimized yet!" });
+    }
+})
+
 // delete backtest results
 router.delete("/deleteResults/:id", async (req, res) => {
     let id = req.params.id;
@@ -157,7 +186,7 @@ router.delete("/deleteResults/:id", async (req, res) => {
         found = false;
     }
 
-    if (found) {
+    if (id.includes("optimized") || found) {
         res.json({ status: "Cannot be deleted. Being used by others." });
     }
     else {
@@ -260,6 +289,24 @@ router.post("/backtest", async (req, res) => {
     else {
         res.json({ id, status: `Backtest will start within ${30 * position} minutes!` });
     }
+});
+
+// optimize a backtest 
+router.post("/optimize", async (req, res) => {
+    // get options from client
+    let optimizeOptions = req.body;
+    let id = req.body["id"];
+
+    let position = optimize(id, optimizeOptions);
+
+    // send response so doesn't hang and gets the unique id
+    if (position == 0) {
+        res.json({ id, status: "Starting your optimization!" });
+    }
+    else {
+        res.json({ id, status: `Optimization will start within ${30 * position} minutes!` });
+    }
 })
+
 
 module.exports = router;

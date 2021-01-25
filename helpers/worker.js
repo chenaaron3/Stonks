@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 
-let { conductBacktest, findIntersections } = require('../helpers/backtest');
+let { conductBacktest, findIntersections, conductOptimization, optimizeStoplossTarget } = require('../helpers/backtest');
 let { updateStock, gatherData, checkSplit } = require('../helpers/stock');
 
 let logDirectory = path.join(__dirname, "../logs");
@@ -9,6 +9,7 @@ let backtestPath = path.join(logDirectory, "backtestLogs.txt");
 let intersectionPath = path.join(logDirectory, "intersectionLogs.txt");
 let updateLogs = path.join(logDirectory, "updateLogs.txt");
 let checkLogs = path.join(logDirectory, "checkLogs.txt");
+let optimizeLogs = path.join(logDirectory, "optimizeLogs.txt");
 let datasetPath = path.join(logDirectory, "datasetLogs.txt");
 
 process.on('message', async (msg) => {
@@ -22,12 +23,12 @@ process.on('message', async (msg) => {
         await conductBacktest(msg.strategyOptions, msg.id);
         console.log("Conduct Backtest Finished");
         // notify parent
-        process.send({ status: "finished" });
-
-        // log end information
-        let time = Math.floor((Date.now() - start) / 1000);
-        fs.appendFileSync(backtestPath, `Worker ${msg.id}: Finished backtest in ${time} seconds\n`, { encoding: "utf-8" });
-        process.exit(0);
+        process.send({ status: "finished" }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(backtestPath, `Worker ${msg.id}: Finished backtest in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
     }
     // thread within backtesting to find buy/sell events
     else if (msg.type == "startIntersection") {
@@ -67,12 +68,68 @@ process.on('message', async (msg) => {
             }
         }
         // notify parent
-        process.send({ status: "finished", intersections });
+        process.send({ status: "finished", intersections }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(intersectionPath, `Worker ${msg.id}: Finished backtest for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
+    }
+    // thread to optimize stoploss and targets
+    else if (msg.type == "startOptimization") {
+        // log start information
+        const start = Date.now();
+        fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Starting optimization\n`, { encoding: "utf-8" });
 
-        // log end information
-        let time = Math.floor((Date.now() - start) / 1000);
-        fs.appendFileSync(intersectionPath, `Worker ${msg.id}: Finished backtest for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
-        setTimeout(() => { process.exit(0); }, 1000)
+        // conduct actual optimization
+        await conductOptimization(msg.id, msg.optimizeOptions);
+        console.log("Conduct Optimization Finished");
+        // notify parent
+        process.send({ status: "finished" }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Finished optimization in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
+    }
+    // thread within backtesting to find buy/sell events
+    else if (msg.type == "optimizeStoplossTarget") {
+        // log start information
+        let symbols = msg.partition;
+        const start = Date.now();
+        let startTicker = symbols[0];
+        let endTicker = symbols[symbols.length - 1];
+        fs.appendFileSync(optimizeLogs,
+            `Worker ${msg.id}: optimizing tickers ${startTicker} to ${endTicker}\n`, { encoding: "utf-8" });
+
+        // conduct actual optimization
+        let optimizedData = {};
+        let updateStep = Math.floor(symbols.length / 100);
+        for (let i = 0; i < symbols.length; ++i) {
+            let symbol = symbols[i];
+
+            // get info from previous results
+            let previousResults = msg.previousResults["results"]["symbolData"][symbol];
+
+            // find results for the symbol
+            let optimizedSymbol = await optimizeStoplossTarget(msg.previousResults["results"]["strategyOptions"], msg.optimizeOptions, symbol, previousResults);
+            optimizedData[symbol] = optimizedSymbol["results"];
+            console.log(`${symbol} => ${(optimizedSymbol["effective"] / optimizedSymbol["count"] * 100).toFixed(0)}% (${optimizedSymbol["effective"] + "/" + optimizedSymbol["count"]})`);
+
+            // update progress
+            if (i != 0 && i % updateStep == 0) {
+                process.send({ status: "progress", progress: updateStep });
+            }
+        }
+        // notify parent
+        process.send({ status: "finished", optimizedData }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Finished optimizing tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
+
+
     }
     // thread to run updates
     else if (msg.type == "startUpdate") {
@@ -93,13 +150,13 @@ process.on('message', async (msg) => {
             await updateStock(document, updateDate);
         }
         // notify parent
-        process.send({ status: "finished" });
-
-        // log end information
-        let time = Math.floor((Date.now() - start) / 1000);
-        fs.appendFileSync(updateLogs,
-            `Worker ${msg.updateID}: Finished update for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
-        setTimeout(() => { process.exit(0); }, 1000)
+        process.send({ status: "finished" }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(updateLogs,
+                `Worker ${msg.updateID}: Finished update for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
+            process.exit(0);
+        });
     }
     // thread to check for splits
     else if (msg.type == "startSplitCheck") {
@@ -119,13 +176,13 @@ process.on('message', async (msg) => {
             changes += await checkSplit(document);
         }
         // notify parent
-        process.send({ status: "finished", changes });
-
-        // log end information
-        let time = Math.floor((Date.now() - start) / 1000);
-        fs.appendFileSync(checkLogs,
-            `Worker ${msg.jobID}: Finished split check for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
-        setTimeout(() => { process.exit(0); }, 1000)
+        process.send({ status: "finished", changes }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(checkLogs,
+                `Worker ${msg.jobID}: Finished split check for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" })
+            process.exit(0);
+        });
     }
     // thread to create dataset for ML
     else if (msg.type == "startCreatingDataset") {
@@ -140,11 +197,11 @@ process.on('message', async (msg) => {
         // conduct actual data gathering
         let data = await gatherData(symbols, msg.result, msg.window);
         // notify parent
-        process.send({ status: "finished", ...data });
-
-        // log end information
-        let time = Math.floor((Date.now() - start) / 1000);
-        fs.appendFileSync(datasetPath, `Worker ${msg.id}: Finished gathering data for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
-        setTimeout(() => { process.exit(0); }, 1000)
+        process.send({ status: "finished", ...data }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(datasetPath, `Worker ${msg.id}: Finished gathering data for tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
     }
 });

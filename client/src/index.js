@@ -5,6 +5,7 @@ import ReviewPage from './pages/ReviewPage';
 import CreatePage from './pages/CreatePage';
 import SummaryPage from './pages/SummaryPage';
 import SimulatePage from './pages/SimulatePage';
+import OptimizePage from './pages/OptimizePage';
 import WatchlistPage from './pages/WatchlistPage';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'react-redux'
@@ -47,6 +48,7 @@ ReactDOM.render(
             <Route path="/review" component={ReviewPage} />
             <Route path="/summary" component={SummaryPage} />
             <Route path="/simulate" component={SimulatePage} />
+            <Route path="/optimize" component={OptimizePage} />
             <Route path="/watchlist" component={WatchlistPage} />
             <Route path="/:backtestID" render={(props) => <CreatePage {...props} />} />
           </Switch>

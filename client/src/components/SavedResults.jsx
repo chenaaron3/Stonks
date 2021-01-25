@@ -49,9 +49,9 @@ class SavedResults extends React.Component {
                     alert(results["error"]);
                 }
                 else {
-                    // save to local storage if not alreay in there
+                    // save to local storage if not already in there
                     let savedResults = JSON.parse(localStorage.getItem("savedResults"));
-                    if (!savedResults.some(r => r["id"] == id)) {
+                    if (!id.includes("optimized") && !savedResults.some(r => r["id"] == id)) {
                         savedResults.push({ id, display: getBacktestDisplayName(results["strategyOptions"]) });
                         this.props.setSavedResults(savedResults);
                         localStorage.setItem("savedResults", JSON.stringify(savedResults));

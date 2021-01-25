@@ -3,11 +3,12 @@ var router = express.Router();
 var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
 let { resetSymbol } = require('../helpers/stock');
-let { containsID, getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
-let { getIndicator, getActionsToday } = require('../helpers/backtest');
+let { containsID, getDocument, setDocumentField, addDocument, getDocumentField } = require('../helpers/mongo');
+let { getIndicator, getActionsToday, optimizeStoplossTarget, optimize } = require('../helpers/backtest');
 let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
+let { getBacktestSummary } = require('../helpers/utils');
 const bson = require('bson');
 const DOC_LIMIT = 16777216;
 
@@ -48,24 +49,23 @@ router.get('/job', async function (req, res) {
 router.get("/test", async function (req, res) {
     let symbol = req.query.symbol;
 
-    if (!await containsID("results", "test")) {
-        await addDocument("results", { _id: "test" });
-    }
+    let optimizeOptions = {
+        startStoploss: 0,
+        endStoploss: 1,
+        strideStoploss: .1,
+        startRatio: 1,
+        endRatio: 3,
+        strideRatio: .2
 
-    let data = [];
-    for (i = 0; i < 1000000; ++i) {
-        data.push("1234567890");
-    }
-    try {
-        await setDocumentField("results", "test", "data", { subField: data }, { subField: "subField" });
-    }
-    catch (Exception) {
-        console.log(Exception)
-    }
+    };
+    let id = "ORtuAa7Elz";
 
-    console.log(await getDocument("results", "test"));
+    let doc = await getDocument("results", id);
+    console.log(getBacktestSummary(doc["results"]));
 
-    res.send("ok")
+    console.log(await getDocumentField("results", id, ["summary", "results.strategyOptions"]))
+
+    res.json("ok");
 });
 
 router.post('/watchlist', async function (req, res) {

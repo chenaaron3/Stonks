@@ -309,8 +309,61 @@ function getLow(dates, prices, period, dateIndex) {
             res = price;
         }
     }
-    
+
     return res;
+}
+
+function getBacktestSummary(results) {
+    let winSpan = 0;
+    let lossSpan = 0;
+    let winProfit = 0;
+    let lossProfit = 0;
+    let winPercentProfit = 0;
+    let lossPercentProfit = 0;
+    let numWins = 0;
+    let numLosses = 0;
+
+    let symbols = Object.keys(results["symbolData"]);
+    symbols.forEach(symbol => {
+        results["symbolData"][symbol]["events"].forEach(event => {
+            if (Math.abs(event["profit"]) > 100000) {
+                return;
+            }
+
+            if (event["profit"] < 0) {
+                numLosses += 1;
+                lossSpan += event["span"];
+                lossProfit += event["profit"];
+                lossPercentProfit += event["percentProfit"];
+            }
+            else if (event["profit"] > 0) {
+                numWins += 1;
+                winSpan += event["span"];
+                winProfit += event["profit"];
+                winPercentProfit += event["percentProfit"];
+            }
+        })
+    })
+
+    // span adjustments
+    winSpan /= numWins;
+    winSpan = Math.floor(winSpan);
+    lossSpan /= numLosses;
+    lossSpan = Math.floor(lossSpan);
+
+    // percent profit adjustments
+    winPercentProfit /= numWins;
+    winPercentProfit = (100 * winPercentProfit);
+    lossPercentProfit /= numLosses;
+    lossPercentProfit = (100 * lossPercentProfit);
+
+    let winRate = (numWins) / (numWins + numLosses);
+    let annualWinPercentProfit = winPercentProfit * 360 / winSpan * (winRate);
+    let annualLossPercentProfit = lossPercentProfit * 360 / lossSpan * (1 - winRate);
+
+    return {
+        profit: (winProfit + lossProfit), percentProfit: (annualWinPercentProfit + annualLossPercentProfit)
+    }
 }
 
 // format date to api needs
@@ -420,5 +473,5 @@ function shallowEqual(object1, object2) {
 
 module.exports = {
     isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, getStochasticOscillator,
-    formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual
+    formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual, getBacktestSummary
 };

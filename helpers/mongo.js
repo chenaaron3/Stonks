@@ -78,14 +78,11 @@ function getCollection(collectionName) {
 function addDocument(collectionName, document) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
-		console.log("Add doc to ", collectionName, "with id", document["_id"])
-
 		// get collection
 		getCollection(collectionName)
 			.then(async (collection) => {
 				// if document not in collection already
-				let count = await collection.countDocuments({"_id": document["_id"] });
-				console.log(count);
+				let count = await collection.countDocuments({ "_id": document["_id"] });
 				if (count == 0) {
 					// Add the document
 					collection.insertOne(document, (error) => {
@@ -200,7 +197,9 @@ function setDocumentField(collectionName, id, fieldName, value, splitOptions) {
 							if (bson.calculateObjectSize(value)) {
 								console.log("TOO LARGE");
 								splitField(collectionName, id, fieldName, value, splitOptions)
-									.then(() => resolve())
+									.then(() => {
+										resolve()
+									})
 									.catch(err => {
 										console.log("ERR: ", err);
 										reject(err)
@@ -219,6 +218,28 @@ function setDocumentField(collectionName, id, fieldName, value, splitOptions) {
 							resolve();
 						}
 					});
+			})
+	});
+}
+
+async function getDocumentField(collectionName, id, fieldNames) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		getCollection(collectionName)
+			.then(async (collection) => {
+				let projection = {};
+				fieldNames.forEach(fn => projection[fn] = true)
+				let results = collection.find({
+					"_id": id
+				}).project(projection);
+
+				let array = await results.toArray();
+				if (array.length > 0) {
+					resolve(array[0]);
+				}
+				else {
+					resolve(undefined);
+				}
 			})
 	});
 }
@@ -259,6 +280,7 @@ async function splitField(collectionName, id, fieldName, value, splitOptions) {
 				for (let i = 0; i < numFragments; ++i) {
 					fragments.push(offendingField.slice(i * fragmentSize, (i + 1) * fragmentSize));
 				}
+				// clear value
 				if (splitOptions["subField"]) {
 					value[splitOptions["subField"]] = [];
 				}
@@ -278,11 +300,12 @@ async function splitField(collectionName, id, fieldName, value, splitOptions) {
 						.forEach(k => dict[k] = offendingField[k]);
 					fragments.push(dict);
 				}
+				// clear value
 				if (splitOptions["subField"]) {
-					value[splitOptions["subField"]] = [];
+					value[splitOptions["subField"]] = {};
 				}
 				else {
-					value = [];
+					value = {};
 				}
 			}
 
@@ -392,6 +415,7 @@ module.exports = {
 	addDocument,
 	getDocument,
 	setDocumentField,
+	getDocumentField,
 	deleteDocument,
 	containsID,
 	setStockInfo,

@@ -4240,3 +4240,12 @@ Worker AzAMxXxz1a: Finished backtest for tickers DESP to JFKKR in 292 seconds
 Worker AzAMxXxz1a: Finished backtest for tickers PZC to ZYXI in 309 seconds
 Worker AzAMxXxz1a: Finished backtest for tickers A to DEO in 314 seconds
 Worker AzAMxXxz1a: Finished backtest for tickers JFKKU to PYZ in 317 seconds
+Worker ORtuAa7Elz: Finding intersections for tickers A to ZYXI
+Worker ORtuAa7Elz: Finding intersections for tickers A to DENN
+Worker ORtuAa7Elz: Finding intersections for tickers DEO to JFIN
+Worker ORtuAa7Elz: Finding intersections for tickers JFK to PYS
+Worker ORtuAa7Elz: Finding intersections for tickers PYT to ZYXI
+Worker ORtuAa7Elz: Finished backtest for tickers PYT to ZYXI in 284 seconds
+Worker ORtuAa7Elz: Finished backtest for tickers JFK to PYS in 287 seconds
+Worker ORtuAa7Elz: Finished backtest for tickers A to DENN in 294 seconds
+Worker ORtuAa7Elz: Finished backtest for tickers DEO to JFIN in 296 seconds
