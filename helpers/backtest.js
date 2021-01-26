@@ -127,9 +127,10 @@ function updateBacktest(id) {
 
 // queues an optimization
 function optimize(id, optimizeOptions) {
-    let maxResults = 10;
+    let maxResults = 20;
     let totalRatios = (optimizeOptions["endRatio"] - optimizeOptions["startRatio"]) / optimizeOptions["strideRatio"];
     let position = undefined;
+    // split up jobs, cut off stoploss
     for (let stoploss = optimizeOptions["startStoploss"]; stoploss < optimizeOptions["endStoploss"];) {
         let end = Math.min(stoploss + optimizeOptions["strideStoploss"] * Math.ceil(maxResults / totalRatios), optimizeOptions["endRatio"]);
         let optimizeOptionsCopy = { ...optimizeOptions };
@@ -150,7 +151,7 @@ function optimize(id, optimizeOptions) {
                 });
             });
         });
-        if (!position) {
+        if (position == undefined) {
             position = p
         }
         stoploss = end;

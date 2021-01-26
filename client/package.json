@@ -10,6 +10,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "color-interpolate": "^1.0.5",
     "distinct-colors": "^3.0.0",
     "neumorphism-react": "^1.1.1",
     "pusher-js": "^6.0.3",

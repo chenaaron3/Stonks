@@ -983,3 +983,11 @@ Worker AzAMxXxz1a: Finished backtest in 321 seconds
 Worker ORtuAa7Elz: Starting backtest
 Worker ORtuAa7Elz: Starting backtest
 Worker ORtuAa7Elz: Finished backtest in 315 seconds
+Worker Z55dQ8ypoB: Starting backtest
+Worker Z55dQ8ypoB: Finished backtest in 372 seconds
+Worker Yl29UyWovP: Starting backtest
+Worker Yl29UyWovP: Finished backtest in 448 seconds
+Worker W17TABXooq: Starting backtest
+Worker W17TABXooq: Finished backtest in 426 seconds
+Worker p9MUxSyIKG: Starting backtest
+Worker p9MUxSyIKG: Finished backtest in 372 seconds

@@ -19,6 +19,7 @@ import Slider from '@material-ui/core/Slider';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import Box from '@material-ui/core/Box';
+import Button from '@material-ui/core/Button';
 
 class Simulate extends React.Component {
     constructor(props) {
@@ -34,15 +35,19 @@ class Simulate extends React.Component {
 
         this.holdings = [];
         this.scoreTypes = ["Percent Profit", "Dollar Profit", "Win Rate"];
+
+        this.minRisk = 5;
+        this.maxRisk = 50;
+        this.stepRisk = 5;
     }
 
     componentDidMount() {
-        this.simulate(false);
+        this.simulate(true);
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.id != this.props.id) {
-            this.simulate(false);
+            this.simulate(true);
         }
     }
 
@@ -84,7 +89,7 @@ class Simulate extends React.Component {
         return score;
     }
 
-    simulate = (forceScore) => {
+    simulate = (forGUI) => {
         // store all events based on their buy dates
         let eventsByDate = {};
         let dates = new Set();
@@ -227,35 +232,68 @@ class Simulate extends React.Component {
         })
         last["equity"] = equity;
 
-        // calculate the returns for each year
-        let currentYear = 0;
-        equityData.forEach(ed => {
-            let d = new Date();
-            d.setTime(ed["date"]);
-            let y = d.getFullYear();
+        if (forGUI) {
+            // calculate the returns for each year
+            let currentYear = 0;
+            equityData.forEach(ed => {
+                let d = new Date();
+                d.setTime(ed["date"]);
+                let y = d.getFullYear();
 
-            // first record of year
-            if (y != currentYear) {
-                // update last year's returns
-                if (returnsData.length > 0) {
-                    let rd = returnsData[returnsData.length - 1];
-                    rd["returns"] = (ed["equity"] - rd["startingEquity"]) / rd["startingEquity"] * 100;
+                // first record of year
+                if (y != currentYear) {
+                    // update last year's returns
+                    if (returnsData.length > 0) {
+                        let rd = returnsData[returnsData.length - 1];
+                        rd["returns"] = (ed["equity"] - rd["startingEquity"]) / rd["startingEquity"] * 100;
+                    }
+                    returnsData.push({ year: y, startingEquity: ed["equity"] });
                 }
-                returnsData.push({ year: y, startingEquity: ed["equity"] });
+
+                // update current year
+                currentYear = y;
+            })
+
+            // calculate returns for last year
+            last = returnsData[returnsData.length - 1];
+            if (!last.hasOwnProperty("returns")) {
+                last["returns"] = (equityData[equityData.length - 1]["equity"] - last["startingEquity"]) / last["startingEquity"] * 100;
             }
 
-            // update current year
-            currentYear = y;
-        })
-
-        // calculate returns for last year
-        last = returnsData[returnsData.length - 1];
-        if (!last.hasOwnProperty("returns")) {
-            last["returns"] = (equityData[equityData.length - 1]["equity"] - last["startingEquity"]) / last["startingEquity"] * 100;
+            this.setState({ equityData, returnsData, loading: false });
+            this.props.setSimulationTransactions(transactions);
         }
 
-        this.setState({ equityData, returnsData, loading: false });
-        this.props.setSimulationTransactions(transactions);
+        return equity;
+    }
+
+    findOptimal = async () => {
+        let optimalSetting = { scoreBy: "", maxRisk: 0 };
+        let optimalEquity = 0;
+        for (let i = 0; i < this.scoreTypes.length; ++i) {
+            if (i == 1) { continue }
+            let scoreBy = this.scoreTypes[i];
+            for (let risk = this.minRisk; risk <= this.maxRisk; risk += this.stepRisk) {
+                let equity = await this.tryOptimal(scoreBy, risk);
+                if (equity > optimalEquity) {
+                    optimalEquity = equity;
+                    optimalSetting["scoreBy"] = scoreBy;
+                    optimalSetting["maxRisk"] = risk;
+                }
+            }
+        }
+        this.setState({ ...optimalSetting }, () => this.simulate(true));
+        return optimalEquity;
+    }
+
+    tryOptimal = (scoreBy, maxRisk) => {
+        console.log(scoreBy, maxRisk);
+        return new Promise(res => {
+            this.setState({ scoreBy, maxRisk }, () => {
+                let finalEquity = this.simulate(false);
+                res(finalEquity);
+            });
+        })
     }
 
     formatDate = (date) => {
@@ -310,7 +348,7 @@ class Simulate extends React.Component {
                                 aria-labelledby="discrete-slider"
                                 valueLabelDisplay="auto"
                                 value={this.state.range}
-                                onChange={(e, v) => { this.setState({ range: v }, () => { this.simulate(false) }) }}
+                                onChange={(e, v) => { this.setState({ range: v }, () => { this.simulate(true) }) }}
                                 step={5}
                                 marks
                                 min={5}
@@ -328,7 +366,7 @@ class Simulate extends React.Component {
                                 value={this.state.maxPositions}
                                 onChange={(e, v) => {
                                     this.setState({ maxPositions: v, positionSize: Math.min(Math.floor(100 / v), this.state.positionSize) },
-                                        () => { this.simulate(false) })
+                                        () => { this.simulate(true) })
                                 }}
                                 step={1}
                                 marks
@@ -345,7 +383,7 @@ class Simulate extends React.Component {
                                 aria-labelledby="discrete-slider"
                                 valueLabelDisplay="auto"
                                 value={this.state.positionSize}
-                                onChange={(e, v) => { this.setState({ positionSize: v }, () => { this.simulate(false) }) }}
+                                onChange={(e, v) => { this.setState({ positionSize: v }, () => { this.simulate(true) }) }}
                                 step={1}
                                 marks
                                 min={1}
@@ -361,13 +399,17 @@ class Simulate extends React.Component {
                                 aria-labelledby="discrete-slider"
                                 valueLabelDisplay="auto"
                                 value={this.state.maxRisk}
-                                onChange={(e, v) => { this.setState({ maxRisk: v }, () => { this.simulate(false) }) }}
-                                step={5}
+                                onChange={(e, v) => { this.setState({ maxRisk: v }, () => { this.simulate(true) }) }}
+                                step={this.stepRisk}
                                 marks
-                                min={1}
-                                max={100}
+                                min={this.minRisk}
+                                max={this.maxRisk}
                             />
                         </FormControl>
+                    </Box>
+                    <Box ml="1vw" ><Button variant="contained" color="primary" onClick={this.findOptimal}>
+                        Find Optimal
+                        </Button>
                     </Box>
                 </div>
             </div>

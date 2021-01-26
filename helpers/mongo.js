@@ -157,7 +157,17 @@ function deleteDocument(collectionName, documentID) {
 		// get collection
 		getCollection(collectionName)
 			.then(async (collection) => {
-				// get document
+				// get document to check for fragments
+				let frag = await getDocumentField(collectionName, documentID, ["_fragmentData"]);
+				if (frag && frag["_fragmentData"]) {
+					for (let i = 0; i < frag["_fragmentData"]["ids"].length; ++i) {
+						let fragID = frag["_fragmentData"]["ids"][i];
+						await collection.deleteOne({ "_id": fragID });
+						console.log("Deleting frag");
+					}
+				}
+
+				// delete main document
 				await collection.deleteOne({
 					"_id": documentID
 				});
@@ -191,7 +201,7 @@ function setDocumentField(collectionName, id, fieldName, value, splitOptions) {
 				},
 					{
 						$set: { [fieldName]: value }
-					}, (err, res) => {
+					}, async (err, res) => {
 						if (err) {
 							// check if size is too large
 							if (bson.calculateObjectSize(value)) {
@@ -211,9 +221,9 @@ function setDocumentField(collectionName, id, fieldName, value, splitOptions) {
 							}
 						}
 						else {
-							let doc = getDocument(collectionName, id);
-							if (doc["_fragmentData"] && doc["_fragmentData"]["field"] == fieldName) {
-								setDocumentField(collectionName, id, "_fragmentData", undefined);
+							let doc = await getDocumentField(collectionName, id, ["_fragmentData"]);
+							if (doc && doc["_fragmentData"] && doc["_fragmentData"]["field"] == fieldName) {
+								await setDocumentField(collectionName, id, "_fragmentData", undefined);
 							}
 							resolve();
 						}
@@ -317,11 +327,10 @@ async function splitField(collectionName, id, fieldName, value, splitOptions) {
 				fragmentData["ids"].push(fragID);
 			}
 
-			// cache fragment data
-			await setDocumentField(collectionName, id, "_fragmentData", fragmentData);
-
 			// clear the offending field
 			await setDocumentField(collectionName, id, fieldName, value);
+			// cache fragment data
+			await setDocumentField(collectionName, id, "_fragmentData", fragmentData);
 
 			console.log(fragmentData)
 			resolve();

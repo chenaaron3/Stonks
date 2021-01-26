@@ -58,12 +58,10 @@ router.get("/test", async function (req, res) {
         strideRatio: .2
 
     };
-    let id = "ORtuAa7Elz";
+    let id = "UamYLjA4k2_optimized_0.00_5.75";
 
-    let doc = await getDocument("results", id);
+    let doc = await getDocument("results", id);    
     console.log(getBacktestSummary(doc["results"]));
-
-    console.log(await getDocumentField("results", id, ["summary", "results.strategyOptions"]))
 
     res.json("ok");
 });

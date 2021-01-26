@@ -143,21 +143,23 @@ router.get("/optimizedStoplossTarget", async (req, res) => {
     if (optimized) {
         if (id != optimized["base"]) {
             doc = await getDocument("results", optimized["base"]);
+            optimized = doc["_optimized"];
         }
         let results = {};
         // fetch all docs
         for (let i = 0; i < optimized["ids"].length; ++i) {
             let optimizedID = optimized["ids"][i];
-            let summary = await getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"]);
-            if (!summary["summary"]) {
+            doc = await getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"]);
+            let summary = doc["summary"];
+            if (!summary || !summary["profit"]) {
                 console.log("Upating summary for " + optimizedID);
                 let d = await getDocument("results", optimizedID);
                 summary = getBacktestSummary(d["results"]);
                 await setDocumentField("results", optimizedID, "summary", summary);
             }
-            results[optimizedID] = { summary: summary["summary"]};
+            results[optimizedID] = { summary: summary, strategyOptions: doc["results"]["strategyOptions"] };
         }
-        res.json(results);
+        res.json({ id: optimized["base"], results });
     }
     else {
         res.json({ error: "Backtest not optimized yet!" });
@@ -190,6 +192,16 @@ router.delete("/deleteResults/:id", async (req, res) => {
         res.json({ status: "Cannot be deleted. Being used by others." });
     }
     else {
+        // delete all the linked optimized docs if any
+        let optimized = await getDocumentField("results", id, ["_optimized"]);
+        if (optimized && optimized["_optimized"]) {
+            let optimizedIDs = optimized["_optimized"]["ids"];
+            console.log("Deleting " + optimizedIDs.length + " optimized docs");
+            for(let i = 0; i < optimizedIDs.length; ++i) {
+                await deleteDocument("results", optimizedIDs[i]);
+            }
+        }
+        // delete main doc
         deleteDocument("results", id);
         res.json({ status: "Deleted" });
     }
@@ -296,6 +308,12 @@ router.post("/optimize", async (req, res) => {
     // get options from client
     let optimizeOptions = req.body;
     let id = req.body["id"];
+
+    // get the base id
+    if (id.includes("optimized")) {
+        let optimized = await getDocumentField("results", id, ["_optimized"]);
+        id = optimized["_optimized"]["base"];
+    }
 
     let position = optimize(id, optimizeOptions);
 
