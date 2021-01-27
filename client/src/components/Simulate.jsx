@@ -76,9 +76,12 @@ class Simulate extends React.Component {
             }
             count += 1;
         }
-        score["Percent Profit"] /= count;
-        score["Dollar Profit"] /= count;
-        score["Win Rate"] = wins / count;
+
+        if(count > 0) {
+            score["Percent Profit"] /= count;
+            score["Dollar Profit"] /= count;
+            score["Win Rate"] = wins / count;
+        }
 
         scoreData["realizedIndex"] = newRealizedIndex;
         scoreData["count"] = count;
@@ -89,7 +92,10 @@ class Simulate extends React.Component {
         return score;
     }
 
-    simulate = (forGUI) => {
+    simulate = (forGUI, state) => {
+        if (forGUI) {
+            state = this.state;
+        }
         // store all events based on their buy dates
         let eventsByDate = {};
         let dates = new Set();
@@ -132,14 +138,14 @@ class Simulate extends React.Component {
         });
 
         // start simulation
-        let equity = this.state.startSize;
+        let equity = state.startSize;
         let buyingPower = equity;
         let equityData = []; // equity after reach trade
         let returnsData = []; // percent annual returns
         let transactions = {}; // maps year to list of events
         let startDate = new Date();
         let start = false;
-        startDate.setFullYear(startDate.getFullYear() - this.state.range);
+        startDate.setFullYear(startDate.getFullYear() - state.range);
         for (let i = 0; i < dates.length; ++i) {
             let date = dates[i];
 
@@ -156,16 +162,16 @@ class Simulate extends React.Component {
             }
 
             // if looking for buyers
-            if (this.holdings.length < this.state.maxPositions) {
+            if (this.holdings.length < state.maxPositions) {
                 let events = eventsByDate[date];
                 if (events) {
-                    events.sort((a, b) => b["score"][this.state.scoreBy] - a["score"][this.state.scoreBy]);
+                    events.sort((a, b) => b["score"][state.scoreBy] - a["score"][state.scoreBy]);
                     // keep buying until holdings maxed
                     for (let i = 0; i < events.length; ++i) {
                         let event = events[i];
 
                         // check for risk
-                        if (event["risk"] && event["risk"] > this.state.maxRisk) {
+                        if (event["risk"] && event["risk"] > state.maxRisk) {
                             continue;
                         }
 
@@ -180,12 +186,12 @@ class Simulate extends React.Component {
 
                         // Calculate buy amount
                         // Metho1: calculate buy amount by account size
-                        if (!this.state.sizeOnRisk || !event["risk"]) {
-                            event["buyAmount"] = equity * (this.state.positionSize / 100);
+                        if (!state.sizeOnRisk || !event["risk"]) {
+                            event["buyAmount"] = equity * (state.positionSize / 100);
                         }
                         // Method2: calculate buy amount by risk
                         else {
-                            event["buyAmount"] = equity * (this.state.risk / 100) / (event["risk"] / 100);
+                            event["buyAmount"] = equity * (state.risk / 100) / (event["risk"] / 100);
                         }
 
                         // check if have enough money to buy
@@ -197,7 +203,7 @@ class Simulate extends React.Component {
                         this.holdings.push(event);
 
                         // stop buying if max out on holdings or ran out of money
-                        if (this.holdings.length >= this.state.maxPositions || buyingPower == 0) {
+                        if (this.holdings.length >= state.maxPositions || buyingPower == 0) {
                             break;
                         }
                     }
@@ -216,7 +222,7 @@ class Simulate extends React.Component {
 
                     // start over in case we bust account
                     if (equity <= 0) {
-                        equity = this.state.startSize;
+                        equity = state.startSize;
                     }
                 }
             })
@@ -232,67 +238,70 @@ class Simulate extends React.Component {
         })
         last["equity"] = equity;
 
-        if (forGUI) {
-            // calculate the returns for each year
-            let currentYear = 0;
-            equityData.forEach(ed => {
-                let d = new Date();
-                d.setTime(ed["date"]);
-                let y = d.getFullYear();
+        // calculate the returns for each year
+        let currentYear = 0;
+        equityData.forEach(ed => {
+            let d = new Date();
+            d.setTime(ed["date"]);
+            let y = d.getFullYear();
 
-                // first record of year
-                if (y != currentYear) {
-                    // update last year's returns
-                    if (returnsData.length > 0) {
-                        let rd = returnsData[returnsData.length - 1];
-                        rd["returns"] = (ed["equity"] - rd["startingEquity"]) / rd["startingEquity"] * 100;
-                    }
-                    returnsData.push({ year: y, startingEquity: ed["equity"] });
+            // first record of year
+            if (y != currentYear) {
+                // update last year's returns
+                if (returnsData.length > 0) {
+                    let rd = returnsData[returnsData.length - 1];
+                    rd["returns"] = (ed["equity"] - rd["startingEquity"]) / rd["startingEquity"] * 100;
                 }
-
-                // update current year
-                currentYear = y;
-            })
-
-            // calculate returns for last year
-            last = returnsData[returnsData.length - 1];
-            if (!last.hasOwnProperty("returns")) {
-                last["returns"] = (equityData[equityData.length - 1]["equity"] - last["startingEquity"]) / last["startingEquity"] * 100;
+                returnsData.push({ year: y, startingEquity: ed["equity"] });
             }
 
+            // update current year
+            currentYear = y;
+        })
+
+        // calculate returns for last year
+        last = returnsData[returnsData.length - 1];
+        if (!last.hasOwnProperty("returns")) {
+            last["returns"] = (equityData[equityData.length - 1]["equity"] - last["startingEquity"]) / last["startingEquity"] * 100;
+        }
+
+        if (forGUI) {
             this.setState({ equityData, returnsData, loading: false });
             this.props.setSimulationTransactions(transactions);
         }
 
-        return equity;
+        return { equity, returnsData };
     }
 
     findOptimal = async () => {
         let optimalSetting = { scoreBy: "", maxRisk: 0 };
-        let optimalEquity = 0;
+        let optimal = 0;
         for (let i = 0; i < this.scoreTypes.length; ++i) {
             if (i == 1) { continue }
             let scoreBy = this.scoreTypes[i];
             for (let risk = this.minRisk; risk <= this.maxRisk; risk += this.stepRisk) {
-                let equity = await this.tryOptimal(scoreBy, risk);
-                if (equity > optimalEquity) {
-                    optimalEquity = equity;
+                let simulateResults = await this.tryOptimal(scoreBy, risk);
+                let equity = simulateResults["equity"];
+                let returnsData = simulateResults["returnsData"];
+                let recentPerformance = 0;
+                returnsData.slice(returnsData.length - 10, returnsData.length).forEach(v => recentPerformance += v["returns"]);
+                console.log(recentPerformance);
+                if (recentPerformance > optimal) {
+                    optimal = recentPerformance;
                     optimalSetting["scoreBy"] = scoreBy;
                     optimalSetting["maxRisk"] = risk;
                 }
             }
         }
         this.setState({ ...optimalSetting }, () => this.simulate(true));
-        return optimalEquity;
+        return optimal;
     }
 
     tryOptimal = (scoreBy, maxRisk) => {
-        console.log(scoreBy, maxRisk);
         return new Promise(res => {
-            this.setState({ scoreBy, maxRisk }, () => {
-                let finalEquity = this.simulate(false);
-                res(finalEquity);
-            });
+            let tempState = { ...this.state, scoreBy, maxRisk };
+            let simulateResults = this.simulate(false, tempState);
+            res(simulateResults);
         })
     }
 

@@ -4281,3 +4281,39 @@ Worker p9MUxSyIKG: Finished backtest for tickers DFFN to JFKKU in 336 seconds
 Worker p9MUxSyIKG: Finished backtest for tickers A to DEX in 360 seconds
 Worker p9MUxSyIKG: Finished backtest for tickers PZG to ZYXI in 360 seconds
 Worker p9MUxSyIKG: Finished backtest for tickers JFKKW to PZC in 361 seconds
+Worker qNLGZIRBUs: Finding intersections for tickers A to DEX
+Worker qNLGZIRBUs: Finding intersections for tickers DFFN to JFKKU
+Worker qNLGZIRBUs: Finding intersections for tickers PZG to ZYXI
+Worker qNLGZIRBUs: Finding intersections for tickers JFKKW to PZC
+Worker qNLGZIRBUs: Finished backtest for tickers DFFN to JFKKU in 390 seconds
+Worker qNLGZIRBUs: Finished backtest for tickers A to DEX in 411 seconds
+Worker qNLGZIRBUs: Finished backtest for tickers JFKKW to PZC in 419 seconds
+Worker qNLGZIRBUs: Finished backtest for tickers PZG to ZYXI in 422 seconds
+Worker 3wl6EhcsSn: Finding intersections for tickers A to DEX
+Worker 3wl6EhcsSn: Finding intersections for tickers PZG to ZYXI
+Worker 3wl6EhcsSn: Finding intersections for tickers JFKKW to PZC
+Worker 3wl6EhcsSn: Finding intersections for tickers DFFN to JFKKU
+Worker 3wl6EhcsSn: Finished backtest for tickers PZG to ZYXI in 264 seconds
+Worker 3wl6EhcsSn: Finished backtest for tickers DFFN to JFKKU in 265 seconds
+Worker 3wl6EhcsSn: Finished backtest for tickers A to DEX in 266 seconds
+Worker 3wl6EhcsSn: Finished backtest for tickers JFKKW to PZC in 287 seconds
+Worker 8XsnstAC05: Finding intersections for tickers A to DEX
+Worker 8XsnstAC05: Finding intersections for tickers PZG to ZYXI
+Worker 8XsnstAC05: Finding intersections for tickers JFKKW to PZC
+Worker 8XsnstAC05: Finding intersections for tickers DFFN to JFKKU
+Worker 8XsnstAC05: Finished backtest for tickers DFFN to JFKKU in 252 seconds
+Worker 8XsnstAC05: Finished backtest for tickers A to DEX in 265 seconds
+Worker 8XsnstAC05: Finished backtest for tickers PZG to ZYXI in 266 seconds
+Worker 8XsnstAC05: Finished backtest for tickers JFKKW to PZC in 268 seconds
+Worker rDAiiTvM5P: Finding intersections for tickers A to DEX
+Worker rDAiiTvM5P: Finding intersections for tickers DFFN to JFKKU
+Worker rDAiiTvM5P: Finding intersections for tickers JFKKW to PZC
+Worker rDAiiTvM5P: Finding intersections for tickers PZG to ZYXI
+Worker YuKm5UOVI5: Finding intersections for tickers JFKKW to PZC
+Worker YuKm5UOVI5: Finding intersections for tickers A to DEX
+Worker YuKm5UOVI5: Finding intersections for tickers DFFN to JFKKU
+Worker YuKm5UOVI5: Finding intersections for tickers PZG to ZYXI
+Worker YuKm5UOVI5: Finished backtest for tickers DFFN to JFKKU in 539 seconds
+Worker YuKm5UOVI5: Finished backtest for tickers A to DEX in 557 seconds
+Worker YuKm5UOVI5: Finished backtest for tickers PZG to ZYXI in 574 seconds
+Worker YuKm5UOVI5: Finished backtest for tickers JFKKW to PZC in 577 seconds

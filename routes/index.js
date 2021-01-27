@@ -8,7 +8,7 @@ const csv = require('csv');
 let { containsID, addDocument, getDocument, addActiveResult, deleteActiveResult, deleteDocument, getDocumentField, setDocumentField } = require('../helpers/mongo');
 let { makeid, daysBetween, getBacktestSummary } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
-let { backtest, optimize, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
+let { backtest, optimizeStoplossTarget, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
 let { getLatestPrice, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
@@ -149,17 +149,23 @@ router.get("/optimizedStoplossTarget", async (req, res) => {
         // fetch all docs
         for (let i = 0; i < optimized["ids"].length; ++i) {
             let optimizedID = optimized["ids"][i];
-            doc = await getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"]);
-            let summary = doc["summary"];
-            if (!summary || !summary["profit"]) {
-                console.log("Upating summary for " + optimizedID);
-                let d = await getDocument("results", optimizedID);
-                summary = getBacktestSummary(d["results"]);
-                await setDocumentField("results", optimizedID, "summary", summary);
-            }
-            results[optimizedID] = { summary: summary, strategyOptions: doc["results"]["strategyOptions"] };
+            getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"])
+                .then(async (doc) => {
+                    let summary = doc["summary"];
+                    // double check if valid summary exists
+                    if (!summary || !summary["profit"]) {
+                        console.log("Upating summary for " + optimizedID);
+                        let d = await getDocument("results", optimizedID);
+                        summary = getBacktestSummary(d["results"]);
+                        await setDocumentField("results", optimizedID, "summary", summary);
+                    }
+                    // return the summary and optionsW
+                    results[optimizedID] = { summary: summary, strategyOptions: doc["results"]["strategyOptions"] };
+                    if (Object.keys(results).length == optimized["ids"].length) {
+                        res.json({ id: optimized["base"], results });
+                    }
+                });
         }
-        res.json({ id: optimized["base"], results });
     }
     else {
         res.json({ error: "Backtest not optimized yet!" });
@@ -192,18 +198,18 @@ router.delete("/deleteResults/:id", async (req, res) => {
         res.json({ status: "Cannot be deleted. Being used by others." });
     }
     else {
+        res.json({ status: "Deleting" });
         // delete all the linked optimized docs if any
         let optimized = await getDocumentField("results", id, ["_optimized"]);
         if (optimized && optimized["_optimized"]) {
             let optimizedIDs = optimized["_optimized"]["ids"];
             console.log("Deleting " + optimizedIDs.length + " optimized docs");
-            for(let i = 0; i < optimizedIDs.length; ++i) {
+            for (let i = 0; i < optimizedIDs.length; ++i) {
                 await deleteDocument("results", optimizedIDs[i]);
             }
         }
         // delete main doc
         deleteDocument("results", id);
-        res.json({ status: "Deleted" });
     }
 })
 
@@ -315,7 +321,7 @@ router.post("/optimize", async (req, res) => {
         id = optimized["_optimized"]["base"];
     }
 
-    let position = optimize(id, optimizeOptions);
+    let position = optimizeStoplossTarget(id, optimizeOptions);
 
     // send response so doesn't hang and gets the unique id
     if (position == 0) {

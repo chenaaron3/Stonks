@@ -16,7 +16,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 class Optimize extends React.Component {
     constructor(props) {
         super(props)
-        this.state = { loading: true, scoreBy: "profit", progress: -1, baseID: this.props.id };
+        this.state = { loading: true, scoreBy: "weightedReturns", progress: -1, baseID: this.props.id };
 
         // field data
         this.fields = ["startStoploss", "endStoploss", "strideStoploss", "startRatio", "endRatio", "strideRatio"];
@@ -66,6 +66,7 @@ class Optimize extends React.Component {
                         score: score ? score : 0,
                         id: id
                     });
+                    console.log(stoplossTargetData);
                 })
                 this.setState({ baseID, optimized, loading: false, stoplossTargetData });
             });
@@ -126,8 +127,8 @@ class Optimize extends React.Component {
             <ResponsiveContainer width="100%" height={`85%`}>
                 <ScatterChart margin={{ top: 0, right: 40, bottom: 40, left: 20 }} >
                     <CartesianGrid />
-                    <XAxis type="number" dataKey="x" name="Stoploss" domain={['auto', 'auto']} label={{ value: "Stoploss", position: "insideBottom", offset: -10 }} />
-                    <YAxis dataKey="y" name="Risk Reward Ratio" domain={['auto', 'auto']} label={{ value: "Risk Reward Ratio", position: "insideLeft", angle: -90 }} />
+                    <XAxis type="number" dataKey="x" name="Stoploss" domain={[0, 'dataMax']} label={{ value: "Stoploss", position: "insideBottom", offset: -10 }} />
+                    <YAxis type="number" dataKey="y" name="Risk Reward Ratio" domain={[0, 'dataMax']} label={{ value: "Risk Reward Ratio", position: "insideLeft", angle: -90 }} />
                     <ZAxis dataKey="z" name={this.state.scoreBy} />
                     <Scatter data={this.state.stoplossTargetData} fill="#82ca9d" shape={<this.CustomizedDot></this.CustomizedDot>} onClick={(params) => {
                         let url = (process.env.NODE_ENV == "production" ? (process.env.REACT_APP_DOMAIN + process.env.REACT_APP_SUBDIRECTORY) : "localhost:3000") + "/" + params["id"];

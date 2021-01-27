@@ -32,7 +32,6 @@ let Swing = require('../helpers/indicators/swing');
 let Divergence = require('../helpers/indicators/divergence');
 let Stochastic = require('../helpers/indicators/stochastic');
 let Indicator = require('../helpers/indicators/indicator');
-const { exception } = require('console');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
     "EMA": EMA,
@@ -113,7 +112,6 @@ function updateBacktest(id) {
             let child = fork(path.join(__dirname, "../helpers/worker.js"));
             child.send({ type: "startBacktest", strategyOptions, id });
             child.on('message', function (message) {
-                console.log(message);
                 if (message.status == "finished") {
                     setDocumentField("results", id, "status", "ready");
                     console.log("Trigger client", id);
@@ -126,23 +124,24 @@ function updateBacktest(id) {
 }
 
 // queues an optimization
-function optimize(id, optimizeOptions) {
-    let maxResults = 20;
+function optimizeStoplossTarget(id, optimizeOptions) {
+    let maxResults = 15;
     let totalRatios = (optimizeOptions["endRatio"] - optimizeOptions["startRatio"]) / optimizeOptions["strideRatio"];
+    if (totalRatios > maxResults) {
+        optimizeOptions["endRatio"] = optimizeOptions["startRatio"] + optimizeOptions["strideRatio"] * (maxResults - 1);
+    }
     let position = undefined;
-    // split up jobs, cut off stoploss
-    for (let stoploss = optimizeOptions["startStoploss"]; stoploss < optimizeOptions["endStoploss"];) {
-        let end = Math.min(stoploss + optimizeOptions["strideStoploss"] * Math.ceil(maxResults / totalRatios), optimizeOptions["endRatio"]);
+    // make a job for each stoploss option
+    for (let stoploss = optimizeOptions["startStoploss"]; stoploss < optimizeOptions["endStoploss"]; stoploss += optimizeOptions["strideStoploss"]) {
         let optimizeOptionsCopy = { ...optimizeOptions };
         optimizeOptionsCopy["startStoploss"] = stoploss;
-        optimizeOptionsCopy["endStoploss"] = end;
+        optimizeOptionsCopy["endStoploss"] = stoploss + optimizeOptions["strideStoploss"];
         let p = addJob(() => {
             return new Promise(async resolveJob => {
                 // spawn child to do work
                 let child = fork(path.join(__dirname, "../helpers/worker.js"));
-                child.send({ type: "startOptimization", id, optimizeOptions: optimizeOptionsCopy });
+                child.send({ type: "startOptimizeStoplossTarget", id, optimizeOptions: optimizeOptionsCopy });
                 child.on('message', async function (message) {
-                    console.log(message);
                     if (message.status == "finished") {
                         console.log("Trigger client", id);
                         triggerChannel(id, "onOptimizeFinished", { id: `${id}` });
@@ -154,10 +153,26 @@ function optimize(id, optimizeOptions) {
         if (position == undefined) {
             position = p
         }
-        stoploss = end;
     }
 
     return position;
+}
+
+function optimizeIndicators(id, indicatorOptions) {
+    return addJob(() => {
+        return new Promise(async resolveJob => {
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "../helpers/worker.js"));
+            child.send({ type: "startOptimizeIndicators", id, indicatorOptions });
+            child.on('message', async function (message) {
+                if (message.status == "finished") {
+                    console.log("Trigger client", id);
+                    triggerChannel(id, "onOptimizeIndicatorsFinished", { id: `${id}` });
+                    resolveJob();
+                }
+            });
+        });
+    });
 }
 
 // get actions today for a backtest
@@ -258,9 +273,9 @@ function conductBacktest(strategyOptions, id) {
 
                             let results = { strategyOptions, symbolData: intersections, lastUpdated: new Date() };
                             // add result to database
+                            await setDocumentField("results", id, "summary", getBacktestSummary(results));
                             let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
                             if (err) console.log(err);
-                            await setDocumentField("results", id, "summary", getBacktestSummary(results));
                             resolve();
                         }
                     }
@@ -269,14 +284,14 @@ function conductBacktest(strategyOptions, id) {
                         triggerChannel(id, "onProgressUpdate", { progress: 100 * progress / symbols.length });
                     }
                 })
-                child.send({ type: "startIntersection", strategyOptions, id, previousResults, partition });
+                child.send({ type: "backtestJob", strategyOptions, id, previousResults, partition });
             }
         });
     })
 }
 
 // conduct an optimization with optimize options
-function conductOptimization(id, optimizeOptions) {
+function conductStoplossTargetOptimization(id, optimizeOptions) {
     return new Promise(async (resolve, reject) => {
         // try to get previous results
         let previousResults = await getDocument("results", id);
@@ -317,6 +332,7 @@ function conductOptimization(id, optimizeOptions) {
             let child = fork(path.join(__dirname, "worker.js"));
             child.on('message', async (msg) => {
                 if (msg.status == "finished") {
+                    console.log("WORKER FINISHED");
                     // enter optimized data into results
                     let optimizedData = msg.optimizedData;
                     Object.keys(optimizedData).forEach(symbol => {
@@ -335,8 +351,8 @@ function conductOptimization(id, optimizeOptions) {
                             // create a new document for each combination
                             await addDocument("results", { _id: newID });
                             // fill in the document
-                            await setDocumentField("results", newID, "results", results[resultsIndex], { subField: "symbolData" });
                             await setDocumentField("results", newID, "summary", getBacktestSummary(results[resultsIndex]));
+                            await setDocumentField("results", newID, "results", results[resultsIndex], { subField: "symbolData" });
                             // link optimized to base
                             await setDocumentField("results", newID, "_optimized", { base: id });
                         }
@@ -361,9 +377,49 @@ function conductOptimization(id, optimizeOptions) {
                     triggerChannel(id, "onOptimizeProgressUpdate", { progress: 100 * progress / symbols.length });
                 }
             })
-            child.send({ type: "optimizeStoplossTarget", partition, id, previousResults, optimizeOptions });
+            child.send({ type: "optimizeStoplossTargetJob", partition, id, previousResults, optimizeOptions });
         }
     })
+}
+
+function conductIndicatorOptimization(id, indicatorOptions) {
+    return new Promise(async (resolve, reject) => {
+        let previousResults = await getDocument("results", id);
+
+        // create threads that split up the work
+        let finishedWorkers = 0;
+        let symbols = Object.keys(previousResults["results"]["symbolData"]).slice(0, 50);
+        let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+        let progress = 0;
+        let indicatorData = {};
+        for (let i = 0; i < NUM_THREADS; ++i) {
+            // divy up the symbols for each thread to work on
+            let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
+
+            // spawn child to do work
+            let child = fork(path.join(__dirname, "worker.js"));
+            child.on('message', async (msg) => {
+                if (msg.status == "finished") {
+                    // accumulate worker's data
+                    Object.assign(indicatorData, msg.optimizedData);
+
+                    // if all worker threads are finished
+                    if (++finishedWorkers == NUM_THREADS) {
+                        // enter data into indicator collection 
+                        await addDocument("indicators", { _id: id });
+                        // fill in the document
+                        await setDocumentField("indicators", id, "data", indicatorData, {});
+                        resolve();
+                    }
+                }
+                if (msg.status == "progress") {
+                    progress += msg.progress;
+                    triggerChannel(id, "onOptimizeIndicatorProgressUpdate", { progress: 100 * progress / symbols.length });
+                }
+            })
+            child.send({ type: "optimizeIndicatorsJob", partition, id, previousResults, indicatorOptions });
+        }
+    });
 }
 
 // gets the symbols from cache or from csv
@@ -439,8 +495,44 @@ function getPrices(symbol) {
     });
 }
 
+// given an existing backtest, record all the indicator data
+function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
+    return new Promise((resolve, reject) => {
+        getPrices(symbol)
+            .then(json => {
+                // if error
+                if (json["error"]) {
+                    reject(json["error"]);
+                }
+                // if valid prices
+                else {
+                    // get price and indicator setup
+                    let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, undefined);
+                    let indicators = {};
+                    let indicatorNames = Object.keys(indicatorOptions);
+                    indicatorNames.forEach(indicatorName => {
+                        indicators[indicatorName] = getIndicator(indicatorName, indicatorOptions[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
+                    });
+
+                    let indicatorData = {};
+                    // record indicator values at every event
+                    results["events"].forEach(event => {
+                        let buyDate = event["buyDate"];
+                        let data = {};
+                        indicatorNames.forEach(indicatorName => {
+                            data[indicatorName] = indicators[indicatorName].getValue(buyDate);
+                        })
+                        indicatorData[buyDate] = { indicators: data, percentProfit: event["percentProfit"] };
+                    });
+
+                    resolve(indicatorData);
+                }
+            });
+    });
+}
+
 // given an existing backtest, apply different stoploss/target options
-function optimizeStoplossTarget(strategyOptions, optimizeOptions, symbol, previousResults) {
+function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbol, previousResults) {
     return new Promise((resolve, reject) => {
         getPrices(symbol)
             .then(json => {
@@ -1037,4 +1129,9 @@ function getConditions(mainIndicator, supportingIndicators, date) {
     return conditions
 }
 
-module.exports = { backtest, optimize, updateBacktest, getActionsToday, conductBacktest, conductOptimization, findIntersections, optimizeStoplossTarget, getSymbols, getAdjustedData, getIndicator };
+module.exports = {
+    backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getActionsToday,
+    conductBacktest, conductStoplossTargetOptimization, conductIndicatorOptimization,
+    findIntersections, optimizeStoplossTargetForSymbol, optimizeIndicatorsForSymbol,
+    getSymbols, getAdjustedData, getIndicator
+};

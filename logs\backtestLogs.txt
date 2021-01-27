@@ -991,3 +991,11 @@ Worker W17TABXooq: Starting backtest
 Worker W17TABXooq: Finished backtest in 426 seconds
 Worker p9MUxSyIKG: Starting backtest
 Worker p9MUxSyIKG: Finished backtest in 372 seconds
+Worker qNLGZIRBUs: Starting backtest
+Worker qNLGZIRBUs: Finished backtest in 431 seconds
+Worker 3wl6EhcsSn: Starting backtest
+Worker 8XsnstAC05: Starting backtest
+Worker 8XsnstAC05: Finished backtest in 276 seconds
+Worker rDAiiTvM5P: Starting backtest
+Worker YuKm5UOVI5: Starting backtest
+Worker YuKm5UOVI5: Finished backtest in 605 seconds

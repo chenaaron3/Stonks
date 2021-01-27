@@ -4,11 +4,11 @@ var yahooFinance = require('yahoo-finance');
 var fetch = require('node-fetch');
 let { resetSymbol } = require('../helpers/stock');
 let { containsID, getDocument, setDocumentField, addDocument, getDocumentField } = require('../helpers/mongo');
-let { getIndicator, getActionsToday, optimizeStoplossTarget, optimize } = require('../helpers/backtest');
+let { getIndicator, getActionsToday, optimizeIndicators, optimizeIndicatorsForSymbol } = require('../helpers/backtest');
 let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
-let { getBacktestSummary } = require('../helpers/utils');
+let { getBacktestSummary, simulateBacktest } = require('../helpers/utils');
 const bson = require('bson');
 const DOC_LIMIT = 16777216;
 
@@ -49,21 +49,38 @@ router.get('/job', async function (req, res) {
 router.get("/test", async function (req, res) {
     let symbol = req.query.symbol;
 
-    let optimizeOptions = {
-        startStoploss: 0,
-        endStoploss: 1,
-        strideStoploss: .1,
-        startRatio: 1,
-        endRatio: 3,
-        strideRatio: .2
 
-    };
-    let id = "UamYLjA4k2_optimized_0.00_5.75";
+    let id = "qNLGZIRBUs";
 
-    let doc = await getDocument("results", id);    
-    console.log(getBacktestSummary(doc["results"]));
+    let doc = await getDocument("results", id);
+    // getBacktestSummary(doc["results"]);
 
-    res.json("ok");
+    let indicatorOptions = {
+        "RSI": {
+            "period": 14,
+            "underbought": 30,
+            "overbought": 70
+        },
+        "MACD": {
+            "ema1": 12,
+            "ema2": 26,
+            "signalPeriod": 9
+        },
+        "ADX": {
+            "period": 14,
+            "threshold": 20
+        },
+        "Stochastic": {
+            "period": 14,
+            "underbought": 20,
+            "overbought": 80
+        }
+    }
+
+
+    optimizeIndicators(id, indicatorOptions);
+
+    res.json({});
 });
 
 router.post('/watchlist', async function (req, res) {

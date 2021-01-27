@@ -9,7 +9,7 @@ class MACD extends Indicator {
 		this.name = "MACD";
 		this.graph = this.calculate();
 		this.signalLine = this.signal();
-		this.histogram = this.histogram();
+		this.histogram = this.getHistogram();
 	}
 
 	calculate() {
@@ -23,7 +23,7 @@ class MACD extends Indicator {
 		return getExponentialMovingAverage(dates, this.graph, this.signalPeriod)["data"];
 	}
 
-	histogram() {
+	getHistogram() {
 		let dates = Object.keys(this.graph).sort(function (a, b) {
 			return new Date(a) - new Date(b);
 		});
@@ -39,7 +39,7 @@ class MACD extends Indicator {
 	}
 
 	getValue(date) {
-		return this.graph[date];
+		return this.histogram[date];
 	}
 
 	normalize(data) {

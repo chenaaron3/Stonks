@@ -1,7 +1,9 @@
 var fs = require('fs');
 var path = require('path');
 
-let { conductBacktest, findIntersections, conductOptimization, optimizeStoplossTarget } = require('../helpers/backtest');
+let { conductBacktest, findIntersections,
+    conductStoplossTargetOptimization, optimizeStoplossTargetForSymbol,
+    conductIndicatorOptimization, optimizeIndicatorsForSymbol } = require('../helpers/backtest');
 let { updateStock, gatherData, checkSplit } = require('../helpers/stock');
 
 let logDirectory = path.join(__dirname, "../logs");
@@ -31,7 +33,7 @@ process.on('message', async (msg) => {
         });
     }
     // thread within backtesting to find buy/sell events
-    else if (msg.type == "startIntersection") {
+    else if (msg.type == "backtestJob") {
         // log start information
         let symbols = msg.partition;
         const start = Date.now();
@@ -76,13 +78,13 @@ process.on('message', async (msg) => {
         });
     }
     // thread to optimize stoploss and targets
-    else if (msg.type == "startOptimization") {
+    else if (msg.type == "startOptimizeStoplossTarget") {
         // log start information
         const start = Date.now();
         fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Starting optimization\n`, { encoding: "utf-8" });
 
         // conduct actual optimization
-        await conductOptimization(msg.id, msg.optimizeOptions);
+        await conductStoplossTargetOptimization(msg.id, msg.optimizeOptions);
         console.log("Conduct Optimization Finished");
         // notify parent
         process.send({ status: "finished" }, null, {}, () => {
@@ -92,15 +94,15 @@ process.on('message', async (msg) => {
             process.exit(0);
         });
     }
-    // thread within backtesting to find buy/sell events
-    else if (msg.type == "optimizeStoplossTarget") {
+    // thread within optimize stoploss target
+    else if (msg.type == "optimizeStoplossTargetJob") {
         // log start information
         let symbols = msg.partition;
         const start = Date.now();
         let startTicker = symbols[0];
         let endTicker = symbols[symbols.length - 1];
         fs.appendFileSync(optimizeLogs,
-            `Worker ${msg.id}: optimizing tickers ${startTicker} to ${endTicker}\n`, { encoding: "utf-8" });
+            `Worker ${msg.id}: optimizing stoploss target tickers ${startTicker} to ${endTicker}\n`, { encoding: "utf-8" });
 
         // conduct actual optimization
         let optimizedData = {};
@@ -112,7 +114,7 @@ process.on('message', async (msg) => {
             let previousResults = msg.previousResults["results"]["symbolData"][symbol];
 
             // find results for the symbol
-            let optimizedSymbol = await optimizeStoplossTarget(msg.previousResults["results"]["strategyOptions"], msg.optimizeOptions, symbol, previousResults);
+            let optimizedSymbol = await optimizeStoplossTargetForSymbol(msg.previousResults["results"]["strategyOptions"], msg.optimizeOptions, symbol, previousResults);
             optimizedData[symbol] = optimizedSymbol["results"];
             console.log(`${symbol} => ${(optimizedSymbol["effective"] / optimizedSymbol["count"] * 100).toFixed(0)}% (${optimizedSymbol["effective"] + "/" + optimizedSymbol["count"]})`);
 
@@ -125,11 +127,63 @@ process.on('message', async (msg) => {
         process.send({ status: "finished", optimizedData }, null, {}, () => {
             // log end information
             let time = Math.floor((Date.now() - start) / 1000);
-            fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Finished optimizing tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
+            fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Finished optimizing stoploss target tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
             process.exit(0);
         });
+    }
+    // thread to optimize indicators
+    else if (msg.type == "startOptimizeIndicators") {
+        // log start information
+        const start = Date.now();
+        fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Starting indicator optimization\n`, { encoding: "utf-8" });
 
+        // conduct actual optimization
+        await conductIndicatorOptimization(msg.id, msg.indicatorOptions);
+        console.log("Conduct Indicator Optimization Finished");
+        // notify parent
+        process.send({ status: "finished" }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Finished indicator optimization in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
+    }
+    // thread within optimize indicators
+    else if (msg.type == "optimizeIndicatorsJob") {
+        // log start information
+        let symbols = msg.partition;
+        const start = Date.now();
+        let startTicker = symbols[0];
+        let endTicker = symbols[symbols.length - 1];
+        fs.appendFileSync(optimizeLogs,
+            `Worker ${msg.id}: optimizing indicators tickers ${startTicker} to ${endTicker}\n`, { encoding: "utf-8" });
 
+        // conduct actual optimization
+        let optimizedData = {};
+        let updateStep = Math.floor(symbols.length / 100);
+        for (let i = 0; i < symbols.length; ++i) {
+            let symbol = symbols[i];
+
+            // get info from previous results
+            let previousResults = msg.previousResults["results"]["symbolData"][symbol];
+
+            // find results for the symbol
+            let optimizedSymbol = await optimizeIndicatorsForSymbol(msg.indicatorOptions, symbol, previousResults);
+            optimizedData[symbol] = optimizedSymbol;
+            console.log(`${symbol} => DONE`);
+
+            // update progress
+            if (i != 0 && i % updateStep == 0) {
+                process.send({ status: "progress", progress: updateStep });
+            }
+        }
+        // notify parent
+        process.send({ status: "finished", optimizedData }, null, {}, () => {
+            // log end information
+            let time = Math.floor((Date.now() - start) / 1000);
+            fs.appendFileSync(optimizeLogs, `Worker ${msg.id}: Finished optimizing stoploss target tickers ${startTicker} to ${endTicker} in ${time} seconds\n`, { encoding: "utf-8" });
+            process.exit(0);
+        });
     }
     // thread to run updates
     else if (msg.type == "startUpdate") {

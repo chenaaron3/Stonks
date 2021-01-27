@@ -38,6 +38,9 @@ function ensureConnected() {
 				if (!collectionNames.includes("results")) {
 					await stonks.createCollection("results");
 				}
+				if (!collectionNames.includes("indicators")) {
+					await stonks.createCollection("indicators");
+				}
 
 				priceCollection = stonks.collection('prices');
 				resultsCollection = stonks.collection('results');
@@ -119,8 +122,12 @@ function getDocument(collectionName, documentID) {
 						let fragmentData = doc["_fragmentData"];
 						let options = fragmentData["options"];
 						let data;
+
+						// fetch all fragments
 						let promises = fragmentData["ids"].map(fragmentID => getDocument(collectionName, fragmentID));
 						let fragments = await Promise.all(promises);
+
+						// check reconstruction method
 						if (fragmentData["type"] == "array") {
 							data = [];
 							fragments.forEach(f => {
@@ -133,6 +140,8 @@ function getDocument(collectionName, documentID) {
 								Object.assign(data, f["fragment"]);
 							})
 						}
+
+						// apply reconstructed data to doc
 						if (options["subField"]) {
 							doc[fragmentData["field"]][options["subField"]] = data;
 						}
@@ -160,10 +169,11 @@ function deleteDocument(collectionName, documentID) {
 				// get document to check for fragments
 				let frag = await getDocumentField(collectionName, documentID, ["_fragmentData"]);
 				if (frag && frag["_fragmentData"]) {
+					// delete doc's fragments first
 					for (let i = 0; i < frag["_fragmentData"]["ids"].length; ++i) {
 						let fragID = frag["_fragmentData"]["ids"][i];
 						await collection.deleteOne({ "_id": fragID });
-						console.log("Deleting frag");
+						console.log("Deleted frag", fragID);
 					}
 				}
 
@@ -237,12 +247,16 @@ async function getDocumentField(collectionName, id, fieldNames) {
 		await ensureConnected();
 		getCollection(collectionName)
 			.then(async (collection) => {
+				// construct projection object
 				let projection = {};
 				fieldNames.forEach(fn => projection[fn] = true)
 				let results = collection.find({
 					"_id": id
 				}).project(projection);
 
+				// TODO if field is fragmented, need to reconstruct
+
+				// cursor to object
 				let array = await results.toArray();
 				if (array.length > 0) {
 					resolve(array[0]);
@@ -319,7 +333,18 @@ async function splitField(collectionName, id, fieldName, value, splitOptions) {
 				}
 			}
 
+			// delete previous fragments
+			let previousFragments = await getDocumentField(collectionName, id, ["_fragmentData"]);
+			if (previousFragments && previousFragments["_fragmentData"]) {
+				console.log("Overwriting existing frags");
+				for (let i = 0; i < previousFragments["_fragmentData"]["ids"].length; ++i) {
+					console.log("Deleting frag", previousFragments["_fragmentData"]["ids"][i])
+					await deleteDocument(collectionName, previousFragments["_fragmentData"]["ids"][i]);
+				}
+			}
+
 			// create fragment docs
+			console.log("Creating new frags");
 			for (let i = 0; i < fragments.length; ++i) {
 				let fragID = id + "_" + i;
 				console.log(fragID, bson.calculateObjectSize(fragments[i]));
@@ -327,7 +352,7 @@ async function splitField(collectionName, id, fieldName, value, splitOptions) {
 				fragmentData["ids"].push(fragID);
 			}
 
-			// clear the offending field
+			// clear the offending field, must do before setting fragment metadata or else metadata will be cleared
 			await setDocumentField(collectionName, id, fieldName, value);
 			// cache fragment data
 			await setDocumentField(collectionName, id, "_fragmentData", fragmentData);
