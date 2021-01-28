@@ -39,7 +39,7 @@ class MACD extends Indicator {
 	}
 
 	getValue(date) {
-		return this.histogram[date];
+		return { MACD_Histogram: this.histogram[date], MACD_Value: this.graph[date] };
 	}
 
 	normalize(data) {

@@ -9,14 +9,28 @@ class Hammer extends Indicator {
         this.expiration = options["expiration"];
         this.name = "Hammer";
         this.freshness = 0;
+        this.graph = this.calculate();
+    }
+
+    calculate() {
+        let graph = {};
+        this.dates.forEach(date => {
+            let isGreen = this.closes[date] > this.opens[date];
+            let candle = Math.abs(this.closes[date] - this.opens[date]);
+            let leg = isGreen ? this.opens[date] - this.lows[date] : this.closes[date] - this.lows[date];
+            let head = isGreen ? this.highs[date] - this.closes[date] : this.highs[date] - this.opens[date];
+            graph[date] = { legRatio: leg / candle, headRatio: head / candle };
+        })
+        return graph;
     }
 
     getGraph() {
-        return {};
+        return this.graph;
     }
 
     getValue(date) {
-        return 0;
+        let entry = this.graph[date];
+        return { Leg_Ratio: entry["legRatio"], Head_Ratio: entry["headRatio"] };
     }
 
     normalize(data) {

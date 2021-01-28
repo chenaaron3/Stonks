@@ -50,7 +50,7 @@ router.get("/test", async function (req, res) {
     let symbol = req.query.symbol;
 
 
-    let id = "qNLGZIRBUs";
+    let id = "YuKm5UOVI5";
 
     let doc = await getDocument("results", id);
     // getBacktestSummary(doc["results"]);
@@ -74,6 +74,8 @@ router.get("/test", async function (req, res) {
             "period": 14,
             "underbought": 20,
             "overbought": 80
+        },
+        "Hammer": {
         }
     }
 

@@ -4317,3 +4317,11 @@ Worker YuKm5UOVI5: Finished backtest for tickers DFFN to JFKKU in 539 seconds
 Worker YuKm5UOVI5: Finished backtest for tickers A to DEX in 557 seconds
 Worker YuKm5UOVI5: Finished backtest for tickers PZG to ZYXI in 574 seconds
 Worker YuKm5UOVI5: Finished backtest for tickers JFKKW to PZC in 577 seconds
+Worker 0fXXPNfchM: Finding intersections for tickers A to DEX
+Worker 0fXXPNfchM: Finding intersections for tickers PZG to ZYXI
+Worker 0fXXPNfchM: Finding intersections for tickers JFKKW to PZC
+Worker 0fXXPNfchM: Finding intersections for tickers DFFN to JFKKU
+Worker 0fXXPNfchM: Finished backtest for tickers DFFN to JFKKU in 348 seconds
+Worker 0fXXPNfchM: Finished backtest for tickers A to DEX in 364 seconds
+Worker 0fXXPNfchM: Finished backtest for tickers PZG to ZYXI in 370 seconds
+Worker 0fXXPNfchM: Finished backtest for tickers JFKKW to PZC in 370 seconds

@@ -999,3 +999,5 @@ Worker 8XsnstAC05: Finished backtest in 276 seconds
 Worker rDAiiTvM5P: Starting backtest
 Worker YuKm5UOVI5: Starting backtest
 Worker YuKm5UOVI5: Finished backtest in 605 seconds
+Worker 0fXXPNfchM: Starting backtest
+Worker 0fXXPNfchM: Finished backtest in 379 seconds

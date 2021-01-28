@@ -388,7 +388,7 @@ function conductIndicatorOptimization(id, indicatorOptions) {
 
         // create threads that split up the work
         let finishedWorkers = 0;
-        let symbols = Object.keys(previousResults["results"]["symbolData"]).slice(0, 50);
+        let symbols = Object.keys(previousResults["results"]["symbolData"]); //.slice(0, 50);
         let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
         let progress = 0;
         let indicatorData = {};
@@ -414,7 +414,7 @@ function conductIndicatorOptimization(id, indicatorOptions) {
                 }
                 if (msg.status == "progress") {
                     progress += msg.progress;
-                    triggerChannel(id, "onOptimizeIndicatorProgressUpdate", { progress: 100 * progress / symbols.length });
+                    triggerChannel(id, "onOptimizeIndicatorsProgressUpdate", { progress: 100 * progress / symbols.length });
                 }
             })
             child.send({ type: "optimizeIndicatorsJob", partition, id, previousResults, indicatorOptions });
@@ -498,6 +498,7 @@ function getPrices(symbol) {
 // given an existing backtest, record all the indicator data
 function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
     return new Promise((resolve, reject) => {
+        let indicatorFields = undefined;
         getPrices(symbol)
             .then(json => {
                 // if error
@@ -514,18 +515,34 @@ function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
                         indicators[indicatorName] = getIndicator(indicatorName, indicatorOptions[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
                     });
 
-                    let indicatorData = {};
+                    let indicatorData = [];
                     // record indicator values at every event
                     results["events"].forEach(event => {
                         let buyDate = event["buyDate"];
                         let data = {};
+
+                        // record data from each indicator
                         indicatorNames.forEach(indicatorName => {
-                            data[indicatorName] = indicators[indicatorName].getValue(buyDate);
-                        })
-                        indicatorData[buyDate] = { indicators: data, percentProfit: event["percentProfit"] };
+                            let value = indicators[indicatorName].getValue(buyDate);
+                            if (typeof (value) == "number") {
+                                data[indicatorName] = value;
+                            }
+                            else if (typeof (value) == "object") {
+                                Object.keys(value).forEach(key => {
+                                    data[key] = value[key];
+                                })
+                            }
+                        });
+
+                        // flatten the data to an array
+                        if (!indicatorFields) {
+                            indicatorFields = Object.keys(data).sort();
+                        }
+                        let flattenedData = indicatorFields.map(f => data[f]);
+                        indicatorData.push({ indicators: flattenedData, percentProfit: event["percentProfit"] });
                     });
 
-                    resolve(indicatorData);
+                    resolve({ data: indicatorData, fields: indicatorFields });
                 }
             });
     });

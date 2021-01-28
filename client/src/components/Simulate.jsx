@@ -77,7 +77,7 @@ class Simulate extends React.Component {
             count += 1;
         }
 
-        if(count > 0) {
+        if (count > 0) {
             score["Percent Profit"] /= count;
             score["Dollar Profit"] /= count;
             score["Win Rate"] = wins / count;
@@ -275,7 +275,7 @@ class Simulate extends React.Component {
 
     findOptimal = async () => {
         let optimalSetting = { scoreBy: "", maxRisk: 0 };
-        let optimal = 0;
+        let optimal = -100000;
         for (let i = 0; i < this.scoreTypes.length; ++i) {
             if (i == 1) { continue }
             let scoreBy = this.scoreTypes[i];
@@ -284,7 +284,14 @@ class Simulate extends React.Component {
                 let equity = simulateResults["equity"];
                 let returnsData = simulateResults["returnsData"];
                 let recentPerformance = 0;
-                returnsData.slice(returnsData.length - 10, returnsData.length).forEach(v => recentPerformance += v["returns"]);
+                returnsData.slice(returnsData.length - 10, returnsData.length).forEach(v => {
+                    if (v["returns"] > 0) {
+                        recentPerformance += v["returns"];
+                    }
+                    else {
+                        recentPerformance += v["returns"] * 10;
+                    }
+                });
                 console.log(recentPerformance);
                 if (recentPerformance > optimal) {
                     optimal = recentPerformance;

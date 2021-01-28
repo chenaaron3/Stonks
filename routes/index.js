@@ -172,6 +172,18 @@ router.get("/optimizedStoplossTarget", async (req, res) => {
     }
 })
 
+// get optimized indicators
+router.get("/optimizedIndicators", async (req, res) => {
+    let id = req.query.id;
+    let doc = await getDocument("indicators", id);
+    if (doc) {
+        res.json(doc);
+    }
+    else {
+        res.json({ error: "Backtest not optimized yet!" });
+    }
+});
+
 // delete backtest results
 router.delete("/deleteResults/:id", async (req, res) => {
     let id = req.params.id;

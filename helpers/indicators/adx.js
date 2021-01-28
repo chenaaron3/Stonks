@@ -28,11 +28,13 @@ class ADX extends Indicator {
         let pdi = {};
         let ndi = {};
         let dx = {};
+        let histogram = {};
         newDates = newDates.slice(this.period);
         newDates.forEach(d => {
             pdi[d] = apdm[d] / atr[d] * 100;
             ndi[d] = andm[d] / atr[d] * 100;
             dx[d] = Math.abs(pdi[d] - ndi[d]) / Math.abs(pdi[d] + ndi[d]) * 100;
+            histogram[d] = pdi[d] - ndi[d];
         });
 
         // calculate adx
@@ -57,7 +59,8 @@ class ADX extends Indicator {
             count += 1;
         })
         this.pdi = pdi;
-        this.ndi = ndi;
+        this.ndi = ndi;        
+        this.histogram = histogram;
 
         return adx;
     }
@@ -67,7 +70,7 @@ class ADX extends Indicator {
     }
 
     getValue(date) {
-        return this.graph[date];
+        return {ADX_Value: this.graph[date] / 100, ADX_Histogram: this.histogram[date] / 100};
     }
 
     normalize(data) {

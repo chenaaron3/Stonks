@@ -19,7 +19,7 @@ class Stochastic extends Indicator {
 	}
 
 	getValue(date) {
-		return this.graph[date];
+		return this.graph[date] / 100;
 	}
 
 	normalize(data) {
