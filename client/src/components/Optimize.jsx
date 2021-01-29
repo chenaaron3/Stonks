@@ -4,8 +4,9 @@ import "./Optimize.css";
 import { camelToDisplay, mapRange } from "../helpers/utils"
 import TextField from '@material-ui/core/TextField';
 import {
-    Tooltip, Label, ResponsiveContainer, ScatterChart, Scatter, CartesianGrid, XAxis, YAxis, ZAxis,
+    Tooltip, Label, ResponsiveContainer, ScatterChart, Scatter, CartesianGrid, XAxis, YAxis, ZAxis, ReferenceArea
 } from 'recharts';
+import { mean, median, standardDeviation, min, max } from 'simple-statistics'
 import interpolate from 'color-interpolate';
 import Button from '@material-ui/core/Button';
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -19,6 +20,9 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Slider from '@material-ui/core/Slider';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import { setBacktestResults } from '../redux';
 
 class Optimize extends React.Component {
     constructor(props) {
@@ -28,7 +32,7 @@ class Optimize extends React.Component {
         this.state = {
             mode: "stoplossTarget",
             scoreBy: "profit", scoreTypes: [],
-            indicator1: "", indicator2: "None", numSectors: 10,
+            indicator1: "", indicator2: "None", numSectors: 10, applySectors: .5, sectors: [], showSectors: true,
             loading: true, progress: -1, baseID: this.props.id
         };
 
@@ -43,11 +47,27 @@ class Optimize extends React.Component {
         this.minSize = 0;
         this.maxSize = 1;
         this.colormap = interpolate(["#FFCCCB", "#2ecc71"]);
+        this.highlightColormap = interpolate(["red", "green"]);
+        this.winColormap = interpolate(["#2ecc71", "green"]);
+        this.lossColormap = interpolate(["#FFCCCB", "red"]);
     }
 
-    componentDidMount() {
+    async componentDidMount() {
+        await this.fetchResults();
         this.fetchOptimizedStoplossTarget();
         this.fetchOptimizedIndicators();
+    }
+
+    fetchResults() {
+        return new Promise(resolve => {
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/results?id=${this.props.id}`, {
+                method: 'GET'
+            }).then(res => res.json())
+                .then(results => { 
+                    this.props.setBacktestResults(this.props.id, results);
+                    resolve();
+                });
+        });
     }
 
     fetchOptimizedIndicators = () => {
@@ -58,37 +78,90 @@ class Optimize extends React.Component {
                 // not optimized
                 if (optimized["error"]) {
                     optimized = undefined;
-                    this.setState({ optimized, loading: false });
+                    this.setState({ loading: false });
                     return;
                 }
 
-                let allIndicatorData = [];
-                let indicatorData = {};
                 let data = optimized["data"];
                 let symbols = Object.keys(data);
                 let fields = data[symbols[0]]["fields"];
+                let allIndicatorData = { events: [], stats: {}, generalStats: {} }; // contains all events, stats for all fields
+                let combinedIndicatorData = []; // contains all indicator averages
+                let indicatorData = {}; // maps indicator to averages
+                fields.forEach(field => {
+                    indicatorData[field] = []
+                });
+
                 // transform data for chart
                 symbols.forEach(symbol => {
                     let events = data[symbol]["data"];
-                    let eventIndex = Math.floor(events.length * Math.random());
-                    let event = events[eventIndex];
-                    // events.forEach(event => {
-                    let allIndicatorEntry = { percentProfit: event["percentProfit"] };
+                    let flattenedData = {};
+                    let stats = {};
+                    let percentProfits = [];
 
-                    // record for each indicator field
-                    event["indicators"].forEach((v, i) => {
-                        if (!indicatorData.hasOwnProperty(fields[i])) {
-                            indicatorData[fields[i]] = [];
-                        }
-                        indicatorData[fields[i]].push({ value: v, percentProfit: event["percentProfit"] });
-                        allIndicatorEntry[fields[i]] = v;
+                    // initialize lists
+                    fields.forEach(field => {
+                        flattenedData[field] = [];
                     })
 
-                    // record for indicator combos
-                    allIndicatorData.push(allIndicatorEntry);
-                    // })
+                    let faulty = false;
+                    // convert data into lists
+                    events.forEach((event, i) => {
+                        event["symbol"] = symbol;
+                        event["buyDate"] = this.props.results["symbolData"][symbol]["events"][i]["buyDate"];
+                        event["sellDate"] = this.props.results["symbolData"][symbol]["events"][i]["sellDate"];
+                        allIndicatorData["events"].push(event);
+                        percentProfits.push(event["percentProfit"]);
+                        // record for each indicator field
+                        event["indicators"].forEach((v, i) => {
+                            if (!v) faulty = true;
+                            flattenedData[fields[i]].push(v);
+                        })
+                    })
+                    if (faulty) return;
+
+                    // average out events for each symbol                     
+                    stats["percentProfit"] = mean(percentProfits);
+                    let combinedIndicatorEntry = { percentProfit: stats["percentProfit"] };
+                    Object.keys(flattenedData).forEach(indicatorField => {
+                        let indicatorEntry = {};
+                        indicatorEntry["value"] = mean(flattenedData[indicatorField]);
+                        indicatorEntry["percentProfit"] = stats["percentProfit"];
+                        indicatorData[indicatorField].push(indicatorEntry);
+                        combinedIndicatorEntry[indicatorField] = indicatorEntry["value"];
+                    })
+                    combinedIndicatorData.push(combinedIndicatorEntry);
+                });
+
+                // calculate stats for all data
+                fields.forEach((field, fieldIndex) => {
+                    let flattened = [];
+                    allIndicatorData["events"].forEach(event => {
+                        if (event["indicators"][fieldIndex]) {
+                            flattened.push(event["indicators"][fieldIndex]);
+                        }
+                    });
+                    allIndicatorData["stats"][field] = {
+                        mean: mean(flattened),
+                        median: median(flattened),
+                        standardDeviation: standardDeviation(flattened)
+                    }
                 })
-                this.setState({ indicatorData, allIndicatorData, indicatorFields: fields, indicator1: fields[0] });
+                let flattened = [];
+                allIndicatorData["events"].forEach(event => {
+                    flattened.push(event["percentProfit"]);
+                });
+                allIndicatorData["stats"]["percentProfit"] = {
+                    min: min(flattened),
+                    max: max(flattened),
+                    mean: mean(flattened),
+                    median: median(flattened),
+                    standardDeviation: standardDeviation(flattened)
+                };
+
+                this.setState({ allIndicatorData, indicatorData, combinedIndicatorData, indicatorFields: fields, indicator1: fields[0] }, () => {
+                    this.setSectors();
+                });
             });
     }
 
@@ -99,8 +172,7 @@ class Optimize extends React.Component {
             .then(optimized => {
                 // not optimized
                 if (optimized["error"]) {
-                    optimized = undefined;
-                    this.setState({ optimized, loading: false });
+                    this.setState({ loading: false });
                     return;
                 }
 
@@ -134,7 +206,7 @@ class Optimize extends React.Component {
             });
     }
 
-    requestOptimization = () => {
+    requestStoplossTargetOptimization = () => {
         let optimizeOptions = {};
         // error check
         let error = "";
@@ -156,7 +228,7 @@ class Optimize extends React.Component {
         }
 
         // valid request
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/optimize`, {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/optimizeStoplossTarget`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -170,6 +242,113 @@ class Optimize extends React.Component {
             });
     }
 
+    requestIndicatorOptimization = () => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/optimizeIndicators`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: this.props.id })
+        })
+            .then(res => res.json())
+            .then(json => {
+                this.setState({ baseID: json["id"] });
+                alert(json["status"]);
+            });
+    }
+
+    setSectors = () => {
+        if (!this.state.indicator1) return;
+        let fieldIndex = this.state.indicatorFields.indexOf(this.state.indicator1);
+        let sectors = [];
+        let domain = this.getDomain(this.state.indicator1);
+        let range = domain[1] - domain[0];
+        let sectorSize = range / this.state.numSectors;
+        let minPercentProfit = 100;
+        let maxPercentProfit = -100;
+        // split up each sector and calculate their profits
+        for (let i = 0; i < this.state.numSectors; ++i) {
+            let sector = {
+                x1: domain[0] + sectorSize * i,
+                x2: domain[0] + sectorSize * (i + 1),
+                y1: this.state.allIndicatorData["stats"]["percentProfit"]["min"],
+                y2: this.state.allIndicatorData["stats"]["percentProfit"]["max"],
+                events: []
+            };
+            let percentProfit = 0;
+            let count = 0;
+            this.state.allIndicatorData["events"].forEach(event => {
+                let v = event["indicators"][fieldIndex];
+                // within sector
+                if (v >= sector["x1"] && v < sector["x2"]) {
+                    sector["events"].push(event);
+                    percentProfit += event["percentProfit"];
+                    count += 1;
+                }
+            })
+            sector["percentProfit"] = percentProfit / count;
+            sector["count"] = count;
+            if (sector["percentProfit"] < minPercentProfit) minPercentProfit = sector["percentProfit"];
+            if (sector["percentProfit"] > maxPercentProfit) maxPercentProfit = sector["percentProfit"];
+            sectors.push(sector);
+        }
+
+        // score each sector relative to each other to assign color
+        sectors.forEach(sector => {
+            let score = mapRange(sector["percentProfit"], 0, maxPercentProfit, 0, 1);
+            let fill = ""
+            if (score) {
+                fill = this.highlightColormap(score);
+            }
+            else {
+                // no data
+                fill = "none";
+            }
+            sector["score"] = score;
+            if (sector["percentProfit"] > 0) {
+                // score = mapRange(sector["percentProfit"], 0, maxPercentProfit, 0, 1);
+                // fill = this.winColormap(score);
+                sector["fill"] = fill;
+            }
+            else {
+                // let score = mapRange(sector["percentProfit"], 0, minPercentProfit, 0, 1);
+                // fill = this.lossColormap(score);
+                sector["fill"] = fill;
+            }
+        });
+        sectors.sort((a, b) => b["score"] - a["score"]);
+
+        this.setState({ sectors });
+    }
+
+    applySectors = () => {
+        let top = Math.floor(this.state.numSectors * this.state.applySectors);
+        let newResults = this.props.results;
+        for (let i = 0; i < top; ++i) {
+            let sector = this.state.sectors[i];
+            // tag events to be removed
+            sector["events"].forEach(event => {
+                newResults["symbolData"][event["symbol"]]["events"].forEach(e => {
+                    if (e["buyDate"] == event["buyDate"] && e["sellDate"] == event["sellDate"]) {
+                        e["remove"] = true;
+                    }
+                });
+            })
+        }
+
+        // does the actual removal
+        let filtered = 0;
+        Object.keys(newResults["symbolData"]).forEach(symbol => {
+            let newEvents = newResults["symbolData"][symbol]["events"].filter(event => !event["remove"]);
+            newResults["symbolData"][symbol]["events"] = newEvents;
+            filtered += 1;
+        })
+
+        // update redux
+        this.props.setBacktestResults(this.props.id, newResults);
+        alert("Filtered " + filtered + " events");
+    }
+
     switchMode = () => {
         if (this.state.mode == "stoplossTarget") {
             this.setState({ mode: "indicators" });
@@ -177,6 +356,18 @@ class Optimize extends React.Component {
         else {
             this.setState({ mode: "stoplossTarget" });
         }
+    }
+
+    getDomain = (field) => {
+        let deviations = 2;
+        let mean = this.state.allIndicatorData["stats"][field]["mean"];
+        let standardDeviation = this.state.allIndicatorData["stats"][field]["standardDeviation"];
+        let domain = [mean - deviations * standardDeviation, mean + deviations * standardDeviation];
+        let onlyPositive = ["Head_Ratio", "Leg_Ratio"];
+        if (onlyPositive.includes(field)) {
+            domain[0] = Math.max(0, domain[0]);
+        }
+        return domain;
     }
 
     yAxisFormatter = (value) => {
@@ -206,6 +397,7 @@ class Optimize extends React.Component {
 
     render() {
         let tooltip = <Tooltip formatter={this.tooltipFormatter} />
+        console.log(this.state);
 
         return <div className="optimize">
             <Pusher
@@ -235,7 +427,7 @@ class Optimize extends React.Component {
                 }}
             />
             <div className="optimize-header">
-                <h3 className="optimize-title">Optimize</h3>
+                <h3 className="optimize-title">Optimize {camelToDisplay(this.state.mode)}</h3>
                 {
                     this.state.progress != -1 && (
                         <LinearProgress className="optimize-progress" variant="determinate" value={this.state.progress} />
@@ -263,7 +455,7 @@ class Optimize extends React.Component {
                                     }} />)
                             }
                             <Box ml="1vw" >
-                                <Button variant="contained" color="primary" onClick={this.requestOptimization}>
+                                <Button variant="contained" color="primary" onClick={this.requestStoplossTargetOptimization}>
                                     Optimize
                                 </Button>
                             </Box>
@@ -295,85 +487,146 @@ class Optimize extends React.Component {
                 }
                 {
                     this.state.mode == "indicators" && <>
-                        <div className="optimize-card">
-                            <Box ml="1vw">
-                                <FormControl style={{ minWidth: "5vw" }}>
-                                    <InputLabel>Indicator 1</InputLabel>
-                                    <Select
-                                        value={this.state.indicator1}
-                                        onChange={(e) => this.setState({ indicator1: e.target.value })}
-                                    >
-                                        {
-                                            this.state.indicatorFields.map((indicatorField, index) => {
-                                                return <MenuItem key={`optimize-indicator1-field-${index}`} value={indicatorField}>{indicatorField}</MenuItem>
-                                            })
-                                        }
-                                    </Select>
-                                </FormControl>
-                            </Box>
-                            <Box ml="1vw">
-                                <FormControl style={{ minWidth: "5vw" }}>
-                                    <InputLabel>Indicator 2</InputLabel>
-                                    <Select
-                                        value={this.state.indicator2}
-                                        onChange={(e) => this.setState({ indicator2: e.target.value })}
-                                    >
-                                        <MenuItem key={`optimize-indicator1-field-none`} value={"None"}>None</MenuItem>
-                                        {
-                                            this.state.indicatorFields.map((indicatorField, index) => {
-                                                return <MenuItem key={`optimize-indicator1-field-${index}`} value={indicatorField}>{indicatorField}</MenuItem>
-                                            })
-                                        }
-                                    </Select>
-                                </FormControl>
-                            </Box>
-                            <Box mx="1vw" mt="1vh">
-                                <FormControl style={{ minWidth: "5vw" }}>
-                                    <InputLabel># Sectors</InputLabel>
-                                    <Slider
-                                        defaultValue={50}
-                                        aria-labelledby="discrete-slider"
-                                        valueLabelDisplay="auto"
-                                        value={this.state.numSectors}
-                                        onChange={(e, v) => { this.setState({ numSectors: v }) }}
-                                        step={1}
-                                        marks
-                                        min={1}
-                                        max={20}
-                                    />
-                                </FormControl>
-                            </Box>
-                            <Box ml="1vw" >
-                                <Button variant="contained" color="primary" onClick={() => { }}>
-                                    Apply
-                                </Button>
-                            </Box>
-                        </div>
                         {
-                            this.state.indicator2 == "None" && <div className="optimize-chart">
-                                <ResponsiveContainer width="100%" height={`85%`}>
-                                    <ScatterChart margin={{ top: 0, right: 40, bottom: 40, left: 20 }} >
-                                        <CartesianGrid />
-                                        <XAxis type="number" dataKey="value" name={this.state.indicator1} domain={['dataMin', 'dataMax']} label={{ value: this.state.indicator1, position: "insideBottom", offset: -10 }} tickFormatter={this.xAxisFormatter} />
-                                        <YAxis type="number" dataKey="percentProfit" name="Percent Profit" domain={['dataMin', 'dataMax']} label={{ value: "Percent Profit", position: "insideLeft", angle: -90 }} tickFormatter={this.yAxisFormatter} />
-                                        <Scatter data={this.state.indicatorData[this.state.indicator1]} fill="#82ca9d" shape={<this.IndicatorDot />} />
-                                        {tooltip}
-                                    </ScatterChart >
-                                </ResponsiveContainer>
-                            </div>
+                            !this.state.indicatorData && <>
+                                <div className="optimize-card" style={{ justifyContent: "center" }}>
+                                    <Box ml="1vw" >
+                                        <Button variant="contained" color="primary" onClick={this.requestIndicatorOptimization}>
+                                            Optimize
+                                        </Button>
+                                    </Box>
+                                </div>
+                            </>
                         }
                         {
-                            (this.state.indicator2 != "None" && this.state.allIndicatorData) && <div className="optimize-chart">
-                                <ResponsiveContainer width="100%" height={`85%`}>
-                                    <ScatterChart margin={{ top: 0, right: 40, bottom: 40, left: 20 }} >
-                                        <CartesianGrid />
-                                        <XAxis type="number" dataKey={this.state.indicator1} name={this.state.indicator1} domain={['dataMin', 'dataMax']} label={{ value: this.state.indicator1, position: "insideBottom", offset: -10 }} tickFormatter={this.xAxisFormatter} />
-                                        <YAxis type="number" dataKey={this.state.indicator2} name={this.state.indicator2} domain={['dataMin', 'dataMax']} label={{ value: this.state.indicator2, position: "insideLeft", angle: -90 }} tickFormatter={this.yAxisFormatter} />
-                                        <Scatter data={this.state.allIndicatorData} fill="#82ca9d" shape={<this.IndicatorDot />} />
-                                        {tooltip}
-                                    </ScatterChart >
-                                </ResponsiveContainer>
+                            this.state.indicatorData && <><div className="optimize-card">
+                                <Box ml="1vw">
+                                    <FormControl style={{ minWidth: "5vw" }}>
+                                        <InputLabel>Indicator 1</InputLabel>
+                                        <Select
+                                            value={this.state.indicator1}
+                                            onChange={(e) => this.setState({ indicator1: e.target.value }, this.setSectors)}
+                                        >
+                                            {
+                                                this.state.indicatorFields.map((indicatorField, index) => {
+                                                    return <MenuItem key={`optimize-indicator1-field-${index}`} value={indicatorField}>{indicatorField}</MenuItem>
+                                                })
+                                            }
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                                <Box ml="1vw">
+                                    <FormControl style={{ minWidth: "5vw" }}>
+                                        <InputLabel>Indicator 2</InputLabel>
+                                        <Select
+                                            value={this.state.indicator2}
+                                            onChange={(e) => this.setState({ indicator2: e.target.value }, this.setSectors)}
+                                        >
+                                            <MenuItem key={`optimize-indicator1-field-none`} value={"None"}>None</MenuItem>
+                                            {
+                                                this.state.indicatorFields.map((indicatorField, index) => {
+                                                    return <MenuItem key={`optimize-indicator1-field-${index}`} value={indicatorField}>{indicatorField}</MenuItem>
+                                                })
+                                            }
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                                <Box mx="1vw" mt="1vh">
+                                    <FormControl style={{ minWidth: "5vw" }}>
+                                        <InputLabel># Sectors</InputLabel>
+                                        <Slider
+                                            defaultValue={50}
+                                            aria-labelledby="discrete-slider"
+                                            valueLabelDisplay="auto"
+                                            value={this.state.numSectors}
+                                            onChange={(e, v) => { this.setState({ numSectors: v }, this.setSectors) }}
+                                            step={1}
+                                            marks
+                                            min={1}
+                                            max={20}
+                                        />
+                                    </FormControl>
+                                </Box>
+                                <Box mx="1vw" mt="1vh">
+                                    <FormControl style={{ minWidth: "5vw" }}>
+                                        <InputLabel>Apply Sectors</InputLabel>
+                                        <Slider
+                                            defaultValue={.5}
+                                            aria-labelledby="discrete-slider"
+                                            valueLabelDisplay="auto"
+                                            value={this.state.applySectors}
+                                            onChange={(e, v) => { this.setState({ applySectors: v }) }}
+                                            step={.1}
+                                            marks
+                                            min={0}
+                                            max={1}
+                                        />
+                                    </FormControl>
+                                </Box>
+                                <Box mx="1vw" mt="1vh">
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={this.state.showSectors}
+                                                onChange={(e) => { this.setState({ showSectors: e.target.checked }) }}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Show Sectors"
+                                    />
+                                </Box>
+                                <Box ml="1vw" >
+                                    <Button variant="contained" color="primary" onClick={this.applySectors}>
+                                        Apply
+                                </Button>
+                                </Box>
                             </div>
+                                {
+                                    this.state.indicator2 == "None" && <div className="optimize-chart">
+                                        <ResponsiveContainer width="100%" height={`85%`}>
+                                            <ScatterChart margin={{ top: 0, right: 40, bottom: 40, left: 20 }} >
+                                                <CartesianGrid />
+                                                <XAxis type="number" dataKey="value" name={this.state.indicator1}
+                                                    domain={[(dataMin) => this.getDomain(this.state.indicator1)[0], (dataMax) => this.getDomain(this.state.indicator1)[1]]}
+                                                    label={{ value: this.state.indicator1, position: "insideBottom", offset: -10 }} tickFormatter={this.xAxisFormatter}
+                                                    ticks={this.state.sectors.map(sector => sector["x1"])} interval={0} />
+                                                <YAxis type="number" dataKey="percentProfit" name="Percent Profit" domain={['dataMin', 'dataMax']}
+                                                    label={{ value: "Percent Profit", position: "insideLeft", angle: -90 }} tickFormatter={this.yAxisFormatter} />
+                                                <Scatter data={this.state.indicatorData[this.state.indicator1]} fill="#82ca9d" shape={<this.IndicatorDot />} />
+                                                {tooltip}
+                                                {
+                                                    this.state.showSectors && this.state.sectors.map((sector, i) => {
+                                                        if (sector["fill"] == "none") return;
+                                                        return <ReferenceArea key={`sector-${i}`} x1={sector["x1"]} x2={sector["x2"]} y1={sector["y1"]} y2={sector["y2"]}
+                                                            stroke="black" fill={sector["fill"]} strokeOpacity={0.3}
+                                                            label={<Label position="insideTop" offset={25}>
+                                                                {`#${i + 1} | ${(sector["percentProfit"] * 100).toFixed(2)}%`}
+                                                            </Label>
+                                                            } alwaysShow />
+                                                    })
+                                                }
+                                            </ScatterChart >
+                                        </ResponsiveContainer>
+                                    </div>
+                                }
+                                {
+                                    (this.state.indicator2 != "None" && this.state.combinedIndicatorData) && <div className="optimize-chart">
+                                        <ResponsiveContainer width="100%" height={`85%`}>
+                                            <ScatterChart margin={{ top: 0, right: 40, bottom: 40, left: 20 }} >
+                                                <CartesianGrid />
+                                                <XAxis type="number" dataKey={this.state.indicator1} name={this.state.indicator1}
+                                                    domain={[(dataMin) => this.getDomain(this.state.indicator1)[0], (dataMax) => this.getDomain(this.state.indicator1)[1]]}
+                                                    label={{ value: this.state.indicator1, position: "insideBottom", offset: -10 }} tickFormatter={this.xAxisFormatter} />
+                                                <YAxis type="number" dataKey={this.state.indicator2} name={this.state.indicator2}
+                                                    domain={[(dataMin) => this.getDomain(this.state.indicator2)[0], (dataMax) => this.getDomain(this.state.indicator2)[1]]}
+                                                    label={{ value: this.state.indicator2, position: "insideLeft", angle: -90 }} tickFormatter={this.yAxisFormatter} />
+                                                <Scatter data={this.state.combinedIndicatorData} fill="#82ca9d" shape={<this.IndicatorDot scale={true} />} />
+                                                {tooltip}
+                                            </ScatterChart >
+                                        </ResponsiveContainer>
+                                    </div>
+                                }
+                            </>
                         }
                     </>
                 }
@@ -401,12 +654,17 @@ class Optimize extends React.Component {
         } = props;
 
         let dotRadius = 10;
+        let domain = this.getDomain("percentProfit");
         if (props.percentProfit > 0) {
-            return <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill={this.colormap(1)} />
+            let colorValue = mapRange(props.percentProfit, 0, domain[1], 0, 1);
+            if (props.scale) dotRadius = colorValue * 10 + 5;
+            return <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill={this.winColormap(colorValue)} />
         }
-        return (
-            <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill={this.colormap(0)} />
-        );
+        else {
+            let colorValue = mapRange(props.percentProfit, 0, domain[0], 0, 1);
+            if (props.scale) dotRadius = colorValue * 10 + 5;
+            return <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill={this.lossColormap(colorValue)} />
+        };
     }
 }
 
@@ -415,4 +673,4 @@ let mapStateToProps = (state) => {
     return { results, id: state.id };
 };
 
-export default connect(mapStateToProps)(Optimize);
+export default connect(mapStateToProps, { setBacktestResults })(Optimize);

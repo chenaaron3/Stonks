@@ -34,6 +34,7 @@ class CreateBacktest extends React.Component {
             targetAtr: 0,
             riskRewardRatio: 0,
             limitOrder: false,
+            trailingStopLoss: false,
             minVolume: 1000000,
             maxDays: 30,
             errors: {}
@@ -134,6 +135,7 @@ class CreateBacktest extends React.Component {
                 "stopLossSwing": this.state.stopLossSwing,
                 "targetSwing": this.state.targetSwing,
                 "limitOrder": this.state.limitOrder,
+                "trailingStopLoss": this.state.trailingStopLoss,
                 "minVolume": this.state.minVolume,
                 "maxDays": this.state.maxDays,
                 "expiration": 7,
@@ -418,6 +420,20 @@ class CreateBacktest extends React.Component {
                                                                     />
                                                                 }
                                                                 label="Use Limit Order"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        checked={this.state.trailingStopLoss}
+                                                                        onChange={(e) => {
+                                                                            this.setState({ trailingStopLoss: e.target.checked });
+                                                                        }}
+                                                                        color="primary"
+                                                                    />
+                                                                }
+                                                                label="Use Trailing Stop"
                                                             />
                                                         </div>
                                                     </div>

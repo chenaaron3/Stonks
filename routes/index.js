@@ -8,7 +8,7 @@ const csv = require('csv');
 let { containsID, addDocument, getDocument, addActiveResult, deleteActiveResult, deleteDocument, getDocumentField, setDocumentField } = require('../helpers/mongo');
 let { makeid, daysBetween, getBacktestSummary } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
-let { backtest, optimizeStoplossTarget, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
+let { backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
 let { getLatestPrice, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
@@ -175,11 +175,11 @@ router.get("/optimizedStoplossTarget", async (req, res) => {
 // get optimized indicators
 router.get("/optimizedIndicators", async (req, res) => {
     let id = req.query.id;
-    let doc = await getDocument("indicators", id);
-    if (doc) {
+    try {
+        let doc = await getDocument("indicators", id);
         res.json(doc);
     }
-    else {
+    catch {
         res.json({ error: "Backtest not optimized yet!" });
     }
 });
@@ -322,7 +322,7 @@ router.post("/backtest", async (req, res) => {
 });
 
 // optimize a backtest 
-router.post("/optimize", async (req, res) => {
+router.post("/optimizeStoplossTarget", async (req, res) => {
     // get options from client
     let optimizeOptions = req.body;
     let id = req.body["id"];
@@ -334,6 +334,45 @@ router.post("/optimize", async (req, res) => {
     }
 
     let position = optimizeStoplossTarget(id, optimizeOptions);
+
+    // send response so doesn't hang and gets the unique id
+    if (position == 0) {
+        res.json({ id, status: "Starting your optimization!" });
+    }
+    else {
+        res.json({ id, status: `Optimization will start within ${30 * position} minutes!` });
+    }
+})
+
+router.post("/optimizeIndicators", async (req, res) => {
+    // get options from client
+    let id = req.body["id"];
+    let indicatorOptions = {
+        "RSI": {
+            "period": 14
+        },
+        "MACD": {
+            "ema1": 12,
+            "ema2": 26,
+            "signalPeriod": 9
+        },
+        "ADX": {
+            "period": 14,
+        },
+        "Stochastic": {
+            "period": 14
+        },
+        "Hammer": {
+        }
+    }
+
+    // get the base id
+    if (id.includes("optimized")) {
+        let optimized = await getDocumentField("results", id, ["_optimized"]);
+        id = optimized["_optimized"]["base"];
+    }
+
+    let position = optimizeIndicators(id, indicatorOptions);
 
     // send response so doesn't hang and gets the unique id
     if (position == 0) {

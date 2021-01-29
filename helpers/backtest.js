@@ -632,7 +632,7 @@ function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbo
                                     soldCount = 0;
                                     sold.forEach((isSold, i) => {
                                         if (!isSold) {
-                                            let eventCopy = getOptimizedEvent(event, buyDate, buyPrice, day, sellPrice, stoplossTargets[i], profits[i]);
+                                            let eventCopy = getOptimizedEvent(event, buyDate, buyPrice, day, sellPrice, "indicator", stoplossTargets[i], profits[i]);
                                             optimizedEvents[i].push(eventCopy);
                                         }
                                     })
@@ -653,11 +653,13 @@ function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbo
                                             if (strategyOptions["limitOrder"]) {
                                                 sellPrice = earlyTrades[buyDate]["price"];
                                             }
-                                            let eventCopy = getOptimizedEvent(event, buyDate, buyPrice, day, sellPrice, stoplossTargets[i], profits[i]);
+                                            let eventCopy = getOptimizedEvent(event, buyDate, buyPrice, day, sellPrice, earlyTrades[buyDate]["reason"], stoplossTargets[i], profits[i]);
                                             optimizedEvents[i].push(eventCopy);
                                             sold[i] = true;
                                             soldCount -= 1;
-                                            effective += 1;
+                                            if (eventCopy["reason"] != event["reason"]) {
+                                                effective += 1;
+                                            }
                                         }
                                     }
                                 }
@@ -681,14 +683,14 @@ function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbo
     });
 }
 
-function getOptimizedEvent(event, buyDate, buyPrice, sellDate, sellPrice, stoplossTarget, profit) {
+function getOptimizedEvent(event, buyDate, buyPrice, sellDate, sellPrice, reason, stoplossTarget, profit) {
     let eventCopy = { ...event };
+    eventCopy["reason"] = reason;
+    calculateProfit(eventCopy, buyPrice, sellPrice, stoplossTarget[buyDate]);
     eventCopy["sellDate"] = sellDate;
-    eventCopy["profit"] = sellPrice - buyPrice;
-    eventCopy["percentProfit"] = (sellPrice - buyPrice) / buyPrice
     eventCopy["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
-    let stoploss = stoplossTarget[buyDate]["stoploss"];
-    eventCopy["risk"] = (buyPrice - stoploss) / buyPrice * 100;
+    let stoploss = stoplossTarget[buyDate]["initStoploss"];
+    event["risk"] = (buyPrice - stoploss) / buyPrice * 100;
 
     // remove from stoplossTarget
     delete stoplossTarget[buyDate];
@@ -895,17 +897,16 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                         event["reason"] = earlyTrades[buyDate]["reason"];
                                     }
                                     else {
-                                        event["reason"] = "indicator"
+                                        event["reason"] = "indicator";
                                     }
 
                                     // populate transaction information
+                                    calculateProfit(event, buyPrice, sellPrice, stoplossTarget[buyDate]);
                                     event["buyDate"] = buyDate;
                                     event["sellDate"] = day;
-                                    event["profit"] = sellPrice - buyPrice;
-                                    event["percentProfit"] = (sellPrice - buyPrice) / buyPrice
                                     event["span"] = daysBetween(new Date(buyDate), new Date(day));
                                     if (stoplossTarget[buyDate] && stoplossTarget[buyDate]["stoploss"]) {
-                                        let stoploss = stoplossTarget[buyDate]["stoploss"];
+                                        let stoploss = stoplossTarget[buyDate]["initStoploss"];
                                         event["risk"] = (buyPrice - stoploss) / buyPrice * 100;
                                     }
 
@@ -1087,8 +1088,13 @@ function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, a
 
     if (stoploss || target) {
         stoplossTarget[buyDate] = {};
+        stoplossTarget[buyDate]["initStoploss"] = stoploss;
         stoplossTarget[buyDate]["stoploss"] = stoploss;
         stoplossTarget[buyDate]["target"] = target;
+        if (target && strategyOptions["trailingStopLoss"]) {
+            stoplossTarget[buyDate]["midPoint"] = (target + buyPrice) / 2;
+            stoplossTarget[buyDate]["midPointReached"] = false;
+        }
     }
 }
 
@@ -1107,6 +1113,7 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
         if (bd == day || !stoplossTarget[bd]) return;
         let stoploss = stoplossTarget[bd]["stoploss"];
         let target = stoplossTarget[bd]["target"];
+        let midPoint = stoplossTarget[bd]["midPoint"];
         if (stoploss && low < stoploss) {
             earlyTrades[bd] = {
                 price: stoploss,
@@ -1118,6 +1125,10 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
                 price: target,
                 reason: "target"
             };
+        }
+        if (midPoint && !stoplossTarget[bd]["midPointReached"] && high > midPoint) {
+            stoplossTarget[bd]["midPointReached"] = true;
+            stoplossTarget[bd]["stoploss"] = prices[bd];
         }
     });
 
@@ -1134,6 +1145,30 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
     }
 
     return earlyTrades;
+}
+
+function calculateProfit(event, buyPrice, sellPrice, stoplossTarget) {
+    // use trailing stop
+    if (stoplossTarget && stoplossTarget["midPoint"]) {
+        // target met, take 1.5
+        if (event["reason"] == "target") {
+            event["profit"] = (sellPrice - buyPrice) * .75;
+            event["percentProfit"] = event["profit"] / buyPrice;
+            return;
+        }
+        // stoploss met, loss depends on if midpoint was reached
+        else if (event["reason" == "stoploss"]) {
+            if ("midPointReached") {
+                event["profit"] = (stoplossTarget["midPoint"] - buyPrice) * .5;
+                event["percentProfit"] = event["profit"] / buyPrice;
+                return;
+            }
+        }
+    }
+
+    // simple case
+    event["profit"] = sellPrice - buyPrice;
+    event["percentProfit"] = (sellPrice - buyPrice) / buyPrice;
 }
 
 // get buy or sell conditions
