@@ -56,7 +56,7 @@ async function ensureUpdated() {
 	setTimeout(() => { ensureUpdated() }, 1000 * 60 * 60 * 1);
 }
 
-router.get("/reset", async function (req, res) {
+router.post("/reset", async function (req, res) {
 	res.send("Resetting!");
 	// clear prices collection;
 	addJob(() => {
