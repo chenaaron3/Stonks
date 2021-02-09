@@ -23,7 +23,7 @@ let MACDPos = require('../helpers/indicators/macdPos');
 let GC = require('../helpers/indicators/gc');
 let ADX = require('../helpers/indicators/adx');
 let Solid = require('../helpers/indicators/solid');
-let Hammer = require('../helpers/indicators/hammer');
+let Candle = require('./indicators/candle');
 let Structure = require('../helpers/indicators/structure');
 let ATR = require('../helpers/indicators/atr');
 let Pullback = require('../helpers/indicators/pullback');
@@ -31,6 +31,7 @@ let Breakout = require('../helpers/indicators/breakout');
 let Swing = require('../helpers/indicators/swing');
 let Divergence = require('../helpers/indicators/divergence');
 let Stochastic = require('../helpers/indicators/stochastic');
+let Trend = require('../helpers/indicators/trend');
 let Indicator = require('../helpers/indicators/indicator');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
@@ -41,14 +42,15 @@ let INDICATOR_OBJECTS = {
     "GC": GC,
     "ADX": ADX,
     "Solid": Solid,
-    "Hammer": Hammer,
+    "Candle": Candle,
     "Structure": Structure,
     "ATR": ATR,
     "Pullback": Pullback,
     "Breakout": Breakout,
     "Swing": Swing,
     "Divergence": Divergence,
-    "Stochastic": Stochastic
+    "Stochastic": Stochastic,
+    "Trend": Trend
 }
 
 // paths to resources
@@ -533,13 +535,14 @@ function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
                                 })
                             }
                         });
+                        data["Price"] = prices[buyDate];
 
                         // flatten the data to an array
                         if (!indicatorFields) {
                             indicatorFields = Object.keys(data).sort();
                         }
                         let flattenedData = indicatorFields.map(f => data[f]);
-                        indicatorData.push({ indicators: flattenedData, percentProfit: event["percentProfit"] });
+                        indicatorData.push({ indicators: flattenedData, percentProfit: event["percentProfit"], buyDate: buyDate });
                     });
 
                     resolve({ data: indicatorData, fields: indicatorFields });
@@ -1158,8 +1161,16 @@ function calculateProfit(event, buyPrice, sellPrice, stoplossTarget) {
         }
         // stoploss met, loss depends on if midpoint was reached
         else if (event["reason" == "stoploss"]) {
-            if ("midPointReached") {
+            if (stoplossTarget["midPointReached"]) {
                 event["profit"] = (stoplossTarget["midPoint"] - buyPrice) * .5;
+                event["percentProfit"] = event["profit"] / buyPrice;
+                return;
+            }
+        }
+        // indicator or overdue
+        else {
+            if (stoplossTarget["midPointReached"]) {
+                event["profit"] = (sellPrice - buyPrice + stoplossTarget["midPoint"] - buyPrice) * .5;
                 event["percentProfit"] = event["profit"] / buyPrice;
                 return;
             }

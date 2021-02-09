@@ -20,7 +20,7 @@ class Chart extends React.Component {
 
         // constants
         this.indicatorCharts = { "RSI": RSI, "MACD": MACD, "ADX": ADX, "Stochastic": Stochastic };
-        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR", "Swing", "Divergence"];
+        this.overlayCharts = ["SMA", "GC", "EMA", "Structure", "Pullback", "Breakout", "ATR", "Swing", "Divergence", "Trend", "Candle"];
         this.chunkSize = 500;
         this.scrollThreshold = .025;
         this.eventMargin = .1;

@@ -175,8 +175,17 @@ router.get("/optimizedStoplossTarget", async (req, res) => {
 // get optimized indicators
 router.get("/optimizedIndicators", async (req, res) => {
     let id = req.query.id;
+
+    let doc = await getDocumentField("results", id, ["_optimized"]);
+    let optimized = doc["_optimized"];
+    // use base id
+    if (optimized && optimized["base"]) {
+        id = optimized["base"];
+    }
+
+    // get doc
     try {
-        let doc = await getDocument("indicators", id);
+        doc = await getDocument("indicators", id);
         res.json(doc);
     }
     catch {
@@ -361,8 +370,6 @@ router.post("/optimizeIndicators", async (req, res) => {
         },
         "Stochastic": {
             "period": 14
-        },
-        "Hammer": {
         }
     }
 

@@ -160,6 +160,21 @@ function getDocument(collectionName, documentID) {
 	});
 }
 
+function deleteCollection(collectionName) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		// get collection
+		getCollection(collectionName)
+			.then(async (collection) => {
+				// delete
+				await collection.remove({
+				});
+				resolve();
+			})
+			.catch(err => reject(err));
+	});
+}
+
 function deleteDocument(collectionName, documentID) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
@@ -451,6 +466,7 @@ module.exports = {
 	setDocumentField,
 	getDocumentField,
 	deleteDocument,
+	deleteCollection,
 	containsID,
 	setStockInfo,
 	updateStockInfo,

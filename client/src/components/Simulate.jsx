@@ -20,6 +20,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
+import { mean, median, standardDeviation, min, max } from 'simple-statistics'
 
 class Simulate extends React.Component {
     constructor(props) {
@@ -276,14 +277,19 @@ class Simulate extends React.Component {
     findOptimal = async () => {
         let optimalSetting = { scoreBy: "", maxRisk: 0 };
         let optimal = -100000;
+        // try all score types
         for (let i = 0; i < this.scoreTypes.length; ++i) {
             if (i == 1) { continue }
             let scoreBy = this.scoreTypes[i];
+            // try all risk settings
             for (let risk = this.minRisk; risk <= this.maxRisk; risk += this.stepRisk) {
                 let simulateResults = await this.tryOptimal(scoreBy, risk);
+                // score by equity or returns
                 let equity = simulateResults["equity"];
                 let returnsData = simulateResults["returnsData"];
                 let recentPerformance = 0;
+
+                // give negative returns more weight
                 returnsData.slice(returnsData.length - 10, returnsData.length).forEach(v => {
                     if (v["returns"] > 0) {
                         recentPerformance += v["returns"];
@@ -292,15 +298,21 @@ class Simulate extends React.Component {
                         recentPerformance += v["returns"] * 10;
                     }
                 });
-                console.log(recentPerformance);
-                if (recentPerformance > optimal) {
-                    optimal = recentPerformance;
+
+                // want high returns with low standard dev
+                let returnsNumeric = returnsData.map(v => v["returns"]);
+                let sharpe = mean(returnsNumeric) / standardDeviation(returnsNumeric);
+
+                let score = sharpe //equity //recentPerformance; // equity;
+                if (score > optimal) {
+                    optimal = score;
                     optimalSetting["scoreBy"] = scoreBy;
                     optimalSetting["maxRisk"] = risk;
                 }
             }
         }
         this.setState({ ...optimalSetting }, () => this.simulate(true));
+        console.log("Optimal:", optimal)
         return optimal;
     }
 

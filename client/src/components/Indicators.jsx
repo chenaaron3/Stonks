@@ -20,6 +20,7 @@ class Indicators extends React.Component {
             "ATR": { "fields": ["period"], "default": [12] },
             "Divergence": { "fields": ["period"], "default": [10] },
             "Stochastic": { "fields": ["period", "underbought", "overbought"], "default": [14, 20, 80] },
+            "Trend": { "fields": ["period"], "default": [10] },
         }
     }
 

@@ -1,3 +1,5 @@
+var { jStat } = require('jstat')
+
 // determine if line (x1, a1) => (x2, a2) crosses line (x1, b1) => (x2, b2)
 function isCrossed(a1, a2, b1, b2, crossUp) {
     if (crossUp) {
@@ -271,6 +273,32 @@ function isHighLow(dates, prices, period, dateIndex) {
     return res;
 }
 
+function howHighLow(dates, prices, maxPeriod, dateIndex) {
+    let currentPrice = prices[dates[dateIndex]];
+    let reached = { high: false, low: false }
+    let res = { high: 0, low: 0 };
+
+    // check if any prices above current price
+    let stopIndex = Math.max(0, dateIndex - maxPeriod);
+    for (let i = dateIndex - 1; i >= stopIndex; --i) {
+        let price = prices[dates[i]]
+        if (price > currentPrice) {
+            if (!reached["low"]) {
+                res["low"] += 1;
+            }
+            reached["high"] = true;
+        }
+        else if (price < currentPrice) {
+            if (!reached["high"]) {
+                res["high"] += 1;
+            }
+            reached["low"] = true;
+        }
+        if (reached["high"] && reached["low"]) break;
+    }
+    return res;
+}
+
 function getStochasticOscillator(dates, lows, prices, highs, period) {
     let res = {};
 
@@ -313,7 +341,7 @@ function getLow(dates, prices, period, dateIndex) {
     return res;
 }
 
-score = (events, index, scoreData) => {
+function score(events, index, scoreData) {
     let mainEvent = events[index];
     let wins = scoreData["wins"];
     let count = scoreData["count"];
@@ -521,7 +549,10 @@ function simulateBacktest(state, results) {
     }
     weightedReturns /= totalWeight;
 
-    return { equity, weightedReturns };
+    let returnsNumeric = returnsData.map(v => v["returns"]);
+    let sharpe = jStat.mean(returnsNumeric) / jStat.stdev(returnsNumeric);
+
+    return { equity, weightedReturns, sharpe };
 }
 
 function getBacktestSummary(results) {
@@ -572,13 +603,27 @@ function getBacktestSummary(results) {
     let annualWinPercentProfit = winPercentProfit * 360 / winSpan * (winRate);
     let annualLossPercentProfit = lossPercentProfit * 360 / lossSpan * (1 - winRate);
 
+    let simulationResults = [];
+    let scoreTypes = ["Win Rate", "Percent Profit"];
+    scoreTypes.forEach(st => {
+        for (let risk = 5; risk < 50; risk += 5) {
+            let simulationResult = simulateBacktest({
+                range: 20, startSize: 1, maxPositions: 20, positionSize: 5, maxRisk: risk,
+                scoreBy: st
+            }, results);
+            simulationResults.push(simulationResult);
+            console.log("Trying risk", risk);
+        }
+    });
+    let topSimulationResults = {};
+    Object.keys(simulationResults[0]).forEach(s => {
+        topSimulationResults[s] = Math.max(...simulationResults.map(v => v[s]));
+    })
+
     return {
         profit: (winProfit + lossProfit),
         percentProfit: (annualWinPercentProfit + annualLossPercentProfit),
-        ...simulateBacktest({
-            range: 50, startSize: 1, maxPositions: 20, positionSize: 5, maxRisk: 100,
-            scoreBy: "Win Rate",
-        }, results)
+        ...topSimulationResults
     }
 }
 
@@ -687,7 +732,12 @@ function shallowEqual(object1, object2) {
     return true;
 }
 
+// check if value is within reference +- range
+function inRange(value, reference, range) {
+    return value >= reference - range && value <= reference + range;
+}
+
 module.exports = {
-    isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, getStochasticOscillator,
-    formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual, simulateBacktest, getBacktestSummary
+    isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, howHighLow,
+    getStochasticOscillator, formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual, simulateBacktest, getBacktestSummary, inRange
 };

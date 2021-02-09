@@ -27,18 +27,18 @@ import { setBacktestResults } from '../redux';
 class Optimize extends React.Component {
     constructor(props) {
         super(props)
-        this.scoreTypes = ["weightedReturns", "equity", "percentProfit", "profit"];
+        this.scoreTypes = ["sharpe", "weightedReturns", "equity", "percentProfit", "profit"];
         this.modes = ["stoplossTarget", "indicators"];
         this.state = {
             mode: "stoplossTarget",
             scoreBy: "profit", scoreTypes: [],
             indicator1: "", indicator2: "None", numSectors: 10, applySectors: .5, sectors: [], showSectors: true,
-            loading: true, progress: -1, baseID: this.props.id
+            loadingStoplossTarget: true, loadingIndicators: true, progress: -1, baseID: this.props.id
         };
 
         // field data
         this.fields = ["startStoploss", "endStoploss", "strideStoploss", "startRatio", "endRatio", "strideRatio"];
-        this.defaults = [0, 2, .25, 1, 6, .25]
+        this.defaults = [0, 2, .5, 1, 6, .5]
         this.stoplossFields = this.fields.slice(0, 3);
         this.ratioFields = this.fields.slice(3, this.fields.length);
         this.fields.forEach((f, i) => this.state[f] = this.defaults[i]);
@@ -58,12 +58,22 @@ class Optimize extends React.Component {
         this.fetchOptimizedIndicators();
     }
 
+    // componentDidUpdate(prevProps) {
+    //     let events = 0;
+    //     let symbols = Object.keys(this.props["results"]["symbolData"]);
+    //     symbols.forEach(symbol => {
+    //         events += this.props["results"]["symbolData"][symbol]["events"].length;
+    //     })
+    //     console.log("NUM EVENTS", events);        
+    // }
+
     fetchResults() {
+        // fetch results again in case we modified it before
         return new Promise(resolve => {
             fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/results?id=${this.props.id}`, {
                 method: 'GET'
             }).then(res => res.json())
-                .then(results => { 
+                .then(results => {
                     this.props.setBacktestResults(this.props.id, results);
                     resolve();
                 });
@@ -78,7 +88,7 @@ class Optimize extends React.Component {
                 // not optimized
                 if (optimized["error"]) {
                     optimized = undefined;
-                    this.setState({ loading: false });
+                    this.setState({ loadingIndicators: false });
                     return;
                 }
 
@@ -107,9 +117,19 @@ class Optimize extends React.Component {
                     let faulty = false;
                     // convert data into lists
                     events.forEach((event, i) => {
+                        let matchingEvent = this.props.results["symbolData"][symbol]["events"][i];
+                        // if available, match events by buy date
+                        if (event["buyDate"]) {
+                            matchingEvent = this.props.results["symbolData"][symbol]["events"].find(e => e["buyDate"] == event["buyDate"])
+                        }
+                        if (!matchingEvent) {
+                            faulty = true;
+                            return;
+                        }
+
+                        // track symbol and buyDate to match later on
                         event["symbol"] = symbol;
-                        event["buyDate"] = this.props.results["symbolData"][symbol]["events"][i]["buyDate"];
-                        event["sellDate"] = this.props.results["symbolData"][symbol]["events"][i]["sellDate"];
+                        event["buyDate"] = matchingEvent["buyDate"];
                         allIndicatorData["events"].push(event);
                         percentProfits.push(event["percentProfit"]);
                         // record for each indicator field
@@ -120,7 +140,7 @@ class Optimize extends React.Component {
                     })
                     if (faulty) return;
 
-                    // average out events for each symbol                     
+                    // average out events for each symbol to create a point on the scatter chart                     
                     stats["percentProfit"] = mean(percentProfits);
                     let combinedIndicatorEntry = { percentProfit: stats["percentProfit"] };
                     Object.keys(flattenedData).forEach(indicatorField => {
@@ -147,6 +167,7 @@ class Optimize extends React.Component {
                         standardDeviation: standardDeviation(flattened)
                     }
                 })
+                // calculate percent profits
                 let flattened = [];
                 allIndicatorData["events"].forEach(event => {
                     flattened.push(event["percentProfit"]);
@@ -159,51 +180,55 @@ class Optimize extends React.Component {
                     standardDeviation: standardDeviation(flattened)
                 };
 
-                this.setState({ allIndicatorData, indicatorData, combinedIndicatorData, indicatorFields: fields, indicator1: fields[0] }, () => {
-                    this.setSectors();
-                });
+                this.setState({ allIndicatorData, indicatorData, combinedIndicatorData, indicatorFields: fields, indicator1: fields[0], loadingIndicators: false },
+                    () => {
+                        this.setSectors();
+                    });
             });
     }
 
     fetchOptimizedStoplossTarget = () => {
-        // check if already optimized
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/optimizedStoplossTarget?id=${this.props.id}`)
-            .then(res => res.json())
-            .then(optimized => {
-                // not optimized
-                if (optimized["error"]) {
-                    this.setState({ loading: false });
-                    return;
-                }
+        return new Promise((resolve, reject) => {
+            // check if already optimized
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/optimizedStoplossTarget?id=${this.props.id}`)
+                .then(res => res.json())
+                .then(optimized => {
+                    // not optimized
+                    if (optimized["error"]) {
+                        this.setState({ loadingStoplossTarget: false });
+                        reject();
+                        return;
+                    }
 
-                let baseID = optimized["id"];
-                optimized = optimized["results"];
-                let optimizedIDs = Object.keys(optimized);
-                // transform data for chart
-                let scoreTypes = Object.keys(optimized[optimizedIDs[0]]["summary"]);
-                scoreTypes.forEach(st => {
-                    if (!this.scoreTypes.includes(st)) this.scoreTypes.splice(this.scoreTypes.indexOf(st), 1)
-                });
-                scoreTypes.sort((st1, st2) => this.scoreTypes.indexOf(st1) - this.scoreTypes.indexOf(st2));
-                let scoreBy = scoreTypes[0];
-                let scores = optimizedIDs.map(id => optimized[id]["summary"][scoreBy]);
-                let minScore = Math.min(...scores);
-                let maxScore = Math.max(...scores);
-                let stoplossTargetData = [];
-                optimizedIDs.forEach(id => {
-                    let strategyOptions = optimized[id]["strategyOptions"];
-                    let summary = optimized[id]["summary"];
-                    let score = mapRange(summary[scoreBy], minScore, maxScore, this.minSize, this.maxSize);
-                    stoplossTargetData.push({
-                        x: strategyOptions["stopLossAtr"].toFixed(2),
-                        y: strategyOptions["riskRewardRatio"].toFixed(2),
-                        z: summary[scoreBy].toFixed(2),
-                        score: score ? score : 0,
-                        id: id
+                    let baseID = optimized["id"];
+                    optimized = optimized["results"];
+                    let optimizedIDs = Object.keys(optimized);
+                    // transform data for chart
+                    let scoreTypes = Object.keys(optimized[optimizedIDs[0]]["summary"]);
+                    scoreTypes.forEach(st => {
+                        if (!this.scoreTypes.includes(st)) this.scoreTypes.splice(this.scoreTypes.indexOf(st), 1)
                     });
-                })
-                this.setState({ baseID, optimized, loading: false, stoplossTargetData, scoreTypes, scoreBy });
-            });
+                    scoreTypes.sort((st1, st2) => this.scoreTypes.indexOf(st1) - this.scoreTypes.indexOf(st2));
+                    let scoreBy = scoreTypes[0];
+                    let scores = optimizedIDs.map(id => optimized[id]["summary"][scoreBy]);
+                    let minScore = Math.min(...scores);
+                    let maxScore = Math.max(...scores);
+                    let stoplossTargetData = [];
+                    optimizedIDs.forEach(id => {
+                        let strategyOptions = optimized[id]["strategyOptions"];
+                        let summary = optimized[id]["summary"];
+                        let score = mapRange(summary[scoreBy], minScore, maxScore, this.minSize, this.maxSize);
+                        stoplossTargetData.push({
+                            x: strategyOptions["stopLossAtr"].toFixed(2),
+                            y: strategyOptions["riskRewardRatio"].toFixed(2),
+                            z: summary[scoreBy].toFixed(2),
+                            score: score ? score : 0,
+                            id: id
+                        });
+                    })
+                    this.setState({ baseID, optimized, loadingStoplossTarget: false, stoplossTargetData, scoreTypes, scoreBy }, resolve);
+                });
+        })
     }
 
     requestStoplossTargetOptimization = () => {
@@ -328,25 +353,30 @@ class Optimize extends React.Component {
             let sector = this.state.sectors[i];
             // tag events to be removed
             sector["events"].forEach(event => {
-                newResults["symbolData"][event["symbol"]]["events"].forEach(e => {
-                    if (e["buyDate"] == event["buyDate"] && e["sellDate"] == event["sellDate"]) {
-                        e["remove"] = true;
+                let actualEvents = newResults["symbolData"][event["symbol"]]["events"];
+                for (let eventIndex = 0; eventIndex < actualEvents.length; ++eventIndex) {
+                    let e = actualEvents[eventIndex];
+                    // keep event if buy date matches
+                    if (e["buyDate"] == event["buyDate"]) {
+                        e["keep"] = true;
                     }
-                });
+                }
             })
         }
 
         // does the actual removal
         let filtered = 0;
         Object.keys(newResults["symbolData"]).forEach(symbol => {
-            let newEvents = newResults["symbolData"][symbol]["events"].filter(event => !event["remove"]);
+            let newEvents = newResults["symbolData"][symbol]["events"].filter(event => event["keep"]);
+            // remove the tag
+            newEvents.forEach(e => delete e["keep"]);
             newResults["symbolData"][symbol]["events"] = newEvents;
-            filtered += 1;
+            filtered += newEvents.length;
         })
 
         // update redux
         this.props.setBacktestResults(this.props.id, newResults);
-        alert("Filtered " + filtered + " events");
+        alert("Kept " + filtered + " events");
     }
 
     switchMode = () => {
@@ -461,7 +491,7 @@ class Optimize extends React.Component {
                             </Box>
                         </div>
                         {
-                            this.state.loading && <div className="optimize-loading">
+                            this.state.loadingStoplossTarget && <div className="optimize-loading">
                                 <h1>Fetching Optimized Results...</h1>
                                 <CircularProgress />
                             </div>
@@ -497,6 +527,12 @@ class Optimize extends React.Component {
                                     </Box>
                                 </div>
                             </>
+                        }
+                        {
+                            this.state.loadingIndicators && <div className="optimize-loading">
+                                <h1>Fetching Indicator Data...</h1>
+                                <CircularProgress />
+                            </div>
                         }
                         {
                             this.state.indicatorData && <><div className="optimize-card">

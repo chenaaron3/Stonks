@@ -1,4 +1,4 @@
-let { isCrossed, getExponentialMovingAverage, daysBetween, getSwingPivots } = require('../utils');
+let { isCrossed, getExponentialMovingAverage, daysBetween, getSwingPivots, howHighLow } = require('../utils');
 let Indicator = require('./indicator');
 
 class Structure extends Indicator {
@@ -8,6 +8,7 @@ class Structure extends Indicator {
         this.minCount = options["minCount"];
         this.name = "Structure";
         this.pivots = {};
+        this.freshness = 720;
         this.graph = this.calculate();
     }
 
@@ -17,11 +18,13 @@ class Structure extends Indicator {
         this.pivots = pivots;
         let realizedPivots = {}
         let keys = Object.keys(pivots);
+
+        // maps realized date to its pivot
         for (let i = 0; i < keys.length; ++i) {
             let pivotDate = keys[i];
             let pivot = pivots[pivotDate];
             pivot["date"] = pivotDate;
-            realizedPivots[pivot["realized"]] = pivot; 
+            realizedPivots[pivot["realized"]] = pivot;
         }
 
         let merged = {};
@@ -44,34 +47,37 @@ class Structure extends Indicator {
                     }
                 }
 
+                let score = howHighLow(this.dates, this.prices, 200, this.dates.indexOf(pivot["date"]))[pivot["type"]];
+
                 // if found a group, add to group
                 if (groupMatch) {
                     let oldStart = merged[groupMatch]["start"];
                     let oldCount = merged[groupMatch]["count"];
+                    let oldScore = merged[groupMatch]["score"];
                     let newCount = oldCount + 1;
                     let newAverage = (groupMatch * oldCount + pivot["price"]) / newCount;
                     let newSupport = merged[groupMatch]["support"] || pivot["type"] == "low";
                     let newResistance = merged[groupMatch]["resistance"] || pivot["type"] == "high";
                     delete merged[groupMatch];
                     merged[newAverage] = {
-                        count: newCount, end: pivot["date"], start: oldStart,
+                        count: newCount, score: oldScore + score, end: pivot["date"], start: oldStart,
                         support: newSupport, resistance: newResistance,
-                        freshness: 720
+                        freshness: this.freshness
                     };
                 }
                 // if not found, create a group
                 else {
                     merged[pivot["price"]] = {
-                        count: 1, end: price["date"], start: price["date"],
-                        support: pivot["type"] == "low", resistance: pivot["type"] == "high", 
-                        freshness: 720
+                        count: 1, score: score, end: price["date"], start: price["date"],
+                        support: pivot["type"] == "low", resistance: pivot["type"] == "high",
+                        freshness: this.freshness
                     };
                 }
             }
 
             // trim merge dict of irrelevant levels
             keys = Object.keys(merged);
-            for(let i = 0; i < keys.length; ++i) {
+            for (let i = 0; i < keys.length; ++i) {
                 let key = keys[i];
                 merged[key]["freshness"] -= 1;
                 if (merged[key]["freshness"] <= 0) {
@@ -80,9 +86,32 @@ class Structure extends Indicator {
             }
 
             let levels = Object.keys(merged);
+            // find areas of value with both support and resistance tested
+            let potentialSupports = levels.filter(level => level < price && merged[level]["support"] && merged[level]["resistance"]);
+            let potentialResistances = levels.filter(level => level > price && merged[level]["support"] && merged[level]["resistance"]);
+            let support = undefined;
+            let resistance = undefined;
+            potentialSupports.forEach(level => {
+                if (support == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[support]["score"] * merged[support]["freshness"]) {
+                    support = level;
+                }
+            });
+            potentialResistances.forEach(level => {
+                if (resistance == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[resistance]["score"] * merged[resistance]["freshness"]) {
+                    resistance = level;
+                }
+            })
             graph[date] = {
-                support: Math.max(...levels.filter(level => level < price)),
-                resistance: Math.min(...levels.filter(level => level > this.prices[date]))
+                support: support,
+                resistance: resistance
+            }
+
+            // use relaxed level if area of value not found
+            if (!graph[date]["support"]) {
+                graph[date]["support"] = Math.min(...levels.filter(level => level < price));
+            }
+            if (!graph[date]["resistance"]) {
+                graph[date]["resistance"] = Math.max(...levels.filter(level => level > price));
             }
         }
         return graph;

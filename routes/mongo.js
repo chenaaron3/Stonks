@@ -4,7 +4,7 @@ var path = require('path');
 var fs = require('fs');
 const { fork } = require('child_process');
 
-let { getCollection, addDocument, getDocument, deleteDocument } = require('../helpers/mongo');
+let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
 let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
 let { getUpdatedPrices, fixFaulty } = require('../helpers/stock');
@@ -56,16 +56,34 @@ async function ensureUpdated() {
 	setTimeout(() => { ensureUpdated() }, 1000 * 60 * 60 * 1);
 }
 
+router.get("/reset", async function (req, res) {
+	res.send("Resetting!");
+	// clear prices collection;
+	addJob(() => {
+		return new Promise(async resolveJob => {
+			await deleteCollection("prices");
+			await fill();
+			resolveJob();
+		})
+	});
+	// update
+	update();
+})
+
 router.get("/fill", async function (req, res) {
 	res.send("Filling!");
+	await fill();
+	console.log("Finished Filling!");
+})
+
+async function fill() {
 	let symbols = await getSymbols();
 	let baseDate = "1/1/1500";
 	for (let i = 0; i < symbols.length; ++i) {
 		let symbol = symbols[i];
 		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
 	}
-	console.log("Finished Filling!");
-})
+}
 
 /* GET users listing. */
 router.get('/update', async function (req, res, next) {

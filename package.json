@@ -24,6 +24,7 @@
     "google-finance": "^0.1.12",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
+    "jstat": "^1.9.4",
     "mongodb": "^3.5.9",
     "morgan": "~1.9.1",
     "node-fetch": "^2.6.1",

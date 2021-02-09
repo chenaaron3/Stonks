@@ -50,39 +50,36 @@ router.get("/test", async function (req, res) {
     let symbol = req.query.symbol;
 
 
-    let id = "YuKm5UOVI5";
+    let id = "iLeJlNmhOF";
 
     let doc = await getDocument("results", id);
-    // getBacktestSummary(doc["results"]);
 
-    let indicatorOptions = {
-        "RSI": {
-            "period": 14,
-            "underbought": 30,
-            "overbought": 70
-        },
-        "MACD": {
-            "ema1": 12,
-            "ema2": 26,
-            "signalPeriod": 9
-        },
-        "ADX": {
-            "period": 14,
-            "threshold": 20
-        },
-        "Stochastic": {
-            "period": 14,
-            "underbought": 20,
-            "overbought": 80
-        },
-        "Hammer": {
+    let optimized = doc["_optimized"];
+    if (optimized) {
+        if (id != optimized["base"]) {
+            doc = await getDocument("results", optimized["base"]);
+            optimized = doc["_optimized"];
+        }
+        let results = {};
+        // fetch all docs
+        for (let i = 0; i < optimized["ids"].length; ++i) {
+            let optimizedID = optimized["ids"][i];
+            getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"])
+                .then(async (doc) => {
+                    let summary = doc["summary"];
+                    // double check if valid summary exists
+                    console.log("Upating summary for " + optimizedID);
+                    let d = await getDocument("results", optimizedID);
+                    summary = getBacktestSummary(d["results"]);
+                    await setDocumentField("results", optimizedID, "summary", summary);
+                });
         }
     }
+    else {
+        res.json({ error: "Backtest not optimized yet!" });
+    }
 
-
-    optimizeIndicators(id, indicatorOptions);
-
-    res.json({});
+    res.json({})
 });
 
 router.post('/watchlist', async function (req, res) {
