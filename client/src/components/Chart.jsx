@@ -39,7 +39,7 @@ class Chart extends React.Component {
             priceGraph: [],
             buyDates: new Set(),
             sellDates: new Set(),
-            holdings: new Set(),
+            holdings: {},
             myOverlayCharts: [],
             startBrushIndex: this.chunkSize - Math.floor(this.chunkSize / 4),
             endBrushIndex: this.chunkSize - 1,
@@ -95,7 +95,10 @@ class Chart extends React.Component {
         // cache all buy/sell dates for quick access
         let buyDates = new Set();
         let sellDates = new Set();
-        let holdings = new Set(results["holdings"]);
+        let holdings = {};
+        results["holdings"].forEach(holding => {
+            holdings[holding["buyDate"]] = holding;
+        })
         this.eventsLookup = {};
         events.forEach(event => {
             buyDates.add(event["buyDate"]);
@@ -429,25 +432,19 @@ class Chart extends React.Component {
     }
 
     getStoploss = (date, atr, close, low) => {
-        // only show for buy dates
-        if (!this.state.buyDates.has(date) && !this.state.holdings.has(date)) {
-            return undefined;
-        }
-
         let stoploss = undefined;
-        if (this.props.strategyOptions["stopLossLow"]) {
-            stoploss = this.props.strategyOptions["stopLossLow"] * close;
-        }
-        else if (this.props.strategyOptions["stopLossAtr"]) {
-            stoploss = low - this.props.strategyOptions["stopLossAtr"] * atr[date];
-        }
-
-        // for swing low
+        // for buy events
         if (this.eventsLookup[date] && this.eventsLookup[date]["type"] == "buy") {
             let event = this.eventsLookup[date]["event"];
             if (event["risk"]) {
                 stoploss = close * (100 - event["risk"]) / 100;
             }
+        }
+
+        // for holdings
+        if (this.state.holdings.hasOwnProperty(date)) {
+            let holding = this.state.holdings[date];
+            stoploss = holding["stoplossTarget"]["initStoploss"];
         }
 
         if (stoploss) {
@@ -464,7 +461,7 @@ class Chart extends React.Component {
 
     getTarget = (date, atr, close, low) => {
         // only show for buy dates
-        if (!this.state.buyDates.has(date) && !this.state.holdings.has(date)) {
+        if (!this.state.buyDates.has(date) && !this.state.holdings.hasOwnProperty(date)) {
             return undefined;
         }
 
@@ -477,13 +474,20 @@ class Chart extends React.Component {
         }
         else if (this.props.strategyOptions["riskRewardRatio"]) {
             let stopLoss = low - this.props.strategyOptions["stopLossAtr"] * atr[date];
-            // for swing low
+            // for buy events
             if (this.eventsLookup[date] && this.eventsLookup[date]["type"] == "buy") {
                 let event = this.eventsLookup[date]["event"];
                 if (event["risk"]) {
                     stopLoss = close * (100 - event["risk"]) / 100;
                 }
             }
+
+            // for holdings
+            if (this.state.holdings.hasOwnProperty(date)) {
+                let holding = this.state.holdings[date];
+                stopLoss = holding["stoplossTarget"]["initStoploss"];
+            }
+
             target = close + this.props.strategyOptions["riskRewardRatio"] * (close - stopLoss);
         }
 
@@ -838,7 +842,7 @@ class Chart extends React.Component {
             );
         }
         // if holding
-        else if (this.state.holdings.has(payload["date"])) {
+        else if (this.state.holdings.hasOwnProperty(payload["date"])) {
             return <circle cx={cx} cy={cy} r={dotRadius} stroke="black" strokeWidth={0} fill="yellow" />
         }
 

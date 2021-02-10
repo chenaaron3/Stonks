@@ -160,6 +160,7 @@ function optimizeStoplossTarget(id, optimizeOptions) {
     return position;
 }
 
+// queues an optimization
 function optimizeIndicators(id, indicatorOptions) {
     return addJob(() => {
         return new Promise(async resolveJob => {
@@ -692,8 +693,7 @@ function getOptimizedEvent(event, buyDate, buyPrice, sellDate, sellPrice, reason
     calculateProfit(eventCopy, buyPrice, sellPrice, stoplossTarget[buyDate]);
     eventCopy["sellDate"] = sellDate;
     eventCopy["span"] = daysBetween(new Date(buyDate), new Date(sellDate));
-    let stoploss = stoplossTarget[buyDate]["initStoploss"];
-    event["risk"] = (buyPrice - stoploss) / buyPrice * 100;
+    event["risk"] = stoplossTarget[buyDate]["risk"];
 
     // remove from stoplossTarget
     delete stoplossTarget[buyDate];
@@ -757,8 +757,10 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                             // carry over holdings to look for sells
                             previousResults["holdings"].forEach(holding => {
-                                buyDates.push(holding);
-                                buyPrices.push(prices[holding]);
+                                let buyDate = holding["buyDate"];
+                                buyDates.push(buyDate);
+                                buyPrices.push(prices[buyDate]);
+                                stoplossTarget[buyDate] = holding["stoplossTarget"];
                             })
 
                             // carry over profits
@@ -909,8 +911,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                                     event["sellDate"] = day;
                                     event["span"] = daysBetween(new Date(buyDate), new Date(day));
                                     if (stoplossTarget[buyDate] && stoplossTarget[buyDate]["stoploss"]) {
-                                        let stoploss = stoplossTarget[buyDate]["initStoploss"];
-                                        event["risk"] = (buyPrice - stoploss) / buyPrice * 100;
+                                        event["risk"] = stoplossTarget[buyDate]["risk"];
                                     }
 
                                     // calculate stats
@@ -945,7 +946,16 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         }
                     };
 
-                    resolve({ "profit": profit, "percentProfit": percentProfit / events.length, "events": events, "holdings": buyDates, "faulty": faulty });
+                    // store holdings information
+                    let holdings = [];
+                    buyDates.forEach(bd => {
+                        holdings.push({
+                            buyDate: bd,
+                            stoplossTarget: stoplossTarget[bd]
+                        })
+                    })
+
+                    resolve({ "profit": profit, "percentProfit": percentProfit / events.length, "events": events, "holdings": holdings, "faulty": faulty });
                 }
             });
     })
@@ -1090,14 +1100,18 @@ function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, a
     }
 
     if (stoploss || target) {
-        stoplossTarget[buyDate] = {};
-        stoplossTarget[buyDate]["initStoploss"] = stoploss;
-        stoplossTarget[buyDate]["stoploss"] = stoploss;
-        stoplossTarget[buyDate]["target"] = target;
-        if (target && strategyOptions["trailingStopLoss"]) {
-            stoplossTarget[buyDate]["midPoint"] = (target + buyPrice) / 2;
-            stoplossTarget[buyDate]["midPointReached"] = false;
+        let entry = {};
+        entry["initStoploss"] = stoploss;
+        entry["stoploss"] = stoploss;
+        entry["target"] = target;
+        if (entry["stoploss"]) {
+            entry["risk"] = (buyPrice - stoploss) / buyPrice * 100;
         }
+        if (target && strategyOptions["trailingStopLoss"]) {
+            entry["midPoint"] = (target + buyPrice) / 2;
+            entry["midPointReached"] = false;
+        }
+        stoplossTarget[buyDate] = entry;
     }
 }
 

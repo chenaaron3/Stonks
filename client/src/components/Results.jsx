@@ -42,7 +42,7 @@ class Results extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            sortedSymbols: [], recentThreshold: 7, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
+            sortedSymbols: [], recentThreshold: 7, maxRisk: 50, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
             scoreBy: "Win Rate",
             chartSettings: {}, ready: false
         }
@@ -171,12 +171,9 @@ class Results extends React.Component {
         }
 
         // get symbols to export
-        let lastRecentDate = new Date()
-        lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
         let symbolsToExport = [];
-        this.state.sortedSymbols.filter(symbol => {
-            let count = this.props.results["symbolData"][symbol]["holdings"].filter(d => daysBetween(lastRecentDate, new Date(d)) < 1).length;
-            if (count) {
+        this.state.sortedSymbols.forEach(symbol => {
+            if (this.findHoldings(symbol)) {
                 symbolsToExport.push(symbol);
             }
         })
@@ -195,6 +192,15 @@ class Results extends React.Component {
             .then(json => alert(json["status"]));
     }
 
+    findHoldings(symbol) {
+        let lastRecentDate = new Date()
+        lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
+        return this.props.results["symbolData"][symbol]["holdings"].find(holding => {
+            let risk = holding["stoplossTarget"]["risk"] ? holding["stoplossTarget"]["risk"] : 0;
+            return risk < this.state.maxRisk && daysBetween(lastRecentDate, new Date(holding["buyDate"])) == 0;
+        });
+    }
+
     render() {
         if (!this.state.ready) {
             return <></>;
@@ -205,10 +211,8 @@ class Results extends React.Component {
 
         let search = this.state.search.toLowerCase().trim();
         let searchResults = this.state.sortedSymbols.filter(s => s.toLowerCase().startsWith(search));
-        let searchBar = <input className="results-search" value={this.state.search} onChange={e => { this.setState({ search: e.target.value }) }} />;
-        let dayFilter = <input className="results-search" value={this.state.recentThreshold} type="number" onChange={e => { this.setState({ recentThreshold: parseFloat(e.target.value) }) }}></input>
-
-        searchBar = <Box mb="1vh"><TextField
+        
+        let searchBar = <Box mb="1vh"><TextField
             id="input-with-icon-textfield"
             value={this.state.search}
             onChange={e => { this.setState({ search: e.target.value }) }}
@@ -221,7 +225,7 @@ class Results extends React.Component {
             }}
         /></Box>
 
-        dayFilter = <div>
+        let dayFilter = <div>
             <p className="results-dayfilter">
                 Show events {this.state.recentThreshold} days ago
             </p>
@@ -235,6 +239,23 @@ class Results extends React.Component {
                 marks
                 min={1}
                 max={30}
+            /></Box>
+        </div>
+
+        let riskFilter = <div>
+            <p className="results-dayfilter">
+                Max Risk is {this.state.maxRisk}%
+        </p>
+            <Box mx="1vw" mt="1vh"><Slider
+                defaultValue={5}
+                aria-labelledby="discrete-slider"
+                valueLabelDisplay="auto"
+                value={this.state.maxRisk}
+                onChange={(e, v) => { this.setState({ maxRisk: v }) }}
+                step={5}
+                marks
+                min={5}
+                max={50}
             /></Box>
         </div>
 
@@ -259,7 +280,7 @@ class Results extends React.Component {
         let buySymbols = [];
         for (let i = 0; i < this.state.sortedSymbols.length; ++i) {
             let symbol = this.state.sortedSymbols[i];
-            if (this.props.results["symbolData"][symbol]["holdings"].find(d => daysBetween(lastRecentDate, new Date(d)) == 0)) {
+            if (this.findHoldings(symbol)) {
                 buySymbols.push({ symbol: symbol, index: i });
             }
         }
@@ -316,6 +337,7 @@ class Results extends React.Component {
                                 <>
                                     <ExportMenu items={this.supportedExports} onClick={this.onExportClicked} />
                                     {dayFilter}
+                                    {riskFilter}
                                     {this.state.sortedSymbols.length != 0 && (
                                         buySymbols.map(({ symbol, index }) =>
                                             <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
@@ -336,11 +358,15 @@ class Results extends React.Component {
                             }
                             <>
                                 {dayFilter}
+                                {riskFilter}
                                 {this.state.sortedSymbols.length != 0 && (
                                     this.state.sortedSymbols.map((symbol, index) => {
                                         // only show if there are recent events
                                         let events = this.props.results["symbolData"][symbol]["events"];
-                                        let numEvents = events.filter(e => daysBetween(lastRecentDate, new Date(e["sellDate"])) == 0).length;
+                                        let numEvents = events.filter(e => {
+                                            let risk = e["risk"] ? e["risk"] : 0;
+                                            return risk < this.state.maxRisk && daysBetween(lastRecentDate, new Date(e["sellDate"])) == 0
+                                        }).length;
                                         if (numEvents > 0) {
                                             if (searchResults.includes(symbol)) {
                                                 return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}

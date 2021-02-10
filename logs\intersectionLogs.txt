@@ -4553,3 +4553,59 @@ Worker CTvCxLLnvG: Finished backtest for tickers DEX to JFK in 270 seconds
 Worker CTvCxLLnvG: Finished backtest for tickers A to DESP in 279 seconds
 Worker CTvCxLLnvG: Finished backtest for tickers PYZ to ZYXI in 289 seconds
 Worker CTvCxLLnvG: Finished backtest for tickers JFKKR to PYT in 291 seconds
+Worker GK6qaycJBx: Finding intersections for tickers JFKKR to PYT
+Worker GK6qaycJBx: Finding intersections for tickers DEX to JFK
+Worker GK6qaycJBx: Finding intersections for tickers A to DESP
+Worker GK6qaycJBx: Finding intersections for tickers PYZ to ZYXI
+Worker GK6qaycJBx: Finished backtest for tickers DEX to JFK in 310 seconds
+Worker GK6qaycJBx: Finished backtest for tickers A to DESP in 327 seconds
+Worker GK6qaycJBx: Finished backtest for tickers PYZ to ZYXI in 327 seconds
+Worker GK6qaycJBx: Finished backtest for tickers JFKKR to PYT in 331 seconds
+Worker BijnD7bzGM: Finding intersections for tickers DEX to JFK
+Worker BijnD7bzGM: Finding intersections for tickers A to DESP
+Worker BijnD7bzGM: Finding intersections for tickers JFKKR to PYT
+Worker BijnD7bzGM: Finding intersections for tickers PYZ to ZYXI
+Worker BijnD7bzGM: Finished backtest for tickers DEX to JFK in 306 seconds
+Worker BijnD7bzGM: Finished backtest for tickers A to DESP in 324 seconds
+Worker BijnD7bzGM: Finished backtest for tickers PYZ to ZYXI in 324 seconds
+Worker BijnD7bzGM: Finished backtest for tickers JFKKR to PYT in 326 seconds
+Worker 9nRU0dxrCZ: Finding intersections for tickers A to DESP
+Worker 9nRU0dxrCZ: Finding intersections for tickers JFKKR to PYT
+Worker 9nRU0dxrCZ: Finding intersections for tickers DEX to JFK
+Worker 9nRU0dxrCZ: Finding intersections for tickers PYZ to ZYXI
+Worker 9nRU0dxrCZ: Finished backtest for tickers DEX to JFK in 288 seconds
+Worker 9nRU0dxrCZ: Finished backtest for tickers PYZ to ZYXI in 307 seconds
+Worker 9nRU0dxrCZ: Finished backtest for tickers JFKKR to PYT in 318 seconds
+Worker 9nRU0dxrCZ: Finished backtest for tickers A to DESP in 320 seconds
+Worker i9azhD25Ry: Finding intersections for tickers DEX to JFK
+Worker i9azhD25Ry: Finding intersections for tickers JFKKR to PYT
+Worker i9azhD25Ry: Finding intersections for tickers PYZ to ZYXI
+Worker i9azhD25Ry: Finding intersections for tickers A to DESP
+Worker i9azhD25Ry: Finished backtest for tickers DEX to JFK in 354 seconds
+Worker i9azhD25Ry: Finished backtest for tickers JFKKR to PYT in 376 seconds
+Worker i9azhD25Ry: Finished backtest for tickers A to DESP in 376 seconds
+Worker i9azhD25Ry: Finished backtest for tickers PYZ to ZYXI in 380 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers A to DESP
+Worker oHFzBNEEW8: Finding intersections for tickers DEX to JFK
+Worker oHFzBNEEW8: Finding intersections for tickers JFKKR to PYT
+Worker oHFzBNEEW8: Finding intersections for tickers PYZ to ZYXI
+Worker oHFzBNEEW8: Finished backtest for tickers DEX to JFK in 287 seconds
+Worker oHFzBNEEW8: Finished backtest for tickers A to DESP in 308 seconds
+Worker oHFzBNEEW8: Finished backtest for tickers JFKKR to PYT in 314 seconds
+Worker oHFzBNEEW8: Finished backtest for tickers PYZ to ZYXI in 316 seconds
+Worker lus7b53L7x: Finding intersections for tickers A to DEX
+Worker lus7b53L7x: Finding intersections for tickers JFKKR to PYZ
+Worker lus7b53L7x: Finding intersections for tickers PZC to ZYXI
+Worker lus7b53L7x: Finding intersections for tickers DFFN to JFK
+Worker lus7b53L7x: Finished backtest for tickers DFFN to JFK in 227 seconds
+Worker lus7b53L7x: Finished backtest for tickers A to DEX in 238 seconds
+Worker lus7b53L7x: Finished backtest for tickers JFKKR to PYZ in 242 seconds
+Worker lus7b53L7x: Finished backtest for tickers PZC to ZYXI in 242 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers DFFN to JFK
+Worker Z5vJVqgB9E: Finding intersections for tickers A to DEX
+Worker Z5vJVqgB9E: Finding intersections for tickers PZC to ZYXI
+Worker Z5vJVqgB9E: Finding intersections for tickers JFKKR to PYZ
+Worker Z5vJVqgB9E: Finished backtest for tickers DFFN to JFK in 267 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers A to DEX in 282 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers PZC to ZYXI in 285 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers JFKKR to PYZ in 285 seconds
