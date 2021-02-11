@@ -40,8 +40,8 @@ async function ensureUpdated() {
 			activeResults = activeResults["activeResults"];
 			for (let i = 0; i < activeResults.length; ++i) {
 				let { id, email, sessionID } = activeResults[i];
-				updateBacktest(id);
-				getActionsToday(id, email, sessionID);
+				updateBacktest(id); // update backtest
+				getActionsToday(id, email, sessionID); // send email notifications about sells, send buy orders to alpaca
 			}
 		}
 		// market not closed
@@ -233,5 +233,11 @@ router.get("/fixFaulty", async function (req, res) {
 	let results = await fixFaulty();
 	console.log(results);
 });
+
+// clear active results
+router.get("/clearActiveResults", async function (req, res) {
+	await deleteDocument("results", "activeResults");
+	res.send("Cleared");
+})
 
 module.exports = router;

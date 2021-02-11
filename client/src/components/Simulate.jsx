@@ -301,7 +301,7 @@ class Simulate extends React.Component {
 
                 // want high returns with low standard dev
                 let returnsNumeric = returnsData.map(v => v["returns"]);
-                let sharpe = mean(returnsNumeric) / standardDeviation(returnsNumeric);
+                let sharpe = mean(returnsNumeric) / Math.sqrt(standardDeviation(returnsNumeric));
 
                 let score = sharpe //equity //recentPerformance; // equity;
                 if (score > optimal) {

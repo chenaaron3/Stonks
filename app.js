@@ -10,6 +10,7 @@ const MongoStore = require('connect-mongo')(session);
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var mongoRouter = require('./routes/mongo');
+var alpacaRouter = require('./routes/alpaca');
 var mlRouter = require('./routes/ml');
 var webhooksRouter = require('./routes/webhooks');
 
@@ -41,6 +42,7 @@ app.use(session({
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/mongo', mongoRouter);
+app.use('/alpaca', alpacaRouter);
 app.use('/ml', mlRouter);
 app.use('/webhooks', webhooksRouter);
 

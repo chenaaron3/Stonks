@@ -550,7 +550,7 @@ function simulateBacktest(state, results) {
     weightedReturns /= totalWeight;
 
     let returnsNumeric = returnsData.map(v => v["returns"]);
-    let sharpe = jStat.mean(returnsNumeric) / jStat.stdev(returnsNumeric);
+    let sharpe = jStat.mean(returnsNumeric) / Math.sqrt(jStat.stdev(returnsNumeric));
 
     return { equity, weightedReturns, sharpe };
 }

@@ -12,6 +12,7 @@ let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo')
 let { daysBetween, getBacktestSummary } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
+let { cancelAllOrders, requestBracketOrder } = require('./alpaca');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
@@ -189,25 +190,45 @@ async function getActionsToday(id, email, sessionID) {
             let today = new Date();
             let actions = { buy: [], sell: [] };
 
-            symbols.forEach(symbol => {
+            // clear all alpaca orders carried over from previous day
+            await cancelAllOrders();
+
+            for(let i = 0; i < symbols.length; ++i) {
+                let symbol = symbols[i];
                 let symbolData = doc["results"]["symbolData"][symbol];
 
-                // // look through holdings for buy actions  
-                // let holdings = symbolData["holdings"];
-                // if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1])) < 2) {
-                //     actions["buy"].push(symbol);
-                // }
+                // look through holdings for buy actions  
+                let holdings = symbolData["holdings"];
+                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) < 2) {
+                    actions["buy"].push(symbol);
+                    let holding = holdings[holdings.length - 1];
+                    let risk = holding["stoplossTarget"]["risk"];
+                    let stoploss = holding["stoplossTarget"]["stoploss"];
+                    let target = holding["stoplossTarget"]["target"];
+                    let buyPrice = stoploss / (1 - risk / 100);
+                    await requestBracketOrder(symbol, buyPrice, .05, stoploss, target);
+                }
 
                 // look through events for sell actions
                 let events = symbolData["events"];
                 if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
                     actions["sell"].push(symbol);
                 }
-            });
+            }
 
-            // only send email if there are stocks to sell
-            if (actions["sell"].length > 0) {
-                let text = "Symbols to Sell:\n" + actions["sell"].join("\n");
+            // only send email if there are stocks to sell or bought stocks in alpaca
+            if (actions["sell"].length + actions["buy"].length > 0) {
+                let text = "";
+                if (actions["sell"].length > 0) {
+                    text += `Symbols to sell:\n
+                    ${actions["sell"].join("\n")}
+                    View at ${process.env.DOMAIN}/${id}\n`;
+                }
+                if (actions["buy"].length > 0) {
+                    text += `Buy orders sent to Alpaca:\n
+                    ${actions["buy"].join("\n")}
+                    View at https://app.alpaca.markets/paper/dashboard/overview\n`;
+                }
 
                 // send email
                 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
