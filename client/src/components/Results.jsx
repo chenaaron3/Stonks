@@ -103,7 +103,7 @@ class Results extends React.Component {
 
     // load initial bought list
     getBoughtSymbols = () => {
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/boughtSymbols`)
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/boughtSymbols`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 this.setState({ boughtSymbols });
@@ -112,7 +112,7 @@ class Results extends React.Component {
 
     // mark as bought
     buySymbol = (symbol) => {
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/buySymbol?symbol=${symbol}`)
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/buySymbol?symbol=${symbol}`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 this.setState({ boughtSymbols });
@@ -121,7 +121,7 @@ class Results extends React.Component {
 
     // sell
     sellSymbol = (symbol) => {
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/sellSymbol?symbol=${symbol}`)
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/sellSymbol?symbol=${symbol}`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 this.setState({ boughtSymbols });

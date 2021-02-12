@@ -12,6 +12,7 @@ let { backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getI
 let { getLatestPrice, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
+//#region Backtest Status
 router.post("/autoUpdate", async (req, res) => {
     // id of the result
     let id = req.body.id;
@@ -55,69 +56,100 @@ router.get("/isAutoUpdate", async (req, res) => {
 
     res.json({ status: found });
 })
+//#endregion
 
-// gets the most updated price for a stock
-router.get("/latestPrice", async (req, res) => {
-    let symbol = req.query.symbol;
-    let entry = await getLatestPrice(symbol);
-    res.json(entry);
-})
+//#region Create Backtest
+// gets the backtest results for all companies
+router.post("/backtest", async (req, res) => {
+    // get options from client
+    let strategyOptions = req.body;
 
-// gets a user's bought symbol list
-router.get("/boughtSymbols", (req, res) => {
-    if (!req.session.hasOwnProperty("buys")) {
-        req.session["buys"] = {};
-    }
-    res.json(req.session["buys"]);
-})
-
-// buy
-router.get("/buySymbol", async (req, res) => {
-    let symbol = req.query.symbol;
-    let entry = await getLatestPrice(symbol);
-    let date = entry["date"];
-    let price = entry["adjClose"]
-
-    // if first buy
-    if (!req.session.hasOwnProperty("buys")) {
-        req.session["buys"] = {};
+    // create unique id
+    let id = makeid(10);
+    while (await containsID("results", id)) {
+        id = makeid(10);
     }
 
-    // if first buy for symbol
-    if (!req.session["buys"].hasOwnProperty(symbol)) {
-        req.session["buys"][symbol] = [];
-    }
+    // add id to the database
+    addDocument("results", {
+        "_id": id,
+        "results": 'Results are not ready yet!'
+    });
 
-    // add date
-    if (!req.session["buys"][symbol].includes(date)) {
-        req.session["buys"][symbol].push({ date, price });
-    }
-    console.log(req.session);
-    res.json(req.session["buys"]);
-});
+    let position = backtest(id, strategyOptions);
 
-// sell
-router.get("/sellSymbol", (req, res) => {
-    let symbol = req.query.symbol;
-
-    // check buys
-    if (!req.session.hasOwnProperty("buys")) {
-        res.json({});
-        return;
-    }
-
-    // check symbol buy
-    if (!req.session["buys"].hasOwnProperty(symbol)) {
-        res.json(req.session["buys"]);
-        return;
+    // send response so doesn't hang and gets the unique id
+    if (position == 0) {
+        res.json({ id, status: "Starting your backtest!" });
     }
     else {
-        delete req.session["buys"][symbol];
-        console.log(req.session);
-        res.json(req.session["buys"]);
+        res.json({ id, status: `Backtest will start within ${30 * position} minutes!` });
+    }
+});
+
+// optimize a backtest for optimal stoploss/target
+router.post("/optimizeStoplossTarget", async (req, res) => {
+    // get options from client
+    let optimizeOptions = req.body;
+    let id = req.body["id"];
+
+    // get the base id
+    if (id.includes("optimized")) {
+        let optimized = await getDocumentField("results", id, ["_optimized"]);
+        id = optimized["_optimized"]["base"];
+    }
+
+    let position = optimizeStoplossTarget(id, optimizeOptions);
+
+    // send response so doesn't hang and gets the unique id
+    if (position == 0) {
+        res.json({ id, status: "Starting your optimization!" });
+    }
+    else {
+        res.json({ id, status: `Optimization will start within ${30 * position} minutes!` });
     }
 })
 
+// optimize a backtest for optimal indicators
+router.post("/optimizeIndicators", async (req, res) => {
+    // get options from client
+    let id = req.body["id"];
+    let indicatorOptions = {
+        "RSI": {
+            "period": 14
+        },
+        "MACD": {
+            "ema1": 12,
+            "ema2": 26,
+            "signalPeriod": 9
+        },
+        "ADX": {
+            "period": 14,
+        },
+        "Stochastic": {
+            "period": 14
+        }
+    }
+
+    // get the base id
+    if (id.includes("optimized")) {
+        let optimized = await getDocumentField("results", id, ["_optimized"]);
+        id = optimized["_optimized"]["base"];
+    }
+
+    let position = optimizeIndicators(id, indicatorOptions);
+
+    // send response so doesn't hang and gets the unique id
+    if (position == 0) {
+        res.json({ id, status: "Starting your optimization!" });
+    }
+    else {
+        res.json({ id, status: `Optimization will start within ${30 * position} minutes!` });
+    }
+})
+//#endregion
+
+//#region Read Backtest
 // get backtest results
 router.get("/results", async (req, res) => {
     let id = req.query.id;
@@ -153,7 +185,7 @@ router.get("/optimizedStoplossTarget", async (req, res) => {
                 .then(async (doc) => {
                     let summary = doc["summary"];
                     // double check if valid summary exists
-                    if (!summary || !summary["profit"]) {
+                    if (!summary) {
                         console.log("Upating summary for " + optimizedID);
                         let d = await getDocument("results", optimizedID);
                         summary = getBacktestSummary(d["results"]);
@@ -192,7 +224,29 @@ router.get("/optimizedIndicators", async (req, res) => {
         res.json({ error: "Backtest not optimized yet!" });
     }
 });
+//#endregion
 
+//#region Update Backtest
+router.get("/updateBacktest", async (req, res) => {
+    // get backtest id
+    let id = req.query.id;
+    if (!await containsID("results", id)) {
+        res.send("Backtest ID is not valid!");
+        return;
+    }
+
+    let position = updateBacktest(id);
+
+    if (position == 0) {
+        res.json({ status: "Updating your backtest!" });
+    }
+    else {
+        res.json({ status: `Backtest update will start within ${30 * position} minutes!` });
+    }
+});
+//#endregion
+
+//#region Delete Backtest
 // delete backtest results
 router.delete("/deleteResults/:id", async (req, res) => {
     let id = req.params.id;
@@ -233,162 +287,6 @@ router.delete("/deleteResults/:id", async (req, res) => {
         deleteDocument("results", id);
     }
 })
-
-// start fake backtesting for testing
-router.get("/fakeBacktest", async (req, res) => {
-    let id = req.query.id;
-    res.json({ "id": id });
-    setTimeout(() => {
-        triggerChannel(id, "onResultsFinished", { id: `${id}` });
-    }, 1000);
-})
-
-router.post("/indicatorGraph", async (req, res) => {
-    let symbol = req.body["symbol"];
-    let indicatorName = req.body["indicatorName"];
-    let indicatorOptions = req.body["indicatorOptions"];
-
-    let stockInfo = await getDocument("prices", symbol);
-    if (stockInfo.length != 0) {
-        let pricesJSON = stockInfo["prices"];
-        let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
-
-        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
-
-        res.json(indicator.getGraph());
-    }
-})
-
-// get price data for a company
-router.post("/priceGraph", async (req, res) => {
-    let symbol = req.body["symbol"];
-    let indicators = req.body["indicators"];
-
-    // get prices from database
-    let stockInfo = await getDocument("prices", symbol);
-    if (stockInfo.length != 0) {
-        let pricesJSON = stockInfo["prices"];
-        let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
-        let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes).getGraph();
-
-        let indicatorGraphs = {};
-        Object.keys(indicators).forEach(indicatorName => {
-            let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
-            indicatorGraphs[indicatorName] = indicator.getGraph();
-        })
-
-        res.json({ price: pricesJSON, atr: atr, volumes: volumes, indicators: indicatorGraphs });
-    }
-    else {
-        res.json({ price: [], volumes: [], indicators: {} });
-    }
-});
-
-router.get("/updateBacktest", async (req, res) => {
-    // get backtest id
-    let id = req.query.id;
-    if (!await containsID("results", id)) {
-        res.send("Backtest ID is not valid!");
-        return;
-    }
-
-    let position = updateBacktest(id);
-
-    if (position == 0) {
-        res.json({ status: "Updating your backtest!" });
-    }
-    else {
-        res.json({ status: `Backtest update will start within ${30 * position} minutes!` });
-    }
-});
-
-// gets the backtest results for all companies
-router.post("/backtest", async (req, res) => {
-    // get options from client
-    let strategyOptions = req.body;
-
-    // create unique id
-    let id = makeid(10);
-    while (await containsID("results", id)) {
-        id = makeid(10);
-    }
-
-    // add id to the database
-    addDocument("results", {
-        "_id": id,
-        "results": 'Results are not ready yet!'
-    });
-
-    let position = backtest(id, strategyOptions);
-
-    // send response so doesn't hang and gets the unique id
-    if (position == 0) {
-        res.json({ id, status: "Starting your backtest!" });
-    }
-    else {
-        res.json({ id, status: `Backtest will start within ${30 * position} minutes!` });
-    }
-});
-
-// optimize a backtest 
-router.post("/optimizeStoplossTarget", async (req, res) => {
-    // get options from client
-    let optimizeOptions = req.body;
-    let id = req.body["id"];
-
-    // get the base id
-    if (id.includes("optimized")) {
-        let optimized = await getDocumentField("results", id, ["_optimized"]);
-        id = optimized["_optimized"]["base"];
-    }
-
-    let position = optimizeStoplossTarget(id, optimizeOptions);
-
-    // send response so doesn't hang and gets the unique id
-    if (position == 0) {
-        res.json({ id, status: "Starting your optimization!" });
-    }
-    else {
-        res.json({ id, status: `Optimization will start within ${30 * position} minutes!` });
-    }
-})
-
-router.post("/optimizeIndicators", async (req, res) => {
-    // get options from client
-    let id = req.body["id"];
-    let indicatorOptions = {
-        "RSI": {
-            "period": 14
-        },
-        "MACD": {
-            "ema1": 12,
-            "ema2": 26,
-            "signalPeriod": 9
-        },
-        "ADX": {
-            "period": 14,
-        },
-        "Stochastic": {
-            "period": 14
-        }
-    }
-
-    // get the base id
-    if (id.includes("optimized")) {
-        let optimized = await getDocumentField("results", id, ["_optimized"]);
-        id = optimized["_optimized"]["base"];
-    }
-
-    let position = optimizeIndicators(id, indicatorOptions);
-
-    // send response so doesn't hang and gets the unique id
-    if (position == 0) {
-        res.json({ id, status: "Starting your optimization!" });
-    }
-    else {
-        res.json({ id, status: `Optimization will start within ${30 * position} minutes!` });
-    }
-})
-
+//#endregion
 
 module.exports = router;

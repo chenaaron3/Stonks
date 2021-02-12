@@ -251,7 +251,7 @@ class Watchlist extends React.Component {
 
     // load initial bought list
     getWatchlist = () => {
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/boughtSymbols`)
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/boughtSymbols`)
             .then(res => res.json())
             .then(boughtSymbols => {
                 let rows = [];
@@ -264,7 +264,7 @@ class Watchlist extends React.Component {
 
     // searches up the latest prices for each stock
     getEntries = (symbol, buyEntries, rows) => {
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/latestPrice?symbol=${symbol}`)
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/latestPrice?symbol=${symbol}`)
             .then(res => res.json())
             .then(async latestPrice => {
                 buyEntries.forEach(buyEntry => {

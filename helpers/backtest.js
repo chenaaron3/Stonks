@@ -7,7 +7,7 @@ const sgMail = require('@sendgrid/mail');
 
 // own helpers
 const csv = require('csv');
-let { fixFaulty } = require('../helpers/stock');
+let { fixFaulty, getPrices } = require('../helpers/stock');
 let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
 let { daysBetween, getBacktestSummary } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
@@ -18,7 +18,6 @@ let { cancelAllOrders, requestBracketOrder } = require('./alpaca');
 let SMA = require('../helpers/indicators/sma');
 let EMA = require('../helpers/indicators/ema');
 let RSI = require('../helpers/indicators/rsi');
-let RSIDull = require('../helpers/indicators/rsiDull');
 let MACD = require('../helpers/indicators/macd');
 let MACDPos = require('../helpers/indicators/macdPos');
 let GC = require('../helpers/indicators/gc');
@@ -61,12 +60,84 @@ let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
 
 // only get symbols from these exchanges
 let EXCHANGES = ["amex", "nasdaq", "nyse"];
-// how many threads to spawn on each request
-const NUM_THREADS = 4;
 
 // cache settings
 const useCache = true;
 
+//#region Subscribed Backtests
+// get actions today for a backtest
+async function getActionsToday(id, email, sessionID) {
+    return addJob(() => {
+        return new Promise(async resolveJob => {
+            let doc = await getDocument("results", id);
+            let symbols = Object.keys(doc["results"]["symbolData"]);
+            let userDoc = await getDocument("sessions", sessionID);
+            let watchlist = Object.keys(JSON.parse(userDoc["session"])["buys"]);
+            let today = new Date();
+            let actions = { buy: [], sell: [] };
+
+            // clear all alpaca orders carried over from previous day
+            await cancelAllOrders();
+
+            for(let i = 0; i < symbols.length; ++i) {
+                let symbol = symbols[i];
+                let symbolData = doc["results"]["symbolData"][symbol];
+
+                // look through holdings for buy actions  
+                let holdings = symbolData["holdings"];
+                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) < 2) {
+                    actions["buy"].push(symbol);
+                    let holding = holdings[holdings.length - 1];
+                    let risk = holding["stoplossTarget"]["risk"];
+                    let stoploss = holding["stoplossTarget"]["stoploss"];
+                    let target = holding["stoplossTarget"]["target"];
+                    let buyPrice = stoploss / (1 - risk / 100);
+                    await requestBracketOrder(symbol, buyPrice, .05, stoploss, target);
+                }
+
+                // look through events for sell actions
+                let events = symbolData["events"];
+                if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
+                    actions["sell"].push(symbol);
+                }
+            }
+
+            // only send email if there are stocks to sell or bought stocks in alpaca
+            if (actions["sell"].length + actions["buy"].length > 0) {
+                let text = "";
+                if (actions["sell"].length > 0) {
+                    text += `Symbols to sell:\n
+                    ${actions["sell"].join("\n")}
+                    View at ${process.env.DOMAIN}/${id}\n`;
+                }
+                if (actions["buy"].length > 0) {
+                    text += `Buy orders sent to Alpaca:\n
+                    ${actions["buy"].join("\n")}
+                    View at https://app.alpaca.markets/paper/dashboard/overview\n`;
+                }
+
+                // send email
+                sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+                const msg = {
+                    to: email,
+                    from: "backtest@updated.com",
+                    subject: "You Have Stocks To Sell!",
+                    text: text
+                };
+                sgMail.send(msg)
+                    .then(() => console.log("Email sent to ", email))
+                    .catch(function (err) {
+                        console.log(err);
+                        console.log(err["response"]["body"]["errors"])
+                    })
+            }
+            resolveJob();
+        })
+    });
+}
+//#endregion
+
+//#region Queue Jobs
 // queues a backtest
 function backtest(id, strategyOptions) {
     return addJob(() => {
@@ -178,78 +249,9 @@ function optimizeIndicators(id, indicatorOptions) {
         });
     });
 }
+//#endregion
 
-// get actions today for a backtest
-async function getActionsToday(id, email, sessionID) {
-    return addJob(() => {
-        return new Promise(async resolveJob => {
-            let doc = await getDocument("results", id);
-            let symbols = Object.keys(doc["results"]["symbolData"]);
-            let userDoc = await getDocument("sessions", sessionID);
-            let watchlist = Object.keys(JSON.parse(userDoc["session"])["buys"]);
-            let today = new Date();
-            let actions = { buy: [], sell: [] };
-
-            // clear all alpaca orders carried over from previous day
-            await cancelAllOrders();
-
-            for(let i = 0; i < symbols.length; ++i) {
-                let symbol = symbols[i];
-                let symbolData = doc["results"]["symbolData"][symbol];
-
-                // look through holdings for buy actions  
-                let holdings = symbolData["holdings"];
-                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) < 2) {
-                    actions["buy"].push(symbol);
-                    let holding = holdings[holdings.length - 1];
-                    let risk = holding["stoplossTarget"]["risk"];
-                    let stoploss = holding["stoplossTarget"]["stoploss"];
-                    let target = holding["stoplossTarget"]["target"];
-                    let buyPrice = stoploss / (1 - risk / 100);
-                    await requestBracketOrder(symbol, buyPrice, .05, stoploss, target);
-                }
-
-                // look through events for sell actions
-                let events = symbolData["events"];
-                if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
-                    actions["sell"].push(symbol);
-                }
-            }
-
-            // only send email if there are stocks to sell or bought stocks in alpaca
-            if (actions["sell"].length + actions["buy"].length > 0) {
-                let text = "";
-                if (actions["sell"].length > 0) {
-                    text += `Symbols to sell:\n
-                    ${actions["sell"].join("\n")}
-                    View at ${process.env.DOMAIN}/${id}\n`;
-                }
-                if (actions["buy"].length > 0) {
-                    text += `Buy orders sent to Alpaca:\n
-                    ${actions["buy"].join("\n")}
-                    View at https://app.alpaca.markets/paper/dashboard/overview\n`;
-                }
-
-                // send email
-                sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-                const msg = {
-                    to: email,
-                    from: "backtest@updated.com",
-                    subject: "You Have Stocks To Sell!",
-                    text: text
-                };
-                sgMail.send(msg)
-                    .then(() => console.log("Email sent to ", email))
-                    .catch(function (err) {
-                        console.log(err);
-                        console.log(err["response"]["body"]["errors"])
-                    })
-            }
-            resolveJob();
-        })
-    });
-}
-
+//#region Conduct Workers
 // conduct a backtest with given strategy
 function conductBacktest(strategyOptions, id) {
     return new Promise(resolve => {
@@ -268,9 +270,9 @@ function conductBacktest(strategyOptions, id) {
 
             // create threads that split up the work
             let finishedWorkers = 0;
-            let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+            let partitionSize = Math.ceil(symbols.length / process.env.NUM_THREADS);
             let progress = 0;
-            for (let i = 0; i < NUM_THREADS; ++i) {
+            for (let i = 0; i < process.env.NUM_THREADS; ++i) {
                 // divy up the symbols for each thread to work on
                 let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
 
@@ -281,7 +283,7 @@ function conductBacktest(strategyOptions, id) {
                         // assign partition's results to collective results
                         Object.assign(intersections, msg.intersections);
                         // if all worker threads are finished
-                        if (++finishedWorkers == NUM_THREADS) {
+                        if (++finishedWorkers == process.env.NUM_THREADS) {
                             // check for faulty data
                             let faulty = [];
                             if (fs.existsSync(PATH_TO_FAULTY)) {
@@ -346,9 +348,9 @@ function conductStoplossTargetOptimization(id, optimizeOptions) {
         // create threads that split up the work
         let finishedWorkers = 0;
         let symbols = Object.keys(previousResults["results"]["symbolData"]);
-        let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+        let partitionSize = Math.ceil(symbols.length / process.env.NUM_THREADS);
         let progress = 0;
-        for (let i = 0; i < NUM_THREADS; ++i) {
+        for (let i = 0; i < process.env.NUM_THREADS; ++i) {
             // divy up the symbols for each thread to work on
             let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
 
@@ -366,7 +368,7 @@ function conductStoplossTargetOptimization(id, optimizeOptions) {
                     });
 
                     // if all worker threads are finished
-                    if (++finishedWorkers == NUM_THREADS) {
+                    if (++finishedWorkers == process.env.NUM_THREADS) {
                         console.log("Finished optimization.");
                         // add result to database
                         for (let resultsIndex = 0; resultsIndex < results.length; resultsIndex++) {
@@ -413,10 +415,10 @@ function conductIndicatorOptimization(id, indicatorOptions) {
         // create threads that split up the work
         let finishedWorkers = 0;
         let symbols = Object.keys(previousResults["results"]["symbolData"]); //.slice(0, 50);
-        let partitionSize = Math.ceil(symbols.length / NUM_THREADS);
+        let partitionSize = Math.ceil(symbols.length / process.env.NUM_THREADS);
         let progress = 0;
         let indicatorData = {};
-        for (let i = 0; i < NUM_THREADS; ++i) {
+        for (let i = 0; i < process.env.NUM_THREADS; ++i) {
             // divy up the symbols for each thread to work on
             let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
 
@@ -428,7 +430,7 @@ function conductIndicatorOptimization(id, indicatorOptions) {
                     Object.assign(indicatorData, msg.optimizedData);
 
                     // if all worker threads are finished
-                    if (++finishedWorkers == NUM_THREADS) {
+                    if (++finishedWorkers == process.env.NUM_THREADS) {
                         // enter data into indicator collection 
                         await addDocument("indicators", { _id: id });
                         // fill in the document
@@ -445,80 +447,9 @@ function conductIndicatorOptimization(id, indicatorOptions) {
         }
     });
 }
+//#endregion
 
-// gets the symbols from cache or from csv
-function getSymbols() {
-    return new Promise((resolve, reject) => {
-        // read blacklist symbols (faulty data)
-        let blacklist = [];
-        if (fs.existsSync(PATH_TO_BLACKLIST)) {
-            blacklist = JSON.parse(fs.readFileSync(PATH_TO_BLACKLIST, { encoding: "utf-8" }));
-        }
-        // read from cache
-        if (fs.existsSync(PATH_TO_SYMBOLS) && useCache) {
-            console.log("Loading Symbols from Cache...");
-            let symbols = JSON.parse(fs.readFileSync(PATH_TO_SYMBOLS, { encoding: "utf-8" }));
-            // filter out blacklist symbols
-            symbols = symbols.filter(s => !blacklist.includes(s));
-            resolve(symbols);
-        }
-        // parse info from csv
-        else {
-            console.log("Loading Symbols from CSV...");
-            let symbols = [];
-            let finished = 0;
-
-            EXCHANGES.forEach(exchange => {
-                let csvPath = path.join(__dirname, `../res/${exchange}.csv`);
-                let data = fs.readFileSync(csvPath, { encoding: "utf-8" });
-
-                // parse data
-                csv.parse(data, {
-                    comment: '#'
-                }, function (err, output) {
-                    // "Symbol","Name","LastSale","MarketCap","IPOyear","Sector","industry","Summary Quote"
-                    let labels = output.shift();
-
-                    output.forEach(stock => {
-                        let symbol = stock[0];
-                        // exclude index and sub stocks
-                        if (!symbol.includes(".") && !symbol.includes("^") && !blacklist.includes(symbol))
-                            symbols.push(symbol.trim());
-                    })
-
-                    // if all exchanges are finished
-                    if (++finished == EXCHANGES.length) {
-                        // sort so its easier to check progress
-                        symbols.sort();
-                        console.log("Writing", symbols.length, "Symbols to cache!");
-                        // Write to cache
-                        fs.writeFileSync(PATH_TO_SYMBOLS, JSON.stringify(symbols), { encoding: "utf-8" });
-                        resolve(symbols);
-                    }
-                })
-            })
-        }
-    });
-}
-
-// gets an indicator object
-function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes) {
-    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices, opens, highs, lows, closes);
-    indicator.initialize(indicatorOptions);
-    return indicator;
-}
-
-// Get price from own database
-function getPrices(symbol) {
-    return new Promise(async (resolve, reject) => {
-        getDocument("prices", symbol)
-            .then(document => {
-                resolve(document.prices);
-            })
-            .catch(err => reject(err));
-    });
-}
-
+//#region Worker Functions
 // given an existing backtest, record all the indicator data
 function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
     return new Promise((resolve, reject) => {
@@ -981,6 +912,63 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
             });
     })
 }
+//#endregion
+
+//#region Helper Functions
+// gets the symbols from cache or from csv
+function getSymbols() {
+    return new Promise((resolve, reject) => {
+        // read blacklist symbols (faulty data)
+        let blacklist = [];
+        if (fs.existsSync(PATH_TO_BLACKLIST)) {
+            blacklist = JSON.parse(fs.readFileSync(PATH_TO_BLACKLIST, { encoding: "utf-8" }));
+        }
+        // read from cache
+        if (fs.existsSync(PATH_TO_SYMBOLS) && useCache) {
+            console.log("Loading Symbols from Cache...");
+            let symbols = JSON.parse(fs.readFileSync(PATH_TO_SYMBOLS, { encoding: "utf-8" }));
+            // filter out blacklist symbols
+            symbols = symbols.filter(s => !blacklist.includes(s));
+            resolve(symbols);
+        }
+        // parse info from csv
+        else {
+            console.log("Loading Symbols from CSV...");
+            let symbols = [];
+            let finished = 0;
+
+            EXCHANGES.forEach(exchange => {
+                let csvPath = path.join(__dirname, `../res/${exchange}.csv`);
+                let data = fs.readFileSync(csvPath, { encoding: "utf-8" });
+
+                // parse data
+                csv.parse(data, {
+                    comment: '#'
+                }, function (err, output) {
+                    // "Symbol","Name","LastSale","MarketCap","IPOyear","Sector","industry","Summary Quote"
+                    let labels = output.shift();
+
+                    output.forEach(stock => {
+                        let symbol = stock[0];
+                        // exclude index and sub stocks
+                        if (!symbol.includes(".") && !symbol.includes("^") && !blacklist.includes(symbol))
+                            symbols.push(symbol.trim());
+                    })
+
+                    // if all exchanges are finished
+                    if (++finished == EXCHANGES.length) {
+                        // sort so its easier to check progress
+                        symbols.sort();
+                        console.log("Writing", symbols.length, "Symbols to cache!");
+                        // Write to cache
+                        fs.writeFileSync(PATH_TO_SYMBOLS, JSON.stringify(symbols), { encoding: "utf-8" });
+                        resolve(symbols);
+                    }
+                })
+            })
+        }
+    });
+}
 
 // convert raw data from api to adjusted prices for backtest
 function getAdjustedData(rawData, lastUpdated) {
@@ -1048,6 +1036,13 @@ function getIndicatorObjects(strategyOptions, type, symbol, dates, prices, opens
     });
 
     return [mainIndicator, supportingIndicators, map];
+}
+
+// gets an indicator object
+function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes) {
+    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices, opens, highs, lows, closes);
+    indicator.initialize(indicatorOptions);
+    return indicator;
 }
 
 // calculate stoplosses and targets
@@ -1226,10 +1221,11 @@ function getConditions(mainIndicator, supportingIndicators, date) {
     });
     return conditions
 }
+//#endregion
 
 module.exports = {
     backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getActionsToday,
     conductBacktest, conductStoplossTargetOptimization, conductIndicatorOptimization,
     findIntersections, optimizeStoplossTargetForSymbol, optimizeIndicatorsForSymbol,
     getSymbols, getAdjustedData, getIndicator
-};
+}; 

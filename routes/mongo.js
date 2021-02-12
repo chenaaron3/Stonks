@@ -7,10 +7,9 @@ const { fork } = require('child_process');
 let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
 let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
-let { getUpdatedPrices, fixFaulty } = require('../helpers/stock');
+let { getUpdatedPrices, fixFaulty, checkSplit, fill, update } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
-const NUM_THREADS = 4;
 let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
 
 ensureUpdated();
@@ -66,7 +65,7 @@ router.post("/reset", async function (req, res) {
 			resolveJob();
 		})
 	});
-	// update
+	// fill in the prices
 	update();
 })
 
@@ -76,57 +75,12 @@ router.get("/fill", async function (req, res) {
 	console.log("Finished Filling!");
 })
 
-async function fill() {
-	let symbols = await getSymbols();
-	let baseDate = "1/1/1500";
-	for (let i = 0; i < symbols.length; ++i) {
-		let symbol = symbols[i];
-		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
-	}
-}
-
 /* GET users listing. */
 router.get('/update', async function (req, res, next) {
 	// respond so doesnt hang
 	res.send("Updating!");
 	update();
 });
-
-async function update() {
-	addJob(() => {
-		return new Promise(async resolveJob => {
-			// get all docs from mongo
-			console.log("Retreiving symbols!");
-			let priceCollection = await getCollection("prices");
-			let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } })//.limit(10);
-			stockInfo = await stockInfo.toArray();
-			console.log(`Retreived ${stockInfo.length} symbols!`);
-
-			// create id to identify the update in logs
-			let updateID = makeid(5);
-
-			// create threads that split up the work
-			let partitionSize = Math.ceil(stockInfo.length / NUM_THREADS);
-			let finishedWorkers = 0;
-			for (let i = 0; i < NUM_THREADS; ++i) {
-				// divy up the documents for each thread to work on
-				let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
-
-				// spawn child to do work
-				let child = fork(path.join(__dirname, "../helpers/worker.js"));
-				child.send({ type: "startUpdate", partition, updateID });
-				child.on('message', function (message) {
-					if (message.status == "finished") {
-						if (++finishedWorkers == NUM_THREADS) {
-							console.log("Symbol Update Complete");
-							resolveJob();
-						}
-					}
-				});
-			}
-		})
-	}, true)
-}
 
 router.get('/pop', async function (req, res) {
 	// respond so doesnt hang
@@ -185,47 +139,10 @@ router.get('/trim', async function (req, res) {
 });
 
 // check if any symbols needs an update because of a split
-router.get("/checkSplits", async function (req, res) {
+router.get("/checkSplit", async function (req, res) {
 	res.send("Checking for Splits");
 	checkSplit();
 });
-
-async function checkSplit() {
-	console.log("Checking for Splits");
-	addJob(() => {
-		return new Promise(async resolveJob => {
-			let priceCollection = await getCollection("prices");
-			// check all stocks for their beginning price
-			let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
-			stockInfo = await stockInfo.toArray();
-
-			// create id to identify the job in logs
-			let jobID = makeid(5);
-
-			// create threads that split up the work
-			let partitionSize = Math.ceil(stockInfo.length / NUM_THREADS);
-			let finishedWorkers = 0;
-			let totalChanges = 0;
-			for (let i = 0; i < NUM_THREADS; ++i) {
-				// divy up the documents for each thread to work on
-				let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
-
-				// spawn child to do work
-				let child = fork(path.join(__dirname, "../helpers/worker.js"));
-				child.send({ type: "startSplitCheck", partition, jobID });
-				child.on('message', function (message) {
-					if (message.status == "finished") {
-						totalChanges += message.changes;
-						if (++finishedWorkers == NUM_THREADS) {
-							console.log("Symbol Split Check Complete With", totalChanges, "Changes!");
-							resolveJob();
-						}
-					}
-				});
-			}
-		})
-	});
-}
 
 // try to fix faulty data
 router.get("/fixFaulty", async function (req, res) {

@@ -1,7 +1,7 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
 import "./Optimize.css";
-import { camelToDisplay, mapRange } from "../helpers/utils"
+import { camelToDisplay, mapRange, findOptimalMetric } from "../helpers/utils"
 import TextField from '@material-ui/core/TextField';
 import {
     Tooltip, Label, ResponsiveContainer, ScatterChart, Scatter, CartesianGrid, XAxis, YAxis, ZAxis, ReferenceArea
@@ -31,7 +31,7 @@ class Optimize extends React.Component {
         this.modes = ["stoplossTarget", "indicators"];
         this.state = {
             mode: "stoplossTarget",
-            scoreBy: "profit", scoreTypes: [],
+            scoreBy: "Score", scoreTypes: [],
             indicator1: "", indicator2: "None", numSectors: 10, applySectors: .5, sectors: [], showSectors: true,
             loadingStoplossTarget: true, loadingIndicators: true, progress: -1, baseID: this.props.id
         };
@@ -204,29 +204,25 @@ class Optimize extends React.Component {
                     optimized = optimized["results"];
                     let optimizedIDs = Object.keys(optimized);
                     // transform data for chart
-                    let scoreTypes = Object.keys(optimized[optimizedIDs[0]]["summary"]);
-                    scoreTypes.forEach(st => {
-                        if (!this.scoreTypes.includes(st)) this.scoreTypes.splice(this.scoreTypes.indexOf(st), 1)
-                    });
-                    scoreTypes.sort((st1, st2) => this.scoreTypes.indexOf(st1) - this.scoreTypes.indexOf(st2));
-                    let scoreBy = scoreTypes[0];
-                    let scores = optimizedIDs.map(id => optimized[id]["summary"][scoreBy]);
+                    let metrics = optimizedIDs.map(optimizedID => optimized[optimizedID]["summary"]);
+                    let { scores } = findOptimalMetric(metrics);
                     let minScore = Math.min(...scores);
                     let maxScore = Math.max(...scores);
+
                     let stoplossTargetData = [];
-                    optimizedIDs.forEach(id => {
+                    optimizedIDs.forEach((id, i) => {
                         let strategyOptions = optimized[id]["strategyOptions"];
-                        let summary = optimized[id]["summary"];
-                        let score = mapRange(summary[scoreBy], minScore, maxScore, this.minSize, this.maxSize);
+                        let score = mapRange(scores[i], minScore, maxScore, this.minSize, this.maxSize);
                         stoplossTargetData.push({
                             x: strategyOptions["stopLossAtr"].toFixed(2),
                             y: strategyOptions["riskRewardRatio"].toFixed(2),
-                            z: summary[scoreBy].toFixed(2),
+                            z: score.toFixed(2),
                             score: score ? score : 0,
-                            id: id
+                            id: id,
+                            metrics: metrics[i]
                         });
                     })
-                    this.setState({ baseID, optimized, loadingStoplossTarget: false, stoplossTargetData, scoreTypes, scoreBy }, resolve);
+                    this.setState({ baseID, optimized, loadingStoplossTarget: false, stoplossTargetData }, resolve);
                 });
         })
     }
@@ -409,8 +405,14 @@ class Optimize extends React.Component {
     }
 
     tooltipFormatter = (value, name, props) => {
-        if (name == "price") {
-            return [value.toFixed(4), this.props.symbol];
+        if (name == "Score") {
+            let metricNames = Object.keys(props["payload"]["metrics"]);
+            return [<>
+                {value}<br />
+                {metricNames.map(metricName => <>
+                    {camelToDisplay(metricName)}: {props["payload"]["metrics"][metricName].toFixed(2)}<br />
+                </>)}
+            </>, name]
         }
         if (value) {
             try {
@@ -418,7 +420,7 @@ class Optimize extends React.Component {
             }
             catch {
                 if (typeof value == "object") {
-                    return "";
+                    return JSON.stringify(value);
                 }
                 return value;
             }
@@ -503,7 +505,7 @@ class Optimize extends React.Component {
                                         <CartesianGrid />
                                         <XAxis type="number" dataKey="x" name="Stoploss" domain={[0, 'dataMax']} label={{ value: "Stoploss", position: "insideBottom", offset: -10 }} tickFormatter={this.xAxisFormatter} />
                                         <YAxis type="number" dataKey="y" name="Risk Reward Ratio" domain={[0, 'dataMax']} label={{ value: "Risk Reward Ratio", position: "insideLeft", angle: -90 }} tickFormatter={this.yAxisFormatter} />
-                                        <ZAxis dataKey="z" name={camelToDisplay(this.state.scoreBy)} />
+                                        <ZAxis dataKey="z" name="Score" />
                                         <Scatter data={this.state.stoplossTargetData} fill="#82ca9d" shape={<this.CustomizedDot></this.CustomizedDot>} onClick={(params) => {
                                             let url = (process.env.NODE_ENV == "production" ? (process.env.REACT_APP_DOMAIN + process.env.REACT_APP_SUBDIRECTORY) : "localhost:3000") + "/" + params["id"];
                                             window.open(url);

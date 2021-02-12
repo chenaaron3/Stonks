@@ -1,12 +1,86 @@
 var yahooFinance = require('yahoo-finance');
 var path = require('path');
 var fs = require('fs');
+const { fork } = require('child_process');
+
 var { updateStockInfo, getDocument, getCollection, setStockInfo } = require("./mongo");
-let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual } = require('./utils');
+let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual, makeid } = require('./utils');
 let { getIndicator } = require('./backtest');
+let { addJob } = require('../helpers/queue');
 
 let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
 let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
+
+// create skeleton docs
+async function fill() {
+	let symbols = await getSymbols();
+	let baseDate = "1/1/1500";
+	for (let i = 0; i < symbols.length; ++i) {
+		let symbol = symbols[i];
+		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
+	}
+}
+
+// get latest price of a stock
+async function getLatestPrice(symbol) {
+    let priceCollection = await getCollection("prices");
+    let stockInfo = await priceCollection.find({ _id: symbol }).project({ prices: { $slice: -1 } });
+    stockInfo = await stockInfo.toArray();
+    if (stockInfo.length > 0) {
+        return stockInfo[0]["prices"][0];
+    }
+    else {
+        return {};
+    }
+}
+
+// Get price from own database
+function getPrices(symbol) {
+    return new Promise(async (resolve, reject) => {
+        getDocument("prices", symbol)
+            .then(document => {
+                resolve(document.prices);
+            })
+            .catch(err => reject(err));
+    });
+}
+
+// queues job to update stock prices
+async function update() {
+	addJob(() => {
+		return new Promise(async resolveJob => {
+			// get all docs from mongo
+			console.log("Retreiving symbols!");
+			let priceCollection = await getCollection("prices");
+			let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } })//.limit(10);
+			stockInfo = await stockInfo.toArray();
+			console.log(`Retreived ${stockInfo.length} symbols!`);
+
+			// create id to identify the update in logs
+			let updateID = makeid(5);
+
+			// create threads that split up the work
+			let partitionSize = Math.ceil(stockInfo.length / process.env.NUM_THREADS);
+			let finishedWorkers = 0;
+			for (let i = 0; i < process.env.NUM_THREADS; ++i) {
+				// divy up the documents for each thread to work on
+				let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
+
+				// spawn child to do work
+				let child = fork(path.join(__dirname, "../helpers/worker.js"));
+				child.send({ type: "startUpdate", partition, updateID });
+				child.on('message', function (message) {
+					if (message.status == "finished") {
+						if (++finishedWorkers == process.env.NUM_THREADS) {
+							console.log("Symbol Update Complete");
+							resolveJob();
+						}
+					}
+				});
+			}
+		})
+	}, true)
+}
 
 // update a price document if needed
 function updateStock(doc, updateDate) {
@@ -100,31 +174,46 @@ function getUpdatedPrices(symbol, startDate, endDate) {
     });
 }
 
-async function getLatestPrice(symbol) {
-    let priceCollection = await getCollection("prices");
-    let stockInfo = await priceCollection.find({ _id: symbol }).project({ prices: { $slice: -1 } });
-    stockInfo = await stockInfo.toArray();
-    if (stockInfo.length > 0) {
-        return stockInfo[0]["prices"][0];
-    }
-    else {
-        return {};
-    }
-}
+// queues job to check splits
+async function checkSplit() {
+	console.log("Checking for Splits");
+	addJob(() => {
+		return new Promise(async resolveJob => {
+			let priceCollection = await getCollection("prices");
+			// check all stocks for their beginning price
+			let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
+			stockInfo = await stockInfo.toArray();
 
-// Get price from own database
-function getPrices(symbol) {
-    return new Promise(async (resolve, reject) => {
-        getDocument("prices", symbol)
-            .then(document => {
-                resolve(document.prices);
-            })
-            .catch(err => reject(err));
-    });
+			// create id to identify the job in logs
+			let jobID = makeid(5);
+
+			// create threads that split up the work
+			let partitionSize = Math.ceil(stockInfo.length / process.env.NUM_THREADS);
+			let finishedWorkers = 0;
+			let totalChanges = 0;
+			for (let i = 0; i < process.env.NUM_THREADS; ++i) {
+				// divy up the documents for each thread to work on
+				let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
+
+				// spawn child to do work
+				let child = fork(path.join(__dirname, "../helpers/worker.js"));
+				child.send({ type: "startSplitCheck", partition, jobID });
+				child.on('message', function (message) {
+					if (message.status == "finished") {
+						totalChanges += message.changes;
+						if (++finishedWorkers == process.env.NUM_THREADS) {
+							console.log("Symbol Split Check Complete With", totalChanges, "Changes!");
+							resolveJob();
+						}
+					}
+				});
+			}
+		})
+	});
 }
 
 // rewrite a document in the case of a stock split
-async function checkSplit(doc) {
+async function checkSplitForSymbol(doc) {
     let today = new Date();
     let baseDate = new Date("1/1/1500");
 
@@ -308,4 +397,4 @@ async function gatherData(symbols, result, window) {
     return { features, labels };
 }
 
-module.exports = { updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, resetSymbol, fixFaulty }
+module.exports = { fill, update, updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }

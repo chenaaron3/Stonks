@@ -46,11 +46,11 @@ router.get('/job', async function (req, res) {
     res.send("ok");
 })
 
-router.get("/test", async function (req, res) {
+router.get("/summarize", async function (req, res) {
     let symbol = req.query.symbol;
 
 
-    let id = "iLeJlNmhOF";
+    let id = "Z5vJVqgB9E";
 
     let doc = await getDocument("results", id);
 
@@ -81,6 +81,14 @@ router.get("/test", async function (req, res) {
 
     res.json({})
 });
+
+router.get('/test', (req, res) => {
+    console.log(process.env.NUM_THREADS);
+    for(let i = 0; i < process.env.NUM_THREADS; ++i) {
+        console.log(i)
+    }
+    res.json({threads: process.env.NUM_THREADS})
+})
 
 router.post('/watchlist', async function (req, res) {
     let destination = req.body.destination;

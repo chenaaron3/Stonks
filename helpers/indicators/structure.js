@@ -92,12 +92,16 @@ class Structure extends Indicator {
             let support = undefined;
             let resistance = undefined;
             potentialSupports.forEach(level => {
-                if (support == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[support]["score"] * merged[support]["freshness"]) {
+                // score by relevance and strength
+                // if (support == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[support]["score"] * merged[support]["freshness"]) {
+                if (support == undefined || merged[level]["count"] > merged[support]["count"]) {
                     support = level;
                 }
             });
             potentialResistances.forEach(level => {
-                if (resistance == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[resistance]["score"] * merged[resistance]["freshness"]) {
+                // score by relevance and strength
+                // if (resistance == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[resistance]["score"] * merged[resistance]["freshness"]) {
+                if (resistance == undefined || merged[level]["count"] > merged[resistance]["count"]) {
                     resistance = level;
                 }
             })
