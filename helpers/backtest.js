@@ -121,7 +121,7 @@ async function getActionsToday(id, email, sessionID) {
                 const msg = {
                     to: email,
                     from: "backtest@updated.com",
-                    subject: "You Have Stocks To Sell!",
+                    subject: "Stock Updates!",
                     text: text
                 };
                 sgMail.send(msg)
