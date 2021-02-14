@@ -75,9 +75,10 @@ function findOptimalRisk(state, results) {
     // try combinations of settings
     scoreTypes.forEach(scoreBy => {
         for (let maxRisk = 5; maxRisk < 50; maxRisk += 5) {
-            let { equity, sharpe, weightedReturns } = simulateBacktest({
-                ...state, scoreBy, maxRisk
-            }, results);
+            let newState = JSON.parse(JSON.stringify(state));
+            newState["scoreBy"] = scoreBy;
+            newState["maxRisk"] = maxRisk;
+            let { equity, sharpe, weightedReturns } = simulateBacktest(newState, results);
             simulationResults.push({
                 metrics: { equity, sharpe, weightedReturns },
                 settings: { scoreBy, maxRisk }
@@ -120,7 +121,7 @@ function simulateBacktest(state, results) {
     });
 
     // sort the dates to simulate
-    dates = [...dates];
+    dates = Array.from(dates);
     dates.sort((a, b) => {
         return new Date(parseInt(a)) - new Date(parseInt(b))
     });
@@ -324,8 +325,8 @@ function findOptimalMetric(metrics) {
     let ranges = {};
     Object.keys(metrics[0]).forEach(metricName => {
         ranges[metricName] = {
-            min: Math.min(...metrics.map(metric => metric[metricName])),
-            max: Math.max(...metrics.map(metric => metric[metricName]))
+            min: Math.min.apply(null, metrics.map(metric => metric[metricName])),
+            max: Math.max.apply(null, metrics.map(metric => metric[metricName]))
         }
     });
 
@@ -336,7 +337,7 @@ function findOptimalMetric(metrics) {
 
     // console.log(metrics, ranges, scores);
     // index of max score
-    let optimalIndex = scores.indexOf(Math.max(...scores));
+    let optimalIndex = scores.indexOf(Math.max.apply(null, scores));
     return {
         optimalIndex: optimalIndex,
         scores: scores
