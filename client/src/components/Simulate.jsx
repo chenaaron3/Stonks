@@ -27,9 +27,9 @@ class Simulate extends React.Component {
         super(props);
 
         this.state = {
-            equityData: [], returnsData: [],
+            equityData: [], returnsData: [], buyingPowerData: [], positionData: [],
             range: 25, startSize: 1000, maxPositions: 10, positionSize: 10, maxRisk: 15,
-            sizeOnRisk: false, risk: 3,
+            sizeOnRisk: false, risk: 1,
             scoreBy: "Win Rate",
             loading: true
         }
@@ -57,11 +57,11 @@ class Simulate extends React.Component {
             state = this.state;
         }
         let { transactions, // for review
-            equityData, returnsData, // for charts
+            equityData, returnsData, buyingPowerData, positionData,// for charts
             equity, weightedReturns, sharpe // for comparison
         } = simulateBacktest(state, this.props.results);
         if (forGUI) {
-            this.setState({ equityData, returnsData, loading: false });
+            this.setState({ equityData, returnsData, buyingPowerData, positionData, loading: false });
             this.props.setSimulationTransactions(transactions);
         }
         return { equity, weightedReturns, sharpe };
@@ -209,6 +209,24 @@ class Simulate extends React.Component {
                         <Tooltip formatter={(value) => value.toFixed(2) + "%"} />
                     </BarChart>
                 </ResponsiveContainer>
+                {/* <ResponsiveContainer width="100%" height={`10%`}>
+                    <BarChart data={this.state.positionData}>
+                        <CartesianGrid vertical={false} horizontal={false} />
+                        <XAxis dataKey="year" minTickGap={50} height={25} />
+                        <YAxis domain={["auto", "auto"]} orientation="left" />
+                        <Bar dataKey="positions" stackId="a" fill={winLossColor[0]} />
+                        <Tooltip formatter={(value) => value.toFixed(2) + "%"} />
+                    </BarChart>
+                </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={`10%`}>
+                    <AreaChart data={this.state.buyingPowerData} >
+                        <CartesianGrid />
+                        <XAxis dataKey="date" minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
+                        <YAxis domain={[0, "dataMax"]} orientation="left" />
+                        <Area dataKey="buyingPower" stroke={winLossColor[0]} fillOpacity={1} fill={`${winLossColor[0]}`} />
+                        <Tooltip formatter={(value) => "$" + numberWithCommas(value.toFixed(0))} labelFormatter={this.xAxisTickFormatter} />
+                    </AreaChart>
+                </ResponsiveContainer> */}
             </div>
         </div>
     }

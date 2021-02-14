@@ -4609,3 +4609,167 @@ Worker Z5vJVqgB9E: Finished backtest for tickers DFFN to JFK in 267 seconds
 Worker Z5vJVqgB9E: Finished backtest for tickers A to DEX in 282 seconds
 Worker Z5vJVqgB9E: Finished backtest for tickers PZC to ZYXI in 285 seconds
 Worker Z5vJVqgB9E: Finished backtest for tickers JFKKR to PYZ in 285 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers A to DEX
+Worker Z5vJVqgB9E: Finding intersections for tickers DFFN to JFK
+Worker Z5vJVqgB9E: Finding intersections for tickers PZC to ZYXI
+Worker Z5vJVqgB9E: Finding intersections for tickers JFKKR to PYZ
+Worker Z5vJVqgB9E: Finished backtest for tickers DFFN to JFK in 138 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers PZC to ZYXI in 120 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers A to DEX in 140 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers JFKKR to PYZ in 123 seconds
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finished backtest for tickers DFFN to JFK in 260 seconds
+Worker SqT25um2h0: Finished backtest for tickers A to DEX in 275 seconds
+Worker SqT25um2h0: Finished backtest for tickers JFKKR to PYZ in 285 seconds
+Worker SqT25um2h0: Finished backtest for tickers PZC to ZYXI in 285 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers A to DEX
+Worker Z5vJVqgB9E: Finding intersections for tickers DFFN to JFK
+Worker Z5vJVqgB9E: Finding intersections for tickers JFKKR to PYZ
+Worker Z5vJVqgB9E: Finding intersections for tickers PZC to ZYXI
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 2 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 1 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 4 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 4 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 4 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 3 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 4 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers KNX to KNX
+Worker Z5vJVqgB9E: Finished backtest for tickers KNX to KNX in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
+Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds

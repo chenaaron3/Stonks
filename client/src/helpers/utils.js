@@ -4,7 +4,7 @@ function formatDate(date) {
         date = new Date(date);
     }
 
-    // add 1 day, data is off
+    // add 1 day, yahoo data is 1 day behind
     date.setDate(date.getDate() + 1);
 
     var year = date.getFullYear();
@@ -128,6 +128,8 @@ function simulateBacktest(state, results) {
     // start simulation
     let equity = state.startSize;
     let buyingPower = equity;
+    let positionData = []; // how many positions at a given time
+    let buyingPowerData = []; // buying power after each trade
     let equityData = []; // equity after reach trade
     let returnsData = []; // percent annual returns
     let transactions = {}; // maps year to list of events
@@ -218,6 +220,8 @@ function simulateBacktest(state, results) {
         holdings = holdings.filter(h => !sold.includes(h));
 
         equityData.push({ date: date, equity });
+        buyingPowerData.push({ date: date, buyingPower: buyingPower });
+        positionData.push({ date: date, positions: holdings.length });
     }
 
     // sell off all holdings
@@ -269,7 +273,7 @@ function simulateBacktest(state, results) {
     let returnsNumeric = returnsData.map(v => v["returns"]);
     let sharpe = getMean(returnsNumeric) / Math.sqrt(getStandardDeviation(returnsNumeric));
 
-    return { transactions, equityData, returnsData, equity, weightedReturns, sharpe };
+    return { transactions, equityData, returnsData, buyingPowerData, positionData, equity, weightedReturns, sharpe };
 }
 
 function scoreEvent(events, index, scoreData) {

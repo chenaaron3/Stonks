@@ -9,7 +9,7 @@ const sgMail = require('@sendgrid/mail');
 const csv = require('csv');
 let { fixFaulty, getPrices } = require('../helpers/stock');
 let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
-let { daysBetween, getBacktestSummary } = require('../helpers/utils');
+let { daysBetween, getBacktestSummary, toPST } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
 let { cancelAllOrders, requestBracketOrder } = require('./alpaca');
@@ -79,7 +79,7 @@ async function getActionsToday(id, email, sessionID) {
             // clear all alpaca orders carried over from previous day
             await cancelAllOrders();
 
-            for(let i = 0; i < symbols.length; ++i) {
+            for (let i = 0; i < symbols.length; ++i) {
                 let symbol = symbols[i];
                 let symbolData = doc["results"]["symbolData"][symbol];
 
@@ -177,10 +177,9 @@ function updateBacktest(id) {
                 resolveJob();
                 return;
             }
-            else {
-                setDocumentField("results", id, "status", "updating");
-            }
-            let strategyOptions = doc.results["strategyOptions"];
+
+            setDocumentField("results", id, "status", "updating");
+            let strategyOptions = doc["results"]["strategyOptions"];
 
             // spawn child to do work
             let child = fork(path.join(__dirname, "../helpers/worker.js"));
@@ -297,7 +296,10 @@ function conductBacktest(strategyOptions, id) {
                             // save faulty list
                             fs.writeFileSync(PATH_TO_FAULTY, JSON.stringify(faulty), { encoding: "utf-8" });
 
-                            let results = { strategyOptions, symbolData: intersections, lastUpdated: new Date() };
+                            let results = {
+                                strategyOptions, symbolData: intersections, lastUpdated: new Date(),
+                                created: previousResults ? previousResults["results"]["created"] : new Date()
+                            };
                             // add result to database
                             await setDocumentField("results", id, "summary", getBacktestSummary(results));
                             let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
@@ -339,7 +341,8 @@ function conductStoplossTargetOptimization(id, optimizeOptions) {
                 results.push({
                     strategyOptions: strategyOptionsCopy,
                     symbolData: {},
-                    lastUpdated: previousResults["results"]["lastUpdated"]
+                    lastUpdated: previousResults["results"]["lastUpdated"],
+                    created: previousResults["results"]["created"]
                 })
                 newIDs.push(`${id}_optimized_${stoploss.toFixed(2)}_${ratio.toFixed(2)}`);
             }
@@ -723,12 +726,14 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                         // start from the date after the last update
                         for (let i = 0; i < dates.length; ++i) {
                             let day = new Date(dates[i]);
+                            day.setDate(day.getDate() + 1) // yahoo data is 1 day behind
+                            day.setHours(0);
                             if (day > lastUpdated) {
                                 startIndex = i;
                                 break;
                             }
                         }
-                        // if theres no changes since last update
+                        // if theres no price changes since last update
                         if (startIndex == 0) {
                             // end the backtest for this symbol
                             startIndex = dates.length;
@@ -990,6 +995,7 @@ function getAdjustedData(rawData, lastUpdated) {
                 break;
             }
         }
+        // go back certain margin
         cutoffIndex = Math.max(0, cutoffIndex - 200);
     }
 
