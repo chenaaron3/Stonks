@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var childProcess = require('child_process');
 var githubUsername = 'chenaaron3'
-var scriptDirectory = '~'
+var scriptDirectory = '~//Desktop'
 var scriptFile = 'stonksDeploy.sh'
 
 router.post("/github", function (req, res) {
