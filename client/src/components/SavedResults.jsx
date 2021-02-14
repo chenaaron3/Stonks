@@ -16,7 +16,7 @@ class SavedResults extends React.Component {
             loading: false
         }
 
-        let demoID = "GUpzkgGRrS"
+        let demoID = process.env.REACT_APP_DEMO_ID;
 
         // create saved results if it doesnt exist
         if (!localStorage.getItem("savedResults")) {

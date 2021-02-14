@@ -7,7 +7,7 @@ const { fork } = require('child_process');
 let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
 let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
-let { getUpdatedPrices, fixFaulty, checkSplit, fill, update } = require('../helpers/stock');
+let { getUpdatedPrices, fixFaulty, checkSplit, update } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
 let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
@@ -72,8 +72,19 @@ router.post("/reset", async function (req, res) {
 router.get("/fill", async function (req, res) {
 	res.send("Filling!");
 	await fill();
-	console.log("Finished Filling!");
 })
+
+// create skeleton docs
+async function fill() {
+	console.log("Filling!");
+	let symbols = await getSymbols(false);
+	let baseDate = "1/1/1500";
+	for (let i = 0; i < symbols.length; ++i) {
+		let symbol = symbols[i];
+		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
+	}
+	console.log("Finished Filling!");
+}
 
 /* GET users listing. */
 router.get('/update', async function (req, res, next) {

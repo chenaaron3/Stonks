@@ -255,7 +255,7 @@ function optimizeIndicators(id, indicatorOptions) {
 function conductBacktest(strategyOptions, id) {
     return new Promise(resolve => {
         // get list of symbols to query
-        getSymbols().then(async (symbols) => {
+        getSymbols(true).then(async (symbols) => {
             // Uncomment to test a portion of symbols
             // symbols = symbols.slice(0, 50);
 
@@ -921,7 +921,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
 //#region Helper Functions
 // gets the symbols from cache or from csv
-function getSymbols() {
+function getSymbols(applyBlacklist) {
     return new Promise((resolve, reject) => {
         // read blacklist symbols (faulty data)
         let blacklist = [];
@@ -933,7 +933,9 @@ function getSymbols() {
             console.log("Loading Symbols from Cache...");
             let symbols = JSON.parse(fs.readFileSync(PATH_TO_SYMBOLS, { encoding: "utf-8" }));
             // filter out blacklist symbols
-            symbols = symbols.filter(s => !blacklist.includes(s));
+            if (applyBlacklist) {
+                symbols = symbols.filter(s => !blacklist.includes(s));
+            }
             resolve(symbols);
         }
         // parse info from csv
@@ -956,8 +958,12 @@ function getSymbols() {
                     output.forEach(stock => {
                         let symbol = stock[0];
                         // exclude index and sub stocks
-                        if (!symbol.includes(".") && !symbol.includes("^") && !blacklist.includes(symbol))
+                        if (!symbol.includes(".") && !symbol.includes("^")) {
+                            if (applyBlacklist && blacklist.includes(symbol)) {
+                                return;
+                            }
                             symbols.push(symbol.trim());
+                        }
                     })
 
                     // if all exchanges are finished

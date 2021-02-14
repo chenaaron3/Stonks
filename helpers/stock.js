@@ -11,16 +11,6 @@ let { addJob } = require('../helpers/queue');
 let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
 let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
 
-// create skeleton docs
-async function fill() {
-	let symbols = await getSymbols();
-	let baseDate = "1/1/1500";
-	for (let i = 0; i < symbols.length; ++i) {
-		let symbol = symbols[i];
-		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
-	}
-}
-
 // get latest price of a stock
 async function getLatestPrice(symbol) {
     let priceCollection = await getCollection("prices");
@@ -397,4 +387,4 @@ async function gatherData(symbols, result, window) {
     return { features, labels };
 }
 
-module.exports = { fill, update, updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }
+module.exports = { update, updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }
