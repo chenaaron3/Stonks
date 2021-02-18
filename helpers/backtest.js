@@ -174,8 +174,9 @@ function updateBacktest(id) {
             }
             // already updating
             else if (doc["status"] == "updating") {
-                resolveJob();
-                return;
+                // CHANGEBACK
+                // resolveJob();
+                // return;
             }
 
             setDocumentField("results", id, "status", "updating");
@@ -258,6 +259,8 @@ function conductBacktest(strategyOptions, id) {
         getSymbols(true).then(async (symbols) => {
             // Uncomment to test a portion of symbols
             // symbols = symbols.slice(0, 50);
+            // Uncoment to test custom symbols CHANGEBACK
+            symbols = ["NCLH"];
 
             // try to get previous results
             let previousResults = await getDocument("results", id);
@@ -300,10 +303,11 @@ function conductBacktest(strategyOptions, id) {
                                 strategyOptions, symbolData: intersections, lastUpdated: new Date(),
                                 created: previousResults ? previousResults["results"]["created"] : new Date()
                             };
-                            // add result to database
-                            await setDocumentField("results", id, "summary", getBacktestSummary(results));
-                            let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
-                            if (err) console.log(err);
+                            console.log(JSON.stringify(intersections["NCLH"]))
+                            // add result to database CHANGEBACK
+                            // await setDocumentField("results", id, "summary", getBacktestSummary(results));
+                            // let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
+                            // if (err) console.log(err);
                             resolve();
                         }
                     }
@@ -672,7 +676,7 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                 // if valid prices
                 else {
                     // maps date to data
-                    let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, lastUpdated);
+                    let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, lastUpdated, strategyOptions);
 
                     // get indicator objects
                     let [mainBuyIndicator, supportingBuyIndicators, buyMap] = getIndicatorObjects(strategyOptions, "buy", symbol, dates, prices, opens, highs, lows, closes);
@@ -982,7 +986,7 @@ function getSymbols(applyBlacklist) {
 }
 
 // convert raw data from api to adjusted prices for backtest
-function getAdjustedData(rawData, lastUpdated) {
+function getAdjustedData(rawData, lastUpdated, strategyOptions) {
     // maps date to closing price
     let prices = {};
     let volumes = {};
@@ -1001,8 +1005,18 @@ function getAdjustedData(rawData, lastUpdated) {
                 break;
             }
         }
+        let flattenedValues = [];
+        // find maximum values used in strategy options
+        let flatten = indicator => {
+            Object.values(indicator).forEach(fieldValue => {
+                flattenedValues.push(fieldValue);
+            })
+        };
+        Object.values(strategyOptions["buyIndicators"]).forEach(flatten);
+        Object.values(strategyOptions["sellIndicators"]).forEach(flatten);
+        let margin = Math.max(...flattenedValues) + 5;
         // go back certain margin
-        cutoffIndex = Math.max(0, cutoffIndex - 200);
+        cutoffIndex = Math.max(0, cutoffIndex - margin);
     }
 
     // parse list into dictionaries

@@ -4773,3 +4773,172 @@ Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
 Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
 Worker Z5vJVqgB9E: Finding intersections for tickers undefined to undefined
 Worker Z5vJVqgB9E: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finished backtest for tickers PZC to ZYXI in 94 seconds
+Worker SqT25um2h0: Finished backtest for tickers DFFN to JFK in 108 seconds
+Worker SqT25um2h0: Finished backtest for tickers JFKKR to PYZ in 107 seconds
+Worker SqT25um2h0: Finished backtest for tickers A to DEX in 113 seconds
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 277 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 391 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 19 seconds
+Worker SqT25um2h0: Finding intersections for tickers NCLH to NCLH
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers undefined to undefined
+Worker SqT25um2h0: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finished backtest for tickers NCLH to NCLH in 147 seconds
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finished backtest for tickers PZC to ZYXI in 267 seconds
+Worker SqT25um2h0: Finished backtest for tickers JFKKR to PYZ in 283 seconds
+Worker SqT25um2h0: Finished backtest for tickers A to DEX in 295 seconds
+Worker SqT25um2h0: Finished backtest for tickers DFFN to JFK in 313 seconds
+Worker lus7b53L7x: Finding intersections for tickers A to DEX
+Worker lus7b53L7x: Finding intersections for tickers DFFN to JFK
+Worker lus7b53L7x: Finding intersections for tickers JFKKR to PYZ
+Worker lus7b53L7x: Finished backtest for tickers JFKKR to PYZ in 167 seconds
+Worker lus7b53L7x: Finished backtest for tickers A to DEX in 189 seconds
+Worker lus7b53L7x: Finished backtest for tickers DFFN to JFK in 193 seconds
+Worker lus7b53L7x: Finding intersections for tickers A to DEX
+Worker lus7b53L7x: Finding intersections for tickers DFFN to JFK
+Worker lus7b53L7x: Finding intersections for tickers JFKKR to PYZ
+Worker lus7b53L7x: Finding intersections for tickers PZC to ZYXI
+Worker lus7b53L7x: Finished backtest for tickers PZC to ZYXI in 173 seconds
+Worker lus7b53L7x: Finished backtest for tickers JFKKR to PYZ in 178 seconds
+Worker lus7b53L7x: Finished backtest for tickers A to DEX in 204 seconds
+Worker lus7b53L7x: Finished backtest for tickers DFFN to JFK in 204 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers NCLH to NCLH
+Worker oHFzBNEEW8: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers NCLH to NCLH
+Worker oHFzBNEEW8: Finished backtest for tickers NCLH to NCLH in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers NCLH to NCLH
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finished backtest for tickers NCLH to NCLH in 219 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers NCLH to NCLH
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
+Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds

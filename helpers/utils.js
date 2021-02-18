@@ -125,7 +125,7 @@ function getMACD(dates, prices, ema1period, ema2period) {
     if (ema1["valid"] && ema2["valid"]) {
         // start storing the differences
         let startIndex = dates.indexOf(ema2["start"]);
-        for (let i = startIndex; i < dates.length - 1; ++i) {
+        for (let i = startIndex; i < dates.length; ++i) {
             let day = dates[i];
             res[day] = ema1["data"][day] - ema2["data"][day];
         }
