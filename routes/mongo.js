@@ -36,11 +36,13 @@ async function ensureUpdated() {
 
 			// update the active backtests
 			let activeResults = await getDocument("results", "activeResults");
-			activeResults = activeResults["activeResults"];
-			for (let i = 0; i < activeResults.length; ++i) {
-				let { id, email, sessionID } = activeResults[i];
-				updateBacktest(id); // update backtest
-				getActionsToday(id, email, sessionID); // send email notifications about sells, send buy orders to alpaca
+			if (activeResults) {
+				activeResults = activeResults["activeResults"];
+				for (let i = 0; i < activeResults.length; ++i) {
+					let { id, email, sessionID } = activeResults[i];
+					updateBacktest(id); // update backtest
+					getActionsToday(id, email, sessionID); // send email notifications about sells, send buy orders to alpaca
+				}
 			}
 		}
 		// market not closed
@@ -74,6 +76,19 @@ router.get("/fill", async function (req, res) {
 	await fill();
 })
 
+router.get('/actions', async function (req, res, next) {
+	// respond so doesnt hang
+	res.send("Getting actions!");
+	let activeResults = await getDocument("results", "activeResults");
+	if (activeResults) {
+		activeResults = activeResults["activeResults"];
+		for (let i = 0; i < activeResults.length; ++i) {
+			let { id, email, sessionID } = activeResults[i];
+			getActionsToday(id, email, sessionID); // send email notifications about sells, send buy orders to alpaca
+		}
+	}
+});
+
 // create skeleton docs
 async function fill() {
 	console.log("Filling!");
@@ -86,7 +101,6 @@ async function fill() {
 	console.log("Finished Filling!");
 }
 
-/* GET users listing. */
 router.get('/update', async function (req, res, next) {
 	// respond so doesnt hang
 	res.send("Updating!");

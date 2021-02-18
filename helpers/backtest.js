@@ -174,9 +174,8 @@ function updateBacktest(id) {
             }
             // already updating
             else if (doc["status"] == "updating") {
-                // CHANGEBACK
-                // resolveJob();
-                // return;
+                resolveJob();
+                return;
             }
 
             setDocumentField("results", id, "status", "updating");
@@ -259,8 +258,8 @@ function conductBacktest(strategyOptions, id) {
         getSymbols(true).then(async (symbols) => {
             // Uncomment to test a portion of symbols
             // symbols = symbols.slice(0, 50);
-            // Uncoment to test custom symbols CHANGEBACK
-            symbols = ["NCLH"];
+            // Uncoment to test custom symbols
+            // symbols = ["NCLH"];
 
             // try to get previous results
             let previousResults = await getDocument("results", id);
@@ -304,10 +303,10 @@ function conductBacktest(strategyOptions, id) {
                                 created: previousResults ? previousResults["results"]["created"] : new Date()
                             };
                             console.log(JSON.stringify(intersections["NCLH"]))
-                            // add result to database CHANGEBACK
-                            // await setDocumentField("results", id, "summary", getBacktestSummary(results));
-                            // let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
-                            // if (err) console.log(err);
+                            // add result to database
+                            await setDocumentField("results", id, "summary", getBacktestSummary(results));
+                            let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
+                            if (err) console.log(err);
                             resolve();
                         }
                     }
