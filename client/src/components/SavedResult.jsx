@@ -57,7 +57,9 @@ class SavedResult extends React.Component {
                         <>
                             <img className={`saved-result-icon ${this.state.hovered ? "saved-result-hover" : ""}`} width="20px" height="20px" src={edit} alt="Edit" onClick={this.onEditStart} />
                             <span className="saved-result-text" onClick={() => { this.props.fetchBacktestResults(this.props.id) }}>{this.props.display}</span>
-                            <img className={`saved-result-trailer ${this.state.hovered ? "saved-result-hover" : ""}`} width="20px" height="20px" src={cross} alt="Cross" onClick={this.onRemove} />
+                            {
+                                this.props.id != process.env.REACT_APP_DEMO_ID && <img className={`saved-result-trailer ${this.state.hovered ? "saved-result-hover" : ""}`} width="20px" height="20px" src={cross} alt="Cross" onClick={this.onRemove} />
+                            }
                         </>
                     )}
                 </div>

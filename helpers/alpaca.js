@@ -11,6 +11,28 @@ function getAccount() {
     return alpaca.getAccount();
 }
 
+function getOpenOrders() {
+    return alpaca.getOrders({
+        status: 'open'
+    })
+}
+
+function cancelAllBuyOrders() {
+    alpaca.getOrders({
+        status: 'open'
+    }).then(async orders => {
+        let cancelledOrders = 0;
+        for(let i = 0; i < orders.length; ++i) {
+            let order = orders[i];
+            if (order["side"] == "buy") {
+                await alpaca.cancelOrder(order["id"]);
+                cancelledOrders += 1;
+            }
+        }
+        console.log(`Cancelled ${cancelledOrders} Alpaca Orders`);
+    })
+}
+
 function cancelAllOrders() {
     return alpaca.cancelAllOrders();
 }
@@ -36,9 +58,9 @@ function requestBracketOrder(symbol, buyPrice, positionSize, stoploss, target) {
                     limit_price: target
                 }
             }).then(order => resolve(order))
-            .catch(err => reject(err));
+                .catch(err => reject(err));
         })
     })
 }
 
-module.exports = { getAccount, cancelAllOrders, requestBracketOrder };
+module.exports = { getAccount, getOpenOrders, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder };

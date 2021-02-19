@@ -12,7 +12,7 @@ let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo')
 let { daysBetween, getBacktestSummary, toPST } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
-let { cancelAllOrders, requestBracketOrder } = require('./alpaca');
+let { cancelAllBuyOrders, requestBracketOrder } = require('./alpaca');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
@@ -76,8 +76,8 @@ async function getActionsToday(id, email, sessionID) {
             let today = new Date();
             let actions = { buy: [], sell: [] };
 
-            // clear all alpaca orders carried over from previous day
-            await cancelAllOrders();
+            // clear all alpaca buy orders carried over from previous day
+            await cancelAllBuyOrders();
 
             for (let i = 0; i < symbols.length; ++i) {
                 let symbol = symbols[i];
@@ -111,9 +111,9 @@ async function getActionsToday(id, email, sessionID) {
                     View at ${process.env.DOMAIN}/${id}\n`;
                 }
                 if (actions["buy"].length > 0) {
-                    text += `Buy orders sent to Alpaca:\n
-                    ${actions["buy"].join("\n")}
-                    View at https://app.alpaca.markets/paper/dashboard/overview\n`;
+                    text += `Buy orders sent to Alpaca:\n` +
+                    `${actions["buy"].join("\n")}\n` +
+                    `View at https://app.alpaca.markets/paper/dashboard/overview\n`;
                 }
 
                 // send email
@@ -125,7 +125,7 @@ async function getActionsToday(id, email, sessionID) {
                     text: text
                 };
                 sgMail.send(msg)
-                    .then(() => console.log("Email sent to ", email))
+                    .then(() => console.log("Email sent to", email))
                     .catch(function (err) {
                         console.log(err);
                         console.log(err["response"]["body"]["errors"])
@@ -302,7 +302,6 @@ function conductBacktest(strategyOptions, id) {
                                 strategyOptions, symbolData: intersections, lastUpdated: new Date(),
                                 created: previousResults ? previousResults["results"]["created"] : new Date()
                             };
-                            console.log(JSON.stringify(intersections["NCLH"]))
                             // add result to database
                             await setDocumentField("results", id, "summary", getBacktestSummary(results));
                             let err = await setDocumentField("results", id, "results", results, { subField: "symbolData" });
@@ -1007,9 +1006,7 @@ function getAdjustedData(rawData, lastUpdated, strategyOptions) {
         let flattenedValues = [];
         // find maximum values used in strategy options
         let flatten = indicator => {
-            Object.values(indicator).forEach(fieldValue => {
-                flattenedValues.push(fieldValue);
-            })
+            flattenedValues.push(Object.values(indicator).reduce((a, b) => a + b));
         };
         Object.values(strategyOptions["buyIndicators"]).forEach(flatten);
         Object.values(strategyOptions["sellIndicators"]).forEach(flatten);

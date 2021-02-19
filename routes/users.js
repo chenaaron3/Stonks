@@ -9,6 +9,7 @@ let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
 let { getBacktestSummary, simulateBacktest } = require('../helpers/utils');
+let { cancelAllBuyOrders, getOpenOrders } = require('../helpers/alpaca');
 const bson = require('bson');
 const DOC_LIMIT = 16777216;
 
@@ -82,12 +83,8 @@ router.get("/summarize", async function (req, res) {
     res.json({})
 });
 
-router.get('/test', (req, res) => {
-    console.log(process.env.NUM_THREADS);
-    for(let i = 0; i < process.env.NUM_THREADS; ++i) {
-        console.log(i)
-    }
-    res.json({threads: process.env.NUM_THREADS})
+router.get('/test', async (req, res) => {
+    res.send(await getOpenOrders());
 })
 
 router.post('/watchlist', async function (req, res) {

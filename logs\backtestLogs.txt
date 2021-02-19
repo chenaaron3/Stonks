@@ -1155,3 +1155,7 @@ Worker oHFzBNEEW8: Finished backtest in 16 seconds
 Worker oHFzBNEEW8: Starting backtest
 Worker oHFzBNEEW8: Finished backtest in 227 seconds
 Worker oHFzBNEEW8: Starting backtest
+Worker SqT25um2h0: Starting backtest
+Worker SqT25um2h0: Starting backtest
+Worker SqT25um2h0: Starting backtest
+Worker SqT25um2h0: Finished backtest in 410 seconds

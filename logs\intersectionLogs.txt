@@ -4942,3 +4942,20 @@ Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
 Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
 Worker oHFzBNEEW8: Finding intersections for tickers undefined to undefined
 Worker oHFzBNEEW8: Finished backtest for tickers undefined to undefined in 0 seconds
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finished backtest for tickers PZC to ZYXI in 203 seconds
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finding intersections for tickers A to DEX
+Worker SqT25um2h0: Finding intersections for tickers DFFN to JFK
+Worker SqT25um2h0: Finding intersections for tickers JFKKR to PYZ
+Worker SqT25um2h0: Finding intersections for tickers PZC to ZYXI
+Worker SqT25um2h0: Finished backtest for tickers PZC to ZYXI in 265 seconds
+Worker SqT25um2h0: Finished backtest for tickers A to DEX in 338 seconds
+Worker SqT25um2h0: Finished backtest for tickers DFFN to JFK in 336 seconds
+Worker SqT25um2h0: Finished backtest for tickers JFKKR to PYZ in 359 seconds
