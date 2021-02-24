@@ -1159,3 +1159,9 @@ Worker SqT25um2h0: Starting backtest
 Worker SqT25um2h0: Starting backtest
 Worker SqT25um2h0: Starting backtest
 Worker SqT25um2h0: Finished backtest in 410 seconds
+Worker ytcOdUqQVM: Starting backtest
+Worker ytcOdUqQVM: Finished backtest in 454 seconds
+Worker hF0HDlijCC: Starting backtest
+Worker hF0HDlijCC: Finished backtest in 213 seconds
+Worker ytcOdUqQVM: Starting backtest
+Worker ytcOdUqQVM: Finished backtest in 227 seconds

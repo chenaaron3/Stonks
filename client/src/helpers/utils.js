@@ -4,9 +4,6 @@ function formatDate(date) {
         date = new Date(date);
     }
 
-    // add 1 day, yahoo data is 1 day behind
-    date.setDate(date.getDate() + 1);
-
     var year = date.getFullYear();
 
     var month = (1 + date.getMonth()).toString();
@@ -344,4 +341,17 @@ function findOptimalMetric(metrics) {
     };
 }
 
-module.exports = { formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay, displayDelta, getBacktestDisplayName, mapRange, simulateBacktest, findOptimalRisk, findOptimalMetric };
+function checkLoggedIn() {
+    return new Promise(resolve => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/isLoggedIn`)
+            .then(res => res.json())
+            .then(json => {
+                resolve(json["isLoggedIn"])
+            })
+    })
+}
+
+module.exports = {
+    formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay, displayDelta, getBacktestDisplayName,
+    mapRange, simulateBacktest, findOptimalRisk, findOptimalMetric, checkLoggedIn
+};

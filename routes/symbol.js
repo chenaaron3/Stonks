@@ -17,11 +17,20 @@ router.get("/latestPrice", async (req, res) => {
 })
 
 // gets a user's bought symbol list
-router.get("/boughtSymbols", (req, res) => {
-    if (!req.session.hasOwnProperty("buys")) {
-        req.session["buys"] = {};
+router.get("/boughtSymbols", async (req, res) => {
+    // if not logged in
+    if (!req.user) {
+        if (!req.session.hasOwnProperty("buys")) {
+            req.session["buys"] = {};
+        }
+        res.json(req.session["buys"]);
     }
-    res.json(req.session["buys"]);
+    // if logged in
+    else {
+        let user = await getDocument("users", req.user.username);
+        res.json(user["buys"]);
+    }
+
 })
 
 // buy
@@ -29,45 +38,65 @@ router.get("/buySymbol", async (req, res) => {
     let symbol = req.query.symbol;
     let entry = await getLatestPrice(symbol);
     let date = entry["date"];
-    let price = entry["adjClose"]
+    let price = entry["close"]
 
-    // if first buy
-    if (!req.session.hasOwnProperty("buys")) {
-        req.session["buys"] = {};
+    let buyDict = undefined;
+
+    if (!req.user) {
+        // if first buy
+        if (!req.session.hasOwnProperty("buys")) {
+            req.session["buys"] = {};
+        }
+        buyDict = req.session["buys"];
+    }
+    else {
+        buyDict = (await getDocumentField("users", req.user.username, ["buys"]))["buys"];
     }
 
     // if first buy for symbol
-    if (!req.session["buys"].hasOwnProperty(symbol)) {
-        req.session["buys"][symbol] = [];
+    if (!buyDict.hasOwnProperty(symbol)) {
+        buyDict[symbol] = [];
     }
 
     // add date
-    if (!req.session["buys"][symbol].includes(date)) {
-        req.session["buys"][symbol].push({ date, price });
+    if (!buyDict[symbol].includes(date)) {
+        buyDict[symbol].push({ date, price });
     }
-    console.log(req.session);
-    res.json(req.session["buys"]);
+
+    // store back into db
+    if (req.user) {
+        await setDocumentField("users", req.user.username, "buys", buyDict, {});
+    }
+
+    res.json(buyDict);
+
 });
 
 // sell
-router.get("/sellSymbol", (req, res) => {
+router.get("/sellSymbol", async (req, res) => {
     let symbol = req.query.symbol;
 
-    // check buys
-    if (!req.session.hasOwnProperty("buys")) {
-        res.json({});
-        return;
+    if (!req.user) {
+        // check buys
+        if (!req.session.hasOwnProperty("buys")) {
+            res.json({});
+            return;
+        }
     }
 
+    let buyDict = !req.user ? req.session["buys"] : (await getDocumentField("users", req.user.username, ["buys"]))["buys"];
+
     // check symbol buy
-    if (!req.session["buys"].hasOwnProperty(symbol)) {
-        res.json(req.session["buys"]);
+    if (!buyDict.hasOwnProperty(symbol)) {
+        res.json(buyDict);
         return;
     }
     else {
-        delete req.session["buys"][symbol];
-        console.log(req.session);
-        res.json(req.session["buys"]);
+        delete buyDict[symbol];
+        if (req.user) {
+            await setDocumentField("users", req.user.username, "buys", buyDict, {});
+        }
+        res.json(buyDict);
     }
 })
 //#endregion

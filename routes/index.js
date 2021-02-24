@@ -14,44 +14,47 @@ let { addJob } = require('../helpers/queue');
 
 //#region Backtest Status
 router.post("/autoUpdate", async (req, res) => {
-    // id of the result
-    let id = req.body.id;
-    // email to notify when update is finished
-    let email = req.body.email;
-    // sessionID of client to get watchlist
-    let sessionID = req.sessionID;
+    if (req.user) {
+        // id of the result
+        let id = req.body.id;
+        // email to notify when update is finished
+        let email = req.user.username;
 
-    if (req.body.subscribe) {
-        await addActiveResult({ id, email, sessionID });
-        res.json({ status: "Added backtest to daily updates!" });
+        if (req.body.subscribe) {
+            await addActiveResult({ id, email });
+            res.json({ status: "Added backtest to daily updates!" });
+        }
+        else {
+            await deleteActiveResult({ id, email });
+            res.json({ status: "Removed backtest from daily updates!" });
+        }
     }
     else {
-        await deleteActiveResult({ id, email, sessionID });
-        res.json({ status: "Removed backtest from daily updates!" });
+        res.json({ error: "You must be logged in to setup auto updates!" });
     }
 });
 
 router.get("/isAutoUpdate", async (req, res) => {
     // each session and backtest can only have 1 email
     let id = req.query.id;
-    let sessionID = req.sessionID;
 
     let found = false;
-    let activeResults;
-    try {
-        activeResults = await getDocument("results", "activeResults");
-        activeResults = activeResults["activeResults"];
-        for (let i = 0; i < activeResults.length; ++i) {
-            let activeResult = activeResults[i];
-            if (activeResult["id"] == id && activeResult["sessionID"] == sessionID) {
-                found = true;
-                break;
+    if (req.user) {
+        try {
+            let activeResults = await getDocument("results", "activeResults");
+            activeResults = activeResults["activeResults"];
+            for (let i = 0; i < activeResults.length; ++i) {
+                let activeResult = activeResults[i];
+                if (activeResult["id"] == id && activeResult["email"] == req.user.username) {
+                    found = true;
+                    break;
+                }
             }
         }
-    }
-    catch (e) {
-        // no active results
-        found = false;
+        catch (e) {
+            // no active results
+            found = false;
+        }
     }
 
     res.json({ status: found });

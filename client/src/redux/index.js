@@ -20,7 +20,7 @@ const initialState = {
     activeIndicators: new Set(),
     savedResults: [],
     eventIndex: -1,
-    boughtSymbols:{},
+    boughtSymbols: {},
     pageIndex: 1,
     chartSettings: {},
     simulationTransactions: {},
@@ -140,6 +140,14 @@ export function clearIndicators() {
 }
 
 export function setSavedResults(savedResults) {
+    // sync with cloud
+    fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ field: "backtestIDs", value: savedResults })
+    })
     return { type: SET_SAVED_RESULTS, savedResults }
 }
 

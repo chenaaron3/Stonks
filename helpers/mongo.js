@@ -41,6 +41,9 @@ function ensureConnected() {
 				if (!collectionNames.includes("indicators")) {
 					await stonks.createCollection("indicators");
 				}
+				if (!collectionNames.includes("users")) {
+					await stonks.createCollection("users");
+				}
 
 				priceCollection = stonks.collection('prices');
 				resultsCollection = stonks.collection('results');
@@ -213,6 +216,44 @@ function containsID(collectionName, id) {
 				}).count() > 0);
 			})
 			.catch(err => reject(err));
+	});
+}
+
+// push a value to an array
+function pushDocumentField(collectionName, id, fieldName, value) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		getCollection(collectionName)
+			.then(async collection => {
+				await collection.updateOne({
+					"_id": id
+				}, {
+					$addToSet: {
+						[fieldName]: value
+					}
+				});
+				resolve();
+			})
+	});
+}
+
+// concat arary to an array
+function concatDocumentField(collectionName, id, fieldName, value) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		getCollection(collectionName)
+			.then(async collection => {
+				await collection.updateOne({
+					"_id": id
+				}, {
+					$addToSet: {
+						[fieldName]: {
+							$each: value
+						}
+					}
+				});
+				resolve();
+			})
 	});
 }
 
@@ -431,7 +472,7 @@ function addActiveResult(id) {
 			"_id": key
 		}, {
 			$addToSet: {
-				"activeResults": id
+				[key]: id
 			}
 		}, {
 			upsert: true
@@ -450,7 +491,7 @@ function deleteActiveResult(id) {
 				"_id": key
 			}, {
 				$pull: {
-					"activeResults": id
+					[key]: id
 				}
 			});
 		}
@@ -464,6 +505,8 @@ module.exports = {
 	addDocument,
 	getDocument,
 	setDocumentField,
+	concatDocumentField,
+	pushDocumentField,
 	getDocumentField,
 	deleteDocument,
 	deleteCollection,

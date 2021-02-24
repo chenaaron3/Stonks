@@ -196,24 +196,25 @@ class Dashboard extends React.Component {
             .then(json => alert(json["status"]));
     }
 
+    // send request to subscribe to auto updates
     setAutoUpdate = () => {
-        // get the email to notify
-        let email = prompt("Enter email to notify.");
-        let emailRegex = /.*@.*/
-        if (emailRegex.test(email)) {
-            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id: this.props.id, email, subscribe: !this.state.active })
-            })
-                .then(res => res.json())
-                .then(json => {
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/autoUpdate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: this.props.id, subscribe: !this.state.active })
+        })
+            .then(res => res.json())
+            .then(json => {
+                if (json["error"]) {
+                    alert(json["error"]);
+                }
+                else {
                     alert(json["status"]);
                     this.updateActiveStatus();
-                });
-        }
+                }
+            });
     }
 
     updateActiveStatus = () => {

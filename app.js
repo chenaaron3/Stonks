@@ -6,6 +6,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config();
 const MongoStore = require('connect-mongo')(session);
+const passport = require('passport');
+const mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -13,6 +15,7 @@ var mongoRouter = require('./routes/mongo');
 var symbolRouter = require('./routes/symbol');
 var alpacaRouter = require('./routes/alpaca');
 var mlRouter = require('./routes/ml');
+var testRouter = require('./routes/test');
 var webhooksRouter = require('./routes/webhooks');
 
 var app = express();
@@ -28,6 +31,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'client/build')));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// mongo session
 app.use(session({
   store: new MongoStore({
     url: process.env.MONGO_DATABASE_URL
@@ -40,16 +44,30 @@ app.use(session({
   }
 }));
 
+// mongoose connection for passport
+mongoose.connect(process.env.MONGO_DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+
+// passport session
+app.use(passport.initialize());
+app.use(passport.session());
+// configure model
+const Account = require('./models/account');
+passport.use(Account.createStrategy());
+passport.serializeUser(Account.serializeUser());
+passport.deserializeUser(Account.deserializeUser());
+
+// routes
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/mongo', mongoRouter);
 app.use('/symbol', symbolRouter);
 app.use('/alpaca', alpacaRouter);
 app.use('/ml', mlRouter);
+app.use('/test', testRouter);
 app.use('/webhooks', webhooksRouter);
 
-app.get('*', function(req, res) {
-  res.sendFile('index.html', {root: path.join(__dirname, 'client/build/')});
+app.get('*', function (req, res) {
+  res.sendFile('index.html', { root: path.join(__dirname, 'client/build/') });
 });
 
 // catch 404 and forward to error handler

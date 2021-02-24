@@ -39,9 +39,9 @@ async function ensureUpdated() {
 			if (activeResults) {
 				activeResults = activeResults["activeResults"];
 				for (let i = 0; i < activeResults.length; ++i) {
-					let { id, email, sessionID } = activeResults[i];
+					let { id, email } = activeResults[i];
 					updateBacktest(id); // update backtest
-					getActionsToday(id, email, sessionID); // send email notifications about sells, send buy orders to alpaca
+					getActionsToday(id, email); // send email notifications about sells, send buy orders to alpaca
 				}
 			}
 		}
@@ -83,8 +83,8 @@ router.get('/actions', async function (req, res, next) {
 	if (activeResults) {
 		activeResults = activeResults["activeResults"];
 		for (let i = 0; i < activeResults.length; ++i) {
-			let { id, email, sessionID } = activeResults[i];
-			getActionsToday(id, email, sessionID); // send email notifications about sells, send buy orders to alpaca
+			let { id, email } = activeResults[i];
+			getActionsToday(id, email); // send email notifications about sells, send buy orders to alpaca
 		}
 	}
 });

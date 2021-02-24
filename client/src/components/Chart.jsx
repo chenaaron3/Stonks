@@ -383,12 +383,11 @@ class Chart extends React.Component {
             // fill in graphs
             days.forEach(day => {
                 // for price
-                let adjScale = day["adjClose"] / day["close"];
                 let date = day["date"];
-                let close = day["adjClose"];
-                let open = day["open"] * adjScale;
-                let low = day["low"] * adjScale;
-                let high = day["high"] * adjScale;
+                let close = day["close"];
+                let open = day["open"];
+                let low = day["low"];
+                let high = day["high"];
                 // candles
                 let greenCandleBody = close >= open ? [close - open, 0] : undefined;
                 let redCandleBody = close < open ? [0, open - close] : undefined;
@@ -444,7 +443,12 @@ class Chart extends React.Component {
         // for holdings
         if (this.state.holdings.hasOwnProperty(date)) {
             let holding = this.state.holdings[date];
-            stoploss = holding["stoplossTarget"]["initStoploss"];
+            if (holding["stoplossTarget"]) {
+                stoploss = holding["stoplossTarget"]["initStoploss"];
+            }
+            else {
+                return undefined;
+            }
         }
 
         if (stoploss) {
@@ -561,7 +565,6 @@ class Chart extends React.Component {
                     for (let i = 1; i < days.length; ++i) {
                         let day = days[i];
                         let date = day["date"];
-                        let price = day["adjClose"];
                         let difference = smoothedGraph[date] - previousPrice;
                         // if has a direction, check for possible reversal
                         if (difference != 0) {
@@ -573,20 +576,20 @@ class Chart extends React.Component {
                                     // look for local min
                                     let minIndex = i;
                                     while (minIndex > 1) {
-                                        if (days[minIndex - 1]["adjClose"] > days[minIndex]["adjClose"]) break;
+                                        if (days[minIndex - 1]["close"] > days[minIndex]["close"]) break;
                                         minIndex--;
                                     }
-                                    supportLevels.push({ price: days[minIndex]["adjClose"], date: new Date(days[minIndex]["date"]) });
+                                    supportLevels.push({ price: days[minIndex]["close"], date: new Date(days[minIndex]["date"]) });
                                 }
                                 // if slow down, is support
                                 else if (slope == "N") {
                                     // look for local max
                                     let maxIndex = i;
                                     while (maxIndex > 1) {
-                                        if (days[maxIndex - 1]["adjClose"] < days[maxIndex]["adjClose"]) break;
+                                        if (days[maxIndex - 1]["close"] < days[maxIndex]["close"]) break;
                                         maxIndex--;
                                     }
-                                    resistanceLevels.push({ price: days[maxIndex]["adjClose"], date: new Date(days[maxIndex]["date"]) });
+                                    resistanceLevels.push({ price: days[maxIndex]["close"], date: new Date(days[maxIndex]["date"]) });
                                 }
                             }
                             previousSlope = slope;

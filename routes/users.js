@@ -1,92 +1,27 @@
 var express = require('express');
 var router = express.Router();
-var yahooFinance = require('yahoo-finance');
-var fetch = require('node-fetch');
-let { resetSymbol } = require('../helpers/stock');
-let { containsID, getDocument, setDocumentField, addDocument, getDocumentField } = require('../helpers/mongo');
-let { getIndicator, getActionsToday, optimizeIndicators, optimizeIndicatorsForSymbol } = require('../helpers/backtest');
 let { addToStocksTrackerWatchlist } = require('../helpers/stockstracker');
 let { addToFinvizWatchlist } = require('../helpers/finviz');
 let { addJob } = require('../helpers/queue');
-let { getBacktestSummary, simulateBacktest } = require('../helpers/utils');
-let { cancelAllBuyOrders, getOpenOrders } = require('../helpers/alpaca');
-const bson = require('bson');
-const DOC_LIMIT = 16777216;
+let { setDocumentField, addDocument, getDocument } = require('../helpers/mongo');
+const passport = require('passport');
+const Account = require('../models/account');
 
 let watchlistFunctions = {
     "StocksTracker": addToStocksTrackerWatchlist,
     "Finviz": addToFinvizWatchlist
 }
 
-/* GET users listing. */
-router.get('/', async function (req, res, next) {
-    console.log(req.session);
-
-    let symbol = req.query.symbol;
-    let from = new Date("1/1/1900")
-    yahooFinance.historical({
-        symbol: symbol,
-        from: from,
-        to: new Date(),
-        period: 'd'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
-    }, function (err, quotes) {
-        res.json(quotes);
-        if (err) console.log(err);
-    });
-});
-
-router.get('/job', async function (req, res) {
-    addJob(() => {
-        return new Promise(async res => {
-            await new Promise(r => setTimeout(r, 5000));
-            console.log(req.query);
-            res();
-        })
-    });
-
-    res.send("ok");
-})
-
-router.get("/summarize", async function (req, res) {
-    let symbol = req.query.symbol;
-
-
-    let id = "Z5vJVqgB9E";
-
-    let doc = await getDocument("results", id);
-
-    let optimized = doc["_optimized"];
-    if (optimized) {
-        if (id != optimized["base"]) {
-            doc = await getDocument("results", optimized["base"]);
-            optimized = doc["_optimized"];
-        }
-        let results = {};
-        // fetch all docs
-        for (let i = 0; i < optimized["ids"].length; ++i) {
-            let optimizedID = optimized["ids"][i];
-            getDocumentField("results", optimizedID, ["summary", "results.strategyOptions"])
-                .then(async (doc) => {
-                    let summary = doc["summary"];
-                    // double check if valid summary exists
-                    console.log("Upating summary for " + optimizedID);
-                    let d = await getDocument("results", optimizedID);
-                    summary = getBacktestSummary(d["results"]);
-                    await setDocumentField("results", optimizedID, "summary", summary);
-                });
-        }
+let userSchema = {
+    buys: {},
+    backtestIDs: [],
+    alpaca: {
+        id: "",
+        key: ""
     }
-    else {
-        res.json({ error: "Backtest not optimized yet!" });
-    }
+}
 
-    res.json({})
-});
-
-router.get('/test', async (req, res) => {
-    res.send(await getOpenOrders());
-})
-
+// add to watchlist
 router.post('/watchlist', async function (req, res) {
     let destination = req.body.destination;
     let symbols = req.body.symbols;
@@ -106,38 +41,83 @@ router.post('/watchlist', async function (req, res) {
     }
 })
 
-router.get('/indicator', async function (req, res) {
-    let symbol = req.query["symbol"];
-    let indicatorName = "Swing";
-    let indicatorOptions = { period: 10, volatility: .10 };
+// check logged in user
+router.get('/', (req, res) => {
+    if (req.user) {
+        res.json(req.user);
+    }
+    else {
+        res.json({ error: "You are not logged in!" });
+    }
+})
 
-    console.log(symbol, indicatorName, indicatorOptions);
+// check login status
+router.get('/isLoggedIn', (req, res) => {
+    if (req.user) {
+        res.json({ isLoggedIn: true });
+    }
+    else {
+        res.json({ isLoggedIn: false });
+    }
+})
 
-    let stockInfo = await getDocument(symbol);
-    if (stockInfo.length != 0) {
-        let pricesJSON = stockInfo[0]["prices"];
-        let prices = {};
-        let opens = {};
-        let highs = {};
-        let lows = {};
-        let closes = {};
-        pricesJSON.forEach(day => {
-            let adjScale = day["adjClose"] / day["close"];
-            let formattedDate = new Date(day["date"]).toISOString();
-            prices[formattedDate] = day["adjClose"];
-            opens[formattedDate] = day["open"] * adjScale;
-            highs[formattedDate] = day["high"] * adjScale;
-            lows[formattedDate] = day["low"] * adjScale;
-            closes[formattedDate] = day["close"] * adjScale;
-        });
-        // get sorted dates
-        let dates = Object.keys(prices).sort(function (a, b) {
-            return new Date(a) - new Date(b);
-        });
+// login
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local',
+        (err, user, info) => {
+            if (err) {
+                return res.json({ error: err })
+            }
 
-        let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
+            // username does not exist
+            if (!user) {
+                return res.json({ error: info });
+            }
 
-        res.json(indicator.graph);
+            req.logIn(user, function (err) {
+                // wrong password
+                if (err) {
+                    return res.json({ error: err })
+                }
+
+                return res.json({ status: "Successfully Logged In", user: req.user });
+            });
+
+        })(req, res, next);
+});
+
+// register new user
+router.post('/register', async (req, res) => {
+    try {
+        await Account.register({ username: req.body.username }, req.body.password);
+        // add base doc to user db
+        addDocument("users", { ...userSchema, _id: req.body.username })
+        res.json({ status: "Successfully Registered" });
+    }
+    catch (err) {
+        res.json({ error: err })
+    }
+})
+
+// logout
+router.get('/logout', async (req, res) => {
+    req.logout();
+    res.json({ status: "Successfully Logged Out" })
+})
+
+router.post("/data", (req, res) => {
+    if (req.user) {
+        setDocumentField("users", req.user.username, req.body.field, req.body.value, {});
+    }
+    res.json({stats: "ok"})
+})
+
+router.get("/data", async (req, res) => {
+    if (req.user) {
+        res.json(await getDocument("users", req.user.username));
+    }
+    else {
+        res.json({stats: "ok"})
     }
 })
 

@@ -4,7 +4,7 @@ var path = require('path');
 let { conductBacktest, findIntersections,
     conductStoplossTargetOptimization, optimizeStoplossTargetForSymbol,
     conductIndicatorOptimization, optimizeIndicatorsForSymbol } = require('../helpers/backtest');
-let { updateStock, gatherData, checkSplitForSymbol } = require('../helpers/stock');
+let { updateStocks, gatherData, checkSplitForSymbol } = require('../helpers/stock');
 
 let logDirectory = path.join(__dirname, "../logs");
 let backtestPath = path.join(logDirectory, "backtestLogs.txt");
@@ -201,7 +201,7 @@ process.on('message', async (msg) => {
         for (let i = 0; i < documents.length; ++i) {
             let document = documents[i];
             // update the stock
-            await updateStock(document, updateDate);
+            await updateStocks(document, updateDate);
         }
         // notify parent
         process.send({ status: "finished" }, null, {}, () => {

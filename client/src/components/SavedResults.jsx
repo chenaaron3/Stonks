@@ -4,7 +4,7 @@ import SavedResult from './SavedResult';
 import Loading from './Loading';
 import { connect } from 'react-redux';
 import { setBacktestResults, setSavedResults, viewStock, setPageIndex, setDrawer } from '../redux';
-import { getBacktestDisplayName } from '../helpers/utils';
+import { getBacktestDisplayName, checkLoggedIn } from '../helpers/utils';
 
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 import MediaQuery from 'react-responsive'
@@ -18,24 +18,41 @@ class SavedResults extends React.Component {
 
         let demoID = process.env.REACT_APP_DEMO_ID;
 
-        // create saved results if it doesnt exist
-        if (!localStorage.getItem("savedResults")) {
-            localStorage.setItem("savedResults", `[{"id":"${demoID}","display":"Demo"}]`)
-        }
-        // check if demo exists
-        let savedResults = JSON.parse(localStorage.getItem("savedResults"));
-        if (!savedResults.some(e => e["id"] == demoID)) {
-            savedResults.unshift({ id: demoID, display: "Demo" });
-        }
+        checkLoggedIn().then(async isLoggedIn => {
+            // create saved results if it doesnt exist
+            if (!localStorage.getItem("savedResults")) {
+                localStorage.setItem("savedResults", `[{"id":"${demoID}","display":"Demo"}]`)
+            }
 
-        this.props.setSavedResults(savedResults);
+            // check if demo exists
+            let savedResults = JSON.parse(localStorage.getItem("savedResults"));
+            if (!savedResults.some(e => e["id"] == demoID)) {
+                savedResults.unshift({ id: demoID, display: "Demo" });
+            }
 
-        // if link to specific backtest
-        if (this.props.match.params.backtestID) {
-            this.fetchBacktestResults(this.props.match.params.backtestID);
-            this.state.loading = true;
-        }
+            // load saved results from account
+            if (isLoggedIn) {
+                let userData = await (fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`).then(res => res.json()));
+                let userSavedResults = userData["backtestIDs"];
+                let currentSavedResults = new Set(savedResults.map(sr => sr["id"]));                
+                // sync ids from the cloud to local
+                userSavedResults.forEach(userSavedResult => {
+                    if (!currentSavedResults.has(userSavedResult["id"])) {
+                        savedResults.unshift(userSavedResult);
+                        currentSavedResults.add(userSavedResult["id"]);
+                    }
+                })
+                localStorage.setItem("savedResults", JSON.stringify(savedResults));
+            }
+            // set global state
+            this.props.setSavedResults(savedResults);
 
+            // if link to specific backtest
+            if (this.props.match.params.backtestID) {
+                this.fetchBacktestResults(this.props.match.params.backtestID);
+                this.state.loading = true;
+            }
+        })
     }
 
     fetchBacktestResults = (id) => {

@@ -42,7 +42,7 @@ class Results extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            sortedSymbols: [], recentThreshold: 7, maxRisk: 50, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
+            sortedSymbols: [], recentThreshold: 0, maxRisk: 50, boughtSymbols: {}, search: "", updateProgress: -1, tabIndex: 0,
             scoreBy: "Win Rate",
             chartSettings: {}, ready: false
         }
@@ -196,8 +196,15 @@ class Results extends React.Component {
         let lastRecentDate = new Date()
         lastRecentDate.setDate(lastRecentDate.getDate() - this.state.recentThreshold);
         return this.props.results["symbolData"][symbol]["holdings"].find(holding => {
-            let risk = holding["stoplossTarget"]["risk"] ? holding["stoplossTarget"]["risk"] : 0;
-            return risk < this.state.maxRisk && daysBetween(lastRecentDate, new Date(holding["buyDate"])) == 0;
+            let dateSatisfied = daysBetween(lastRecentDate, new Date(holding["buyDate"])) == 0;
+            // filter by risk if supplied
+            if (holding["stoplossTarget"]) {
+                let risk = holding["stoplossTarget"]["risk"] ? holding["stoplossTarget"]["risk"] : 0;
+                return risk < this.state.maxRisk && dateSatisfied;
+            }
+            else {
+                return dateSatisfied;
+            }
         });
     }
 
@@ -230,15 +237,15 @@ class Results extends React.Component {
                 Show events {this.state.recentThreshold} days ago
             </p>
             <Box mx="1vw" mt="1vh"><Slider
-                defaultValue={7}
+                defaultValue={0}
                 aria-labelledby="discrete-slider"
                 valueLabelDisplay="auto"
                 value={this.state.recentThreshold}
                 onChange={(e, v) => { this.setState({ recentThreshold: v }) }}
                 step={1}
                 marks
-                min={1}
-                max={30}
+                min={0}
+                max={32}
             /></Box>
         </div>
 
@@ -286,7 +293,7 @@ class Results extends React.Component {
         }
         buySymbols.sort((a, b) => this.props.results["symbolData"][b["symbol"]]["score"] - this.props.results["symbolData"][a["symbol"]]["score"]);
 
-        let tabPanelStyle = { overflow: "auto" };
+        let tabPanelStyle = { overflow: "auto", overflowX: "hidden" };
 
         let desktopVersion = (
             <>

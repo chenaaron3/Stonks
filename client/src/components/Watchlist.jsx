@@ -268,7 +268,7 @@ class Watchlist extends React.Component {
             .then(res => res.json())
             .then(async latestPrice => {
                 buyEntries.forEach(buyEntry => {
-                    let recentPrice = latestPrice["adjClose"];
+                    let recentPrice = latestPrice["close"];
                     console.log(buyEntry);
                     let buyPrice = buyEntry["price"]
                     let profit = recentPrice - buyPrice;

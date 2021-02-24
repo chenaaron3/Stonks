@@ -8,10 +8,11 @@ import SearchIcon from '@material-ui/icons/Search';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import SettingsIcon from '@material-ui/icons/Settings';
 import WatchLaterOutlinedIcon from '@material-ui/icons/WatchLaterOutlined';
+import PersonOutlineOutlinedIcon from '@material-ui/icons/PersonOutlineOutlined';
 
-let pageName = ["/", "/summary", "/review", "/simulate", "/optimize", "/watchlist"];
-let icons = [HomeIcon, EqualizerIcon, SearchIcon, PlayArrowIcon, SettingsIcon, WatchLaterOutlinedIcon];
-let label = ["Home", "Summary", "Review", "Simulate", "Optimize", "Watchlist"]
+let pageName = ["/", "/summary", "/review", "/simulate", "/optimize", "/watchlist", "/account"];
+let icons = [HomeIcon, EqualizerIcon, SearchIcon, PlayArrowIcon, SettingsIcon, WatchLaterOutlinedIcon, PersonOutlineOutlinedIcon];
+let label = ["Home", "Summary", "Review", "Simulate", "Optimize", "Watchlist", "Account"]
 
 class Sidebar extends React.Component {
     render() {

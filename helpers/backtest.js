@@ -12,7 +12,7 @@ let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo')
 let { daysBetween, getBacktestSummary, toPST } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
-let { cancelAllBuyOrders, requestBracketOrder } = require('./alpaca');
+let { cancelAllBuyOrders, requestBracketOrder, changeAccount } = require('./alpaca');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
@@ -66,18 +66,26 @@ const useCache = true;
 
 //#region Subscribed Backtests
 // get actions today for a backtest
-async function getActionsToday(id, email, sessionID) {
+async function getActionsToday(id, email) {
     return addJob(() => {
         return new Promise(async resolveJob => {
             let doc = await getDocument("results", id);
             let symbols = Object.keys(doc["results"]["symbolData"]);
-            let userDoc = await getDocument("sessions", sessionID);
-            let watchlist = Object.keys(JSON.parse(userDoc["session"])["buys"]);
+            let userDoc = await getDocument("users", email);
+            let watchlist = Object.keys(userDoc["buys"]);
             let today = new Date();
             let actions = { buy: [], sell: [] };
+            let alpacaCredentials = userDoc["alpaca"];
+            let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
 
-            // clear all alpaca buy orders carried over from previous day
-            await cancelAllBuyOrders();
+            console.log(`Getting actions for id: ${id}, alpaca: ${useAlpaca}`)
+
+            if (useAlpaca) {
+                // change accounts using credentials
+                changeAccount(alpacaCredentials);
+                // clear all alpaca buy orders carried over from previous day
+                await cancelAllBuyOrders();
+            }
 
             for (let i = 0; i < symbols.length; ++i) {
                 let symbol = symbols[i];
@@ -85,35 +93,53 @@ async function getActionsToday(id, email, sessionID) {
 
                 // look through holdings for buy actions  
                 let holdings = symbolData["holdings"];
-                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) < 2) {
+                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) == 0) {
                     actions["buy"].push(symbol);
-                    let holding = holdings[holdings.length - 1];
-                    let risk = holding["stoplossTarget"]["risk"];
-                    let stoploss = holding["stoplossTarget"]["stoploss"];
-                    let target = holding["stoplossTarget"]["target"];
-                    let buyPrice = stoploss / (1 - risk / 100);
-                    await requestBracketOrder(symbol, buyPrice, .05, stoploss, target);
+
+                    if (useAlpaca) {
+                        // add to alpaca
+                        let holding = holdings[holdings.length - 1];
+                        let risk = holding["stoplossTarget"]["risk"];
+                        let stoploss = holding["stoplossTarget"]["stoploss"];
+                        let target = holding["stoplossTarget"]["target"];
+                        let buyPrice = stoploss / (1 - risk / 100);
+                        try {
+                            await requestBracketOrder(symbol, buyPrice, .05, stoploss, target);
+                        }
+                        catch (e) {
+                            // insufficient buying power                            
+                        }
+                    }
                 }
 
-                // look through events for sell actions
+                // look at last event for sell actions
                 let events = symbolData["events"];
-                if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) < 2) {
+                if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) == 0) {
                     actions["sell"].push(symbol);
                 }
             }
+
+            console.log(`#Buys: ${actions["buy"].length}, #Sells: ${actions["sell"].length}`)
 
             // only send email if there are stocks to sell or bought stocks in alpaca
             if (actions["sell"].length + actions["buy"].length > 0) {
                 let text = "";
                 if (actions["sell"].length > 0) {
-                    text += `Symbols to sell:\n
-                    ${actions["sell"].join("\n")}
-                    View at ${process.env.DOMAIN}/${id}\n`;
+                    text += `Symbols to sell:\n` +
+                    `${actions["sell"].join("\n")}\n` +
+                    `View at ${process.env.DOMAIN}/${id}\n`;
                 }
                 if (actions["buy"].length > 0) {
-                    text += `Buy orders sent to Alpaca:\n` +
-                    `${actions["buy"].join("\n")}\n` +
-                    `View at https://app.alpaca.markets/paper/dashboard/overview\n`;
+                    if (useAlpaca) {
+                        text += `Buy orders sent to Alpaca:\n` +
+                            `${actions["buy"].join("\n")}\n` +
+                            `View at https://app.alpaca.markets/paper/dashboard/overview\n`;
+                    }
+                    else {
+                        text += `Symbols to sell:\n
+                    ${actions["sell"].join("\n")}
+                    View at ${process.env.DOMAIN}/${id}\n`;
+                    }
                 }
 
                 // send email
@@ -130,6 +156,9 @@ async function getActionsToday(id, email, sessionID) {
                         console.log(err);
                         console.log(err["response"]["body"]["errors"])
                     })
+            }
+            else {
+                console.log("No email sent")
             }
             resolveJob();
         })
@@ -1021,13 +1050,12 @@ function getAdjustedData(rawData, lastUpdated, strategyOptions) {
         let date = new Date(day["date"]);
 
         let formattedDate = date.toISOString();
-        let adjScale = day["adjClose"] / day["close"];
-        prices[formattedDate] = day["adjClose"];
+        prices[formattedDate] = day["close"];
         volumes[formattedDate] = day["volume"];
-        opens[formattedDate] = day["open"] * adjScale;
-        highs[formattedDate] = day["high"] * adjScale;
-        lows[formattedDate] = day["low"] * adjScale;
-        closes[formattedDate] = day["close"] * adjScale;
+        opens[formattedDate] = day["open"];
+        highs[formattedDate] = day["high"];
+        lows[formattedDate] = day["low"];
+        closes[formattedDate] = day["close"];
     };
 
     let dates = Object.keys(prices).sort(function (a, b) {

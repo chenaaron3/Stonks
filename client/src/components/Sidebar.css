@@ -39,6 +39,7 @@
     .sidebar {
         width: 100%;
         height: 10vh;
+        overflow-x: auto;
     }
 
     .sidebar-icon-list{
@@ -46,5 +47,19 @@
         flex-direction: row;
         margin-top: 1vh;
         justify-content: space-evenly;
+    }
+
+    .sidebar-icon-wrapper:first-child{
+        margin-left: 15vw;
+    }
+
+    .sidebar-icon-wrapper:last-child{
+        margin-right: 15vw;
+    }
+
+    .sidebar-icon-wrapper{
+        /* width: 20vw; */
+        margin-left: 3vw;
+        margin-right: 3vw;
     }
 }

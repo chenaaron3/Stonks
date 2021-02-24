@@ -7,6 +7,7 @@ var { updateStockInfo, getDocument, getCollection, setStockInfo } = require("./m
 let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual, makeid } = require('./utils');
 let { getIndicator } = require('./backtest');
 let { addJob } = require('../helpers/queue');
+let { getYahooBars } = require('./yahoo');
 
 let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
 let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
@@ -37,80 +38,71 @@ function getPrices(symbol) {
 
 // queues job to update stock prices
 async function update() {
-	addJob(() => {
-		return new Promise(async resolveJob => {
-			// get all docs from mongo
-			console.log("Retreiving symbols!");
-			let priceCollection = await getCollection("prices");
-			let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } })//.limit(10);
-			stockInfo = await stockInfo.toArray();
-			console.log(`Retreived ${stockInfo.length} symbols!`);
+    addJob(() => {
+        return new Promise(async resolveJob => {
+            // get all docs from mongo
+            console.log("Retreiving symbols!");
+            let priceCollection = await getCollection("prices");
+            let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } })//.limit(10);
+            stockInfo = await stockInfo.toArray();
+            console.log(`Retreived ${stockInfo.length} symbols!`);
 
-			// create id to identify the update in logs
-			let updateID = makeid(5);
+            // create id to identify the update in logs
+            let updateID = makeid(5);
 
-			// create threads that split up the work
-			let partitionSize = Math.ceil(stockInfo.length / process.env.NUM_THREADS);
-			let finishedWorkers = 0;
-			for (let i = 0; i < process.env.NUM_THREADS; ++i) {
-				// divy up the documents for each thread to work on
-				let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
+            // create threads that split up the work
+            let partitionSize = Math.ceil(stockInfo.length / process.env.NUM_THREADS);
+            let finishedWorkers = 0;
+            for (let i = 0; i < process.env.NUM_THREADS; ++i) {
+                // divy up the documents for each thread to work on
+                let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
 
-				// spawn child to do work
-				let child = fork(path.join(__dirname, "../helpers/worker.js"));
-				child.send({ type: "startUpdate", partition, updateID });
-				child.on('message', function (message) {
-					if (message.status == "finished") {
-						if (++finishedWorkers == process.env.NUM_THREADS) {
-							console.log("Symbol Update Complete");
-							resolveJob();
-						}
-					}
-				});
-			}
-		})
-	}, true)
+                // spawn child to do work
+                let child = fork(path.join(__dirname, "../helpers/worker.js"));
+                child.send({ type: "startUpdate", partition, updateID });
+                child.on('message', function (message) {
+                    if (message.status == "finished") {
+                        if (++finishedWorkers == process.env.NUM_THREADS) {
+                            console.log("Symbol Update Complete");
+                            resolveJob();
+                        }
+                    }
+                });
+            }
+        })
+    }, true)
 }
 
 // update a price document if needed
-function updateStock(doc, updateDate) {
+function updateStocks(doc, updateDate) {
     return new Promise(async (resolve, reject) => {
-        let forceUpdate = true;
+        // let symbols = docs.map(doc => doc["_id"]);
+        // batch updates based on last update entry
         // get information from document
-        let symbol = doc._id;
-        let lastUpdated = new Date(doc.lastUpdated);
+        let symbol = doc["_id"];
+        let priceData = undefined;
 
-        // console.log(doc);
-        // console.log("DIFF", hoursBetween(new Date(lastUpdated), updateDate));
-        // if need an update
-        if (hoursBetween(new Date(lastUpdated), updateDate) > 12 || forceUpdate) {
-            let priceData = undefined;
-
-            // try to get price data
-            try {
-                // get last recorded date
-                let baseDate = "1/1/1500";
-                let startDate = new Date(baseDate);
-                if (doc.prices.length > 0) {
-                    startDate = new Date(doc.prices[0]["date"])
-                }
-                // dont repeat last date
-                startDate.setDate(startDate.getDate() + 1);
-                priceData = await getUpdatedPrices(doc._id, startDate, updateDate);
-            } catch (e) {
-                console.log("Error! ", e);
+        // try to get price data
+        try {
+            // get last recorded date
+            let baseDate = "1/1/1500";
+            let startDate = new Date(baseDate);
+            if (doc["prices"].length > 0) {
+                startDate = new Date(doc["prices"][0]["date"])
             }
 
-            // if succesfully retrieved data
-            if (priceData != undefined) {
-                console.log(`${symbol} update size: ${priceData.length}`);
-                await updateStockInfo(doc._id, priceData, updateDate);
-            }
-            resolve();
+            // dont repeat last date
+            startDate.setDate(startDate.getDate() + 1);
+            priceData = await getUpdatedPrices(doc["_id"], startDate, updateDate);
+
+            // update database
+            console.log(`${symbol} update size: ${priceData.length}`);
+            await updateStockInfo(doc["_id"], priceData, updateDate);
+        } catch (e) {
+            console.log("Error! ", e);
         }
-        else {
-            resolve();
-        }
+
+        resolve();
     });
 }
 
@@ -123,21 +115,12 @@ function getUpdatedPrices(symbol, startDate, endDate) {
             return resolve([]);
         }
         try {
-            yahooFinance.historical({
-                symbol: symbol,
-                from: startDate,
-                to: endDate,
-                period: 'd'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
-            }, function (err, quotes) {
-                if (err) reject(err);
-                else {
-                    // reverse for yahoo, want old to new
-                    quotes = quotes.reverse();
-                    // console.log("BEFORE:", quotes);
-                    for (let i = 0; i < quotes.length; ++i) {
+            getYahooBars(symbol, startDate, endDate, 'd')
+                .then(bars => {
+                    for (let i = 0; i < bars.length; ++i) {
                         // remove updates that are out of range 
-                        if (quotes[i]["date"] < startDate) {
-                            quotes.shift();
+                        if (bars[i]["date"] < startDate) {
+                            bars.shift();
                             --i;
                         }
                         else {
@@ -147,17 +130,15 @@ function getUpdatedPrices(symbol, startDate, endDate) {
                     // check last 3 results for repeats
                     let baseDate = "1/1/1500";
                     let previousDate = new Date(baseDate);
-                    for (let i = Math.max(0, quotes.length - 3); i < quotes.length; ++i) {
-                        if (quotes[i]["date"].getTime() == previousDate.getTime()) {
-                            quotes.splice(i - 1, 1);
+                    for (let i = Math.max(0, bars.length - 3); i < bars.length; ++i) {
+                        if (bars[i]["date"].getTime() == previousDate.getTime()) {
+                            bars.splice(i - 1, 1);
                             --i;
                         }
-                        previousDate = quotes[i]["date"];
+                        previousDate = bars[i]["date"];
                     }
-                    // console.log("AFTER:", quotes);
-                    resolve(quotes);
-                }
-            });
+                    resolve(bars);
+                })
         } catch (e) {
             reject(`Error: ${e}`);
         }
@@ -166,40 +147,40 @@ function getUpdatedPrices(symbol, startDate, endDate) {
 
 // queues job to check splits
 async function checkSplit() {
-	console.log("Checking for Splits");
-	addJob(() => {
-		return new Promise(async resolveJob => {
-			let priceCollection = await getCollection("prices");
-			// check all stocks for their beginning price
-			let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
-			stockInfo = await stockInfo.toArray();
+    console.log("Checking for Splits");
+    addJob(() => {
+        return new Promise(async resolveJob => {
+            let priceCollection = await getCollection("prices");
+            // check all stocks for their beginning price
+            let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
+            stockInfo = await stockInfo.toArray();
 
-			// create id to identify the job in logs
-			let jobID = makeid(5);
+            // create id to identify the job in logs
+            let jobID = makeid(5);
 
-			// create threads that split up the work
-			let partitionSize = Math.ceil(stockInfo.length / process.env.NUM_THREADS);
-			let finishedWorkers = 0;
-			let totalChanges = 0;
-			for (let i = 0; i < process.env.NUM_THREADS; ++i) {
-				// divy up the documents for each thread to work on
-				let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
+            // create threads that split up the work
+            let partitionSize = Math.ceil(stockInfo.length / process.env.NUM_THREADS);
+            let finishedWorkers = 0;
+            let totalChanges = 0;
+            for (let i = 0; i < process.env.NUM_THREADS; ++i) {
+                // divy up the documents for each thread to work on
+                let partition = stockInfo.slice(i * partitionSize, (i + 1) * partitionSize);
 
-				// spawn child to do work
-				let child = fork(path.join(__dirname, "../helpers/worker.js"));
-				child.send({ type: "startSplitCheck", partition, jobID });
-				child.on('message', function (message) {
-					if (message.status == "finished") {
-						totalChanges += message.changes;
-						if (++finishedWorkers == process.env.NUM_THREADS) {
-							console.log("Symbol Split Check Complete With", totalChanges, "Changes!");
-							resolveJob();
-						}
-					}
-				});
-			}
-		})
-	});
+                // spawn child to do work
+                let child = fork(path.join(__dirname, "../helpers/worker.js"));
+                child.send({ type: "startSplitCheck", partition, jobID });
+                child.on('message', function (message) {
+                    if (message.status == "finished") {
+                        totalChanges += message.changes;
+                        if (++finishedWorkers == process.env.NUM_THREADS) {
+                            console.log("Symbol Split Check Complete With", totalChanges, "Changes!");
+                            resolveJob();
+                        }
+                    }
+                });
+            }
+        })
+    });
 }
 
 // rewrite a document in the case of a stock split
@@ -314,7 +295,7 @@ async function gatherData(symbols, result, window) {
         for (let symbolDataIndex = 0; symbolDataIndex < symbolData.length; ++symbolDataIndex) {
             let day = symbolData[symbolDataIndex];
             let formattedDate = new Date(day["date"]).toISOString();
-            prices[formattedDate] = day["adjClose"];
+            prices[formattedDate] = day["close"];
             opens[formattedDate] = day["open"];
             highs[formattedDate] = day["high"];
             lows[formattedDate] = day["low"];
@@ -387,4 +368,4 @@ async function gatherData(symbols, result, window) {
     return { features, labels };
 }
 
-module.exports = { update, updateStock, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }
+module.exports = { update, updateStocks, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }
