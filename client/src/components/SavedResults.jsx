@@ -122,6 +122,7 @@ class SavedResults extends React.Component {
     }
 
     render() {
+        let reversedResults = [...this.props.savedResults].reverse();
         let desktopVersion = <div className="saved-results">
             <Loading loading={this.state.loading} />
             <h1 className="saved-results-title">Saved Results</h1>
@@ -131,7 +132,7 @@ class SavedResults extends React.Component {
                 </span>)
                 }
                 {this.props.savedResults.length != 0 && (
-                    this.props.savedResults.reverse().map((save, index) => {
+                    reversedResults.map((save, index) => {
                         return <SavedResult id={save["id"]} display={save["display"]} fetchBacktestResults={this.fetchBacktestResults}
                             editSavedResults={this.editSavedResults} removeSavedResults={this.removeSavedResults} key={`saved-results-${save["id"]}`} />
                     })
