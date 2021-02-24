@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
-let { getAccount, requestBracketOrder } = require('../helpers/alpaca');
+let { getAccount, requestBracketOrder, changeAccount } = require('../helpers/alpaca');
 
 router.get("/", (req, res) => {
+    changeAccount({ id: process.env.APCA_API_KEY_ID, key: process.env.APCA_API_SECRET_KEY });
     getAccount().then(account => {
         res.json(account);
     })

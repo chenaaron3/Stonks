@@ -93,6 +93,7 @@ function updateStocks(doc, updateDate) {
 
             // dont repeat last date
             startDate.setDate(startDate.getDate() + 1);
+            startDate.setHours(0);
             priceData = await getUpdatedPrices(doc["_id"], startDate, updateDate);
 
             // update database
