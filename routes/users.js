@@ -107,7 +107,7 @@ router.get('/logout', async (req, res) => {
 
 router.post("/data", (req, res) => {
     if (req.user) {
-        setDocumentField("users", req.user.username, req.body.field, req.body.value, {});
+        setDocumentField("users", req.user.username, [req.body.field], req.body.value, {});
     }
     res.json({stats: "ok"})
 })

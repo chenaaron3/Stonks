@@ -105,7 +105,7 @@ class Account extends React.Component {
 
         // if done editting
         if (newValue == false) {
-            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/login`, {
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
