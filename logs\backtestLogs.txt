@@ -1167,3 +1167,4 @@ Worker ytcOdUqQVM: Starting backtest
 Worker ytcOdUqQVM: Finished backtest in 227 seconds
 Worker ytcOdUqQVM: Starting backtest
 Worker ytcOdUqQVM: Finished backtest in 360 seconds
+Worker DdfA3K6RCD: Starting backtest

@@ -254,25 +254,37 @@ router.get("/updateBacktest", async (req, res) => {
 router.delete("/deleteResults/:id", async (req, res) => {
     let id = req.params.id;
 
-    let found = false;
+    let dependents = [];
+    let results = [];
     let activeResults;
+    // find list of people subscribed to this backtest
     try {
         activeResults = await getDocument("results", "activeResults");
         activeResults = activeResults["activeResults"];
         for (let i = 0; i < activeResults.length; ++i) {
             let activeResult = activeResults[i];
             if (activeResult["id"] == id) {
-                found = true;
-                break;
+                dependents.push(activeResult["email"]);
+                results.push(activeResult);
             }
         }
     }
     catch (e) {
         // no active results with id
-        found = false;
+        dependents = [];
     }
 
-    if (id.includes("optimized") || found) {
+    // if user subscribed, unsubscribe them
+    if (req.user && dependents.includes(req.user.username)) {
+        let index = dependents.indexOf(req.user.username);
+        await deleteActiveResult(results[index]);
+        // remove user from subscribed list
+        dependents.splice(index, 1);
+    }
+
+    // cannot delete if more users are subscribed
+    if (id.includes("optimized") || dependents.length > 0) {
+        console.log("Cannot delete backtest, used by", dependents);
         res.json({ status: "Cannot be deleted. Being used by others." });
     }
     else {

@@ -38,7 +38,7 @@ class SavedResults extends React.Component {
                 // sync ids from the cloud to local
                 userSavedResults.forEach(userSavedResult => {
                     if (!currentSavedResults.has(userSavedResult["id"])) {
-                        savedResults.unshift(userSavedResult);
+                        savedResults.push(userSavedResult);
                         currentSavedResults.add(userSavedResult["id"]);
                     }
                 })
