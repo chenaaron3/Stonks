@@ -9,10 +9,11 @@ const sgMail = require('@sendgrid/mail');
 const csv = require('csv');
 let { fixFaulty, getPrices } = require('../helpers/stock');
 let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
-let { daysBetween, getBacktestSummary, toPST } = require('../helpers/utils');
+let { daysBetween, getBacktestSummary } = require('../helpers/utils');
+let { sortResultsByScore } = require('../client/src/helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
-let { cancelAllBuyOrders, requestBracketOrder, changeAccount } = require('./alpaca');
+let { cancelAllBuyOrders, requestBracketOrder, changeAccount, requestMarketOrderSell } = require('./alpaca');
 
 // indicators
 let SMA = require('../helpers/indicators/sma');
@@ -75,48 +76,86 @@ async function getActionsToday(id, email) {
             let watchlist = Object.keys(userDoc["buys"]);
             let today = new Date();
             let actions = { buy: [], sell: [] };
+            let buyData = {};
+            let sellData = {};
             let alpacaCredentials = userDoc["alpaca"];
             let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+            let tradeSettings = userDoc["tradeSettings"][id];
 
             console.log(`Getting actions for id: ${id}, alpaca: ${useAlpaca}`)
+
+            // look for buy and sell symbols
+            for (let i = 0; i < symbols.length; ++i) {
+                let symbol = symbols[i];
+                let symbolData = doc["results"]["symbolData"][symbol];
+                let events = symbolData["events"];
+                let lastEvent = events.length > 0 ? events[events.length - 1] : undefined;
+
+                // look through holdings for buy actions  
+                let holdings = symbolData["holdings"];
+                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) == 0) {
+                    actions["buy"].push(symbol);
+                    buyData[symbol] = {
+                        holding: holdings[holdings.length - 1]
+                    }
+                }
+
+                // look at last event for sell actions
+                if (watchlist.includes(symbol) && lastEvent && daysBetween(today, new Date(lastEvent["sellDate"])) == 0) {
+                    actions["sell"].push(symbol);
+                    sellData[symbol] = {
+                        event: lastEvent
+                    }
+                }
+            }
 
             if (useAlpaca) {
                 // change accounts using credentials
                 changeAccount(alpacaCredentials);
                 // clear all alpaca buy orders carried over from previous day
                 await cancelAllBuyOrders();
-            }
 
-            for (let i = 0; i < symbols.length; ++i) {
-                let symbol = symbols[i];
-                let symbolData = doc["results"]["symbolData"][symbol];
+                // execute alpaca orders for buys
+                let scoreBy = (tradeSettings && tradeSettings["scoreBy"]) ? tradeSettings["scoreBy"] : "Percent Profit";
+                let sortedSymbols = sortResultsByScore(doc["results"], scoreBy);
+                actions["buy"].sort((a, b) => sortedSymbols.indexOf(a) - sortedSymbols.indexOf(b))
 
-                // look through holdings for buy actions  
-                let holdings = symbolData["holdings"];
-                if (holdings.length > 0 && daysBetween(today, new Date(holdings[holdings.length - 1]["buyDate"])) == 0) {
-                    actions["buy"].push(symbol);
-
-                    if (useAlpaca) {
+                actions["buy"].forEach(async buySymbol => {
+                    let holding = buyData[buySymbol]["holding"];
+                    // qualify for bracket orders
+                    if (holding["stoplossTarget"]) {
                         // add to alpaca
-                        let holding = holdings[holdings.length - 1];
                         let risk = holding["stoplossTarget"]["risk"];
                         let stoploss = holding["stoplossTarget"]["stoploss"];
                         let target = holding["stoplossTarget"]["target"];
                         let buyPrice = stoploss / (1 - risk / 100);
-                        try {
-                            await requestBracketOrder(symbol, buyPrice, .05, stoploss, target);
+                        let positionSize = .05;
+                        let shouldTrade = true;
+
+                        // adjust parameters
+                        if (tradeSettings) {
+                            if (tradeSettings["maxRisk"]) shouldTrade = risk <= parseInt(tradeSettings["maxRisk"]);
+                            if (tradeSettings["maxPositions"]) positionSize = 1 / (parseInt(tradeSettings["maxPositions"]));
                         }
-                        catch (e) {
-                            // insufficient buying power                            
+
+                        if (shouldTrade) {
+                            try {
+                                await requestBracketOrder(buySymbol, buyPrice, positionSize, stoploss, target);
+                            }
+                            catch (e) {
+                                console.log(e["message"])
+                                // insufficient buying power                            
+                            }
                         }
                     }
-                }
+                })
 
-                // look at last event for sell actions
-                let events = symbolData["events"];
-                if (watchlist.includes(symbol) && events.length > 0 && daysBetween(today, new Date(events[events.length - 1]["sellDate"])) == 0) {
-                    actions["sell"].push(symbol);
-                }
+                // execute alpaca orders for sells (overdue)
+                actions["sell"].forEach(async sellSymbol => {
+                    if (sellData[sellSymbol]["event"]["reason"] == "overdue") {
+                        await requestMarketOrderSell(sellSymbol);
+                    }
+                })
             }
 
             console.log(`#Buys: ${actions["buy"].length}, #Sells: ${actions["sell"].length}`)
@@ -126,8 +165,8 @@ async function getActionsToday(id, email) {
                 let text = "";
                 if (actions["sell"].length > 0) {
                     text += `Symbols to sell:\n` +
-                    `${actions["sell"].join("\n")}\n` +
-                    `View at ${process.env.DOMAIN}/${id}\n`;
+                        `${actions["sell"].join("\n")}\n` +
+                        `View at ${process.env.DOMAIN}/${id}\n`;
                 }
                 if (actions["buy"].length > 0) {
                     if (useAlpaca) {

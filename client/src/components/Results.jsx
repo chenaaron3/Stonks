@@ -7,7 +7,7 @@ import eye from "../eye.svg";
 import buy from "../buy.svg";
 import bought from "../bought.svg";
 import sell from "../sell.svg";
-import { formatDate, daysBetween, displayDelta } from "../helpers/utils";
+import { formatDate, daysBetween, displayDelta, sortResultsByScore } from "../helpers/utils";
 import Pusher from 'react-pusher';
 
 import TextField from '@material-ui/core/TextField';
@@ -55,38 +55,12 @@ class Results extends React.Component {
         this.props.viewStock(symbol)
     }
 
-    // statistical analysis (win/loss)
+    // sort symbols
     analyze() {
-        this.score();
         // get the sorted symbols
-        let sortedSymbols = Object.keys(this.props.results["symbolData"]);
-        sortedSymbols.sort((a, b) => this.props.results["symbolData"][b]["score"] - this.props.results["symbolData"][a]["score"]);
+        let sortedSymbols = sortResultsByScore(this.props.results, this.state.scoreBy);
         this.setState({ sortedSymbols });
         this.setState({ ready: true });
-    }
-
-    score() {
-        let symbols = Object.keys(this.props.results["symbolData"]);
-        symbols.forEach(symbol => {
-            let score = 0;
-            if (this.state.scoreBy == "Percent Profit") {
-                score = this.props.results["symbolData"][symbol]["percentProfit"];
-            }
-            else if (this.state.scoreBy == "Dollar Profit") {
-                score = this.props.results["symbolData"][symbol]["profit"];
-            }
-            else if (this.state.scoreBy == "Win Rate") {
-                let wins = 0;
-                let events = this.props.results["symbolData"][symbol]["events"];
-                events.forEach(e => {
-                    if (e["profit"] > 0) {
-                        wins += 1;
-                    }
-                });
-                score = wins / events.length;
-            }
-            this.props.results["symbolData"][symbol]["score"] = score;
-        });
     }
 
     componentDidMount() {
@@ -218,7 +192,7 @@ class Results extends React.Component {
 
         let search = this.state.search.toLowerCase().trim();
         let searchResults = this.state.sortedSymbols.filter(s => s.toLowerCase().startsWith(search));
-        
+
         let searchBar = <Box mb="1vh"><TextField
             id="input-with-icon-textfield"
             value={this.state.search}

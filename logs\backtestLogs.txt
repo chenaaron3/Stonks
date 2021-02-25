@@ -1165,3 +1165,5 @@ Worker hF0HDlijCC: Starting backtest
 Worker hF0HDlijCC: Finished backtest in 213 seconds
 Worker ytcOdUqQVM: Starting backtest
 Worker ytcOdUqQVM: Finished backtest in 227 seconds
+Worker ytcOdUqQVM: Starting backtest
+Worker ytcOdUqQVM: Finished backtest in 360 seconds

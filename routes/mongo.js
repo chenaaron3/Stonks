@@ -18,7 +18,7 @@ async function ensureUpdated() {
 	console.log("Retreiving metadata...");
 	let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA));
 	let date = new Date();
-	let pstHour = date.getUTCHours() - 7;
+	let pstHour = date.getUTCHours() - 8;
 	if (pstHour < 0) pstHour += 24;
 	// check for new day
 	if (daysBetween(new Date(metadata["lastUpdated"]), new Date()) > 0) {

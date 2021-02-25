@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { setSimulationTransactions } from '../redux';
+import { setSimulationTransactions, setTradeSettings } from '../redux';
 import Loading from './Loading';
 import "./Simulate.css";
 
@@ -237,4 +237,4 @@ let mapStateToProps = (state) => {
     return { results, id: state.id };
 };
 
-export default connect(mapStateToProps, { setSimulationTransactions })(Simulate);
+export default connect(mapStateToProps, { setSimulationTransactions, setTradeSettings })(Simulate);

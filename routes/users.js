@@ -18,6 +18,8 @@ let userSchema = {
     alpaca: {
         id: "",
         key: ""
+    },
+    tradeSettings: {
     }
 }
 
@@ -91,7 +93,7 @@ router.post('/register', async (req, res) => {
     try {
         await Account.register({ username: req.body.username }, req.body.password);
         // add base doc to user db
-        addDocument("users", { ...userSchema, _id: req.body.username })
+        await addDocument("users", { ...userSchema, _id: req.body.username })
         res.json({ status: "Successfully Registered" });
     }
     catch (err) {

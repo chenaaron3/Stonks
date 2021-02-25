@@ -4983,3 +4983,11 @@ Worker ytcOdUqQVM: Finished backtest for tickers JFR to PZN in 151 seconds
 Worker ytcOdUqQVM: Finished backtest for tickers PZZA to ZYXI in 122 seconds
 Worker ytcOdUqQVM: Finished backtest for tickers DESP to JFKKW in 167 seconds
 Worker ytcOdUqQVM: Finished backtest for tickers A to DEO in 172 seconds
+Worker ytcOdUqQVM: Finding intersections for tickers A to DEO
+Worker ytcOdUqQVM: Finding intersections for tickers JFR to PZN
+Worker ytcOdUqQVM: Finding intersections for tickers DESP to JFKKW
+Worker ytcOdUqQVM: Finding intersections for tickers PZZA to ZYXI
+Worker ytcOdUqQVM: Finished backtest for tickers A to DEO in 259 seconds
+Worker ytcOdUqQVM: Finished backtest for tickers DESP to JFKKW in 232 seconds
+Worker ytcOdUqQVM: Finished backtest for tickers JFR to PZN in 236 seconds
+Worker ytcOdUqQVM: Finished backtest for tickers PZZA to ZYXI in 247 seconds

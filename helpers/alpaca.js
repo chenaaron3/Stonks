@@ -26,6 +26,10 @@ function getOpenOrders() {
     })
 }
 
+function getPosition(symbol) {
+    return alpaca.getPosition(symbol);
+}
+
 function getAlpacaBars(symbols, startDate, endDate, timeframe) {
     return new Promise(async (resolve, reject) => {
         let lastDate = {}; // maps symbol to oldest date
@@ -174,7 +178,7 @@ function cancelAllOrders() {
 function requestBracketOrder(symbol, buyPrice, positionSize, stoploss, target) {
     return new Promise((resolve, reject) => {
         getAccount().then(account => {
-            let totalEquity = parseFloat(account["buying_power"]) + parseFloat(account["equity"]);
+            let totalEquity = parseFloat(account["equity"]);
             let qty = (totalEquity * positionSize) / buyPrice;
             alpaca.createOrder({
                 symbol: symbol,
@@ -197,4 +201,20 @@ function requestBracketOrder(symbol, buyPrice, positionSize, stoploss, target) {
     })
 }
 
-module.exports = { changeAccount, getAccount, getOpenOrders, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, getAlpacaBars };
+function requestMarketOrderSell(symbol) {
+    return new Promise(async (resolve, reject) => {
+        let position = await getPosition(symbol);
+        let qty = parseInt(position["qty"]);
+
+        alpaca.createOrder({
+            symbol: symbol,
+            qty: qty,
+            side: 'sell',
+            type: 'market',
+            time_in_force: 'gtc'
+        }).then(order => resolve(order))
+            .catch(err => reject(err));
+    })
+}
+
+module.exports = { changeAccount, getAccount, getOpenOrders, getAlpacaBars, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, requestMarketOrderSell,  };

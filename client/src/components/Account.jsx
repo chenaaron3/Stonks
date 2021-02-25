@@ -1,13 +1,21 @@
 import React, { createRef } from 'react';
+import { connect } from 'react-redux';
 import "./Account.css";
+import { setTradeSettings } from '../redux';
+import { checkLoggedIn } from '../helpers/utils'
+
 import Card from '@material-ui/core/Card';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 import Box from '@material-ui/core/Box';
-import { checkLoggedIn } from '../helpers/utils'
 import EditOutlinedIcon from '@material-ui/icons/EditOutlined';
 import SaveOutlinedIcon from '@material-ui/icons/SaveOutlined';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import Slider from '@material-ui/core/Slider';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
 class Account extends React.Component {
     constructor(props) {
@@ -19,9 +27,53 @@ class Account extends React.Component {
             mode: "login",
             loggedIn: false,
             loading: true,
-            alpaca: { key: "", id: "" },
-            edit: { alpaca: false }
+            edit: {}
         }
+
+        this.formData = {
+            "alpaca": {
+                title: "Alpaca Credentials",
+                fields: [
+                    {
+                        name: "Alpaca ID",
+                        key: "id"
+                    },
+                    {
+                        name: "Alpaca Key",
+                        key: "key"
+                    }
+                ]
+            },
+            "tradeSettings": {
+                title: "Trade Settings",
+                fields: [
+                    {
+                        name: "Score By",
+                        key: "scoreBy",
+                        type: "select",
+                        options: [
+                            "Win Rate",
+                            "Percent Profit"
+                        ]
+                    },
+                    {
+                        name: "Max Risk",
+                        key: "maxRisk",
+                        type: "number"
+                    },
+                    {
+                        name: "Max Positions",
+                        key: "maxPositions",
+                        type: "number"
+                    }
+                ]
+            }
+        }
+
+        Object.keys(this.formData).forEach(formID => {
+            this.state[formID] = {};
+            this.state["edit"][formID] = false;
+        })
     }
 
     componentDidMount() {
@@ -36,7 +88,8 @@ class Account extends React.Component {
                 fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`)
                     .then(res => res.json())
                     .then(json => {
-                        this.setState({ alpaca: json["alpaca"] })
+                        let tradeSettings = json["tradeSettings"][this.props.id] ? json["tradeSettings"][this.props.id] : {};
+                        this.setState({ alpaca: json["alpaca"], tradeSettings })
                     })
             }
         })
@@ -101,22 +154,28 @@ class Account extends React.Component {
 
     toggleEdit = (formName) => {
         let newValue = !this.state.edit[formName];
+        // set form state to read
         this.setState({ edit: { ...this.state.edit, [formName]: newValue } });
 
-        // if done editting
+        // if done editting, update the database
         if (newValue == false) {
+            let body = { field: formName, value: this.state[formName] };
+            if (formName == "tradeSettings") {
+                body["field"] += "." + this.props.id;
+                this.props.setTradeSettings(this.state[formName]);
+            }
+
             fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ field: formName, value: this.state[formName] })
+                body: JSON.stringify(body)
             })
         }
     }
 
     render() {
-        console.log(this.state.edit["alpaca"])
         return <div className="account">
             < div className="account-header" >
                 <h3 className="account-title">Account</h3>
@@ -174,37 +233,60 @@ class Account extends React.Component {
             }
             {
                 (this.state.isLoggedIn && !this.state.loading) && <div className="account-info">
-                    <div className="account-card">
-                        <h3 className="account-card-title">Alpaca Credentials</h3>
-                        <TextField label="Alpaca ID" value={this.state["alpaca"]["id"]} style={{ minWidth: "15vw", marginBottom: "2vh" }}
-                            onChange={(e) => {
-                                this.setState({ alpaca: { ...this.state["alpaca"], id: e.target.value } })
-                            }}
-                            InputProps={{
-                                readOnly: !this.state.edit["alpaca"],
-                            }} />
-                        <TextField label="Alpaca Key" value={this.state["alpaca"]["key"]} style={{ minWidth: "15vw", marginBottom: "2vh" }}
-                            onChange={(e) => {
-                                this.setState({ alpaca: { ...this.state["alpaca"], key: e.target.value } })
-                            }}
-                            InputProps={{
-                                readOnly: !this.state.edit["alpaca"],
-                            }} />
-                        <IconButton
-                            aria-label="more"
-                            aria-controls="long-menu"
-                            aria-haspopup="true"
-                            onClick={() => this.toggleEdit("alpaca")}
-                            style={{ position: "absolute", top: "1vh", right: "1vh" }}
-                        >
-                            {!this.state.edit["alpaca"] && <EditOutlinedIcon />}
-                            {this.state.edit["alpaca"] && <SaveOutlinedIcon />}
-                        </IconButton>
-                    </div>
+                    {
+                        Object.keys(this.formData).map(formID => {
+                            let form = this.formData[formID];
+                            return <div className="account-card" key={`account-form-${formID}`}>
+                                <h3 className="account-card-title">{form["title"]}</h3>
+                                {
+                                    form["fields"].map(field => {
+                                        if (field["type"] == "select") {
+                                            return <FormControl style={{ minWidth: "15vw", marginBottom: "2vh" }} key={`account-field-${field["name"]}`}>
+                                                <InputLabel>{field["name"]}</InputLabel>
+                                                <Select
+                                                    value={this.state[formID][field["key"]] || ""}
+                                                    onChange={(e) => {
+                                                        this.setState({ [formID]: { ...this.state[formID], [field["key"]]: e.target.value } })
+                                                    }}
+                                                    disabled={!this.state.edit[formID]}
+                                                >
+                                                    {
+                                                        field["options"].map((value) => {
+                                                            return <MenuItem key={`account-field-option-${value}`} value={value}>{value}</MenuItem>
+                                                        })
+                                                    }
+                                                </Select>
+                                            </FormControl>
+                                        }
+                                        return <TextField key={`account-field-${field["name"]}`} label={field["name"]} value={this.state[formID][field["key"]] || ""}
+                                            style={{ minWidth: "15vw", marginBottom: "2vh" }} type={field["type"]}
+                                            onChange={(e) => {
+                                                this.setState({ [formID]: { ...this.state[formID], [field["key"]]: e.target.value } })
+                                            }}
+                                            disabled={!this.state.edit[formID]} />
+                                    })
+                                }
+                                <IconButton
+                                    aria-label="more"
+                                    aria-controls="long-menu"
+                                    aria-haspopup="true"
+                                    onClick={() => this.toggleEdit(formID)}
+                                    style={{ position: "absolute", top: "1vh", right: "1vh" }}
+                                >
+                                    {!this.state.edit[formID] && <EditOutlinedIcon />}
+                                    {this.state.edit[formID] && <SaveOutlinedIcon />}
+                                </IconButton>
+                            </div>
+                        })
+                    }
                 </div>
             }
         </div >
     }
 }
 
-export default Account;
+let mapStateToProps = (state) => {
+    return { tradeSettings: state.tradeSettings, id: state.id };
+};
+
+export default connect(mapStateToProps, { setTradeSettings })(Account);

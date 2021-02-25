@@ -11,6 +11,7 @@ const SET_PAGE_INDEX = "SET_PAGE_INDEX";
 const SET_CHART_SETTINGS = "SET_CHART_SETTINGS";
 const SET_SIMULATION_TRANSACTIONS = "SET_SIMULATION_TRANSACTIONS";
 const SET_DRAWER = "SET_DRAWER";
+const SET_TRADE_SETTINGS = "SET_TRADE_SETTINGS";
 
 const initialState = {
     id: "",
@@ -24,7 +25,8 @@ const initialState = {
     pageIndex: 1,
     chartSettings: {},
     simulationTransactions: {},
-    drawer: {}
+    drawer: {},
+    tradeSettings: { scoreBy: "Win Rate", maxRisk: 15 }
 };
 
 // Reducer
@@ -106,6 +108,11 @@ export default function reducer(state = initialState, action) {
                     [action.anchor]: action.open
                 }
             }
+        case SET_TRADE_SETTINGS:
+            return {
+                ...state,
+                tradeSettings: action.settings
+            }
         default: return state;
     }
 }
@@ -165,4 +172,8 @@ export function setSimulationTransactions(simulationTransactions) {
 
 export function setDrawer(anchor, open) {
     return { type: SET_DRAWER, anchor, open }
+}
+
+export function setTradeSettings(settings) {
+    return { type: SET_TRADE_SETTINGS, settings }
 }

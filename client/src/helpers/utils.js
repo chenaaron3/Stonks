@@ -341,6 +341,33 @@ function findOptimalMetric(metrics) {
     };
 }
 
+function sortResultsByScore(results, scoreBy) {
+    let symbols = Object.keys(results["symbolData"]);
+    let scores = {};
+    symbols.forEach(symbol => {
+        let score = 0;
+        if (scoreBy == "Percent Profit") {
+            score = results["symbolData"][symbol]["percentProfit"];
+        }
+        else if (scoreBy == "Dollar Profit") {
+            score = results["symbolData"][symbol]["profit"];
+        }
+        else if (scoreBy == "Win Rate") {
+            let wins = 0;
+            let events = results["symbolData"][symbol]["events"];
+            events.forEach(e => {
+                if (e["profit"] > 0) {
+                    wins += 1;
+                }
+            });
+            score = wins / events.length;
+        }
+        scores[symbol] = score;
+    });
+    symbols.sort((a, b) => scores[b] - scores[a]);
+    return symbols;
+}
+
 function checkLoggedIn() {
     return new Promise(resolve => {
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/isLoggedIn`)
@@ -353,5 +380,5 @@ function checkLoggedIn() {
 
 module.exports = {
     formatDate, daysBetween, hoursBetween, numberWithCommas, camelToDisplay, displayDelta, getBacktestDisplayName,
-    mapRange, simulateBacktest, findOptimalRisk, findOptimalMetric, checkLoggedIn
+    mapRange, simulateBacktest, findOptimalRisk, findOptimalMetric, sortResultsByScore, checkLoggedIn
 };
