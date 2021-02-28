@@ -33,3 +33,5 @@ coverage
 
 # Benchmarking
 benchmarks/graphs
+logs/backtestLogs.txt
+logs/intersectionLogs.txt

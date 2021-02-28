@@ -4,7 +4,7 @@ var path = require('path');
 var fs = require('fs');
 const { fork } = require('child_process');
 
-let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection } = require('../helpers/mongo');
+let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection, createCollection } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
 let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
 let { getUpdatedPrices, fixFaulty, checkSplit, update } = require('../helpers/stock');
@@ -25,13 +25,13 @@ async function ensureUpdated() {
 		// market closed
 		if (pstHour >= 13) {
 			console.log("Update required!");
-			update();
+			update("day");
 			metadata["lastUpdated"] = new Date().toString();
 			fs.writeFileSync(PATH_TO_METADATA, JSON.stringify(metadata));
 
 			// check for splits on saturdays
 			if (date.getDay() == 6) {
-				checkSplit();
+				// checkSplit();
 			}
 
 			// update the active backtests
@@ -59,21 +59,30 @@ async function ensureUpdated() {
 
 router.purge("/reset", async function (req, res) {
 	res.send("Resetting!");
+	let timeframe = req.query.timeframe ? req.query.timeframe : "day";
+	console.log(timeframe)
 	// clear prices collection;
 	addJob(() => {
 		return new Promise(async resolveJob => {
-			await deleteCollection("prices");
-			await fill();
+			try {
+				await deleteCollection("prices" + timeframe);
+			}
+			catch (e) {
+				console.log(e);
+			}
+			await createCollection("prices" + timeframe);
+			await fill(timeframe);
 			resolveJob();
 		})
 	});
 	// fill in the prices
-	update();
+	update(timeframe);
 })
 
 router.get("/fill", async function (req, res) {
 	res.send("Filling!");
-	await fill();
+	let timeframe = req.query.timeframe ? req.query.timeframe : "day";
+	await fill(timeframe);
 })
 
 router.get('/actions', async function (req, res, next) {
@@ -90,13 +99,13 @@ router.get('/actions', async function (req, res, next) {
 });
 
 // create skeleton docs
-async function fill() {
+async function fill(timeframe) {
 	console.log("Filling!");
 	let symbols = await getSymbols(false);
 	let baseDate = "1/1/1500";
 	for (let i = 0; i < symbols.length; ++i) {
 		let symbol = symbols[i];
-		await addDocument("prices", { _id: symbol, prices: [], lastUpdated: baseDate });
+		await addDocument("prices" + timeframe, { _id: symbol, prices: [], lastUpdated: baseDate });
 	}
 	console.log("Finished Filling!");
 }
@@ -104,17 +113,19 @@ async function fill() {
 router.get('/update', async function (req, res, next) {
 	// respond so doesnt hang
 	res.send("Updating!");
-	update();
+	let timeframe = req.query.timeframe ? req.query.timeframe : "day";
+	update(timeframe);
 });
 
 router.get('/pop', async function (req, res) {
 	// respond so doesnt hang
 	res.send("Popping!");
 	let amount = req.query["amount"] ? parseInt(req.query["amount"]) : 1;
+	let timeframe = req.query.timeframe ? req.query.timeframe : "day";
 
 	// get all docs from mongo
 	console.log("Retreiving symbols!");
-	let priceCollection = await getCollection("prices");
+	let priceCollection = await getCollection("prices" + timeframe);
 	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 })//.limit(10);
 	stockInfo = await stockInfo.toArray();
 	console.log(`Retreived ${stockInfo.length} symbols!`);
@@ -142,21 +153,22 @@ router.get('/pop', async function (req, res) {
 // trim database of stocks with no data
 router.get('/trim', async function (req, res) {
 	res.send("Trimming");
+	let timeframe = req.query.timeframe ? req.query.timeframe : "day";
 
 	// get all docs
 	console.log("Retreiving symbols!");
-	let priceCollection = await getCollection("prices");
+	let priceCollection = await getCollection("prices" + timeframe);
 	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 });
 	stockInfo = await stockInfo.toArray();
 	console.log(`Retreived ${stockInfo.length} symbols!`);
 
 	let numEmpty = 0;
 	for (let i = 0; i < stockInfo.length; ++i) {
-		let doc = await getDocument("prices", stockInfo[i]["_id"]);
+		let doc = await getDocument("prices" + timeframe, stockInfo[i]["_id"]);
 		if (doc["prices"].length < 5) {
 			console.log(doc["_id"]);
 			numEmpty += 1
-			deleteDocument("prices", doc["_id"]);
+			deleteDocument("prices" + timeframe, doc["_id"]);
 		}
 	}
 	console.log("Total Empty", numEmpty);

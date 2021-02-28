@@ -17,6 +17,10 @@ import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import MenuIcon from '@material-ui/icons/Menu';
 import IconButton from '@material-ui/core/IconButton';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
 import MediaQuery from 'react-responsive'
 
 class CreateBacktest extends React.Component {
@@ -35,6 +39,7 @@ class CreateBacktest extends React.Component {
             riskRewardRatio: 0,
             limitOrder: false,
             trailingStopLoss: false,
+            timeframe: "day",
             minVolume: 1000000,
             maxDays: 30,
             errors: {}
@@ -132,6 +137,7 @@ class CreateBacktest extends React.Component {
                 "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
                 "targetAtr": this.state.targetAtr == 0 ? undefined : this.state.targetAtr,
                 "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
+                "timeframe": this.state.timeframe,
                 "stopLossSwing": this.state.stopLossSwing,
                 "targetSwing": this.state.targetSwing,
                 "limitOrder": this.state.limitOrder,
@@ -379,6 +385,20 @@ class CreateBacktest extends React.Component {
                                                                 }}
                                                                 helperText="Buy if above volume."
                                                                 error={this.state.errors["minVolume"]} />
+                                                        </div>
+                                                        <div>
+                                                            <FormControl >
+                                                                <InputLabel>Timeframe</InputLabel>
+                                                                <Select
+                                                                    value={this.state.timeframe}
+                                                                    onChange={(e) => {
+                                                                        this.setState({ timeframe: e.target.value })
+                                                                    }}
+                                                                >
+                                                                    <MenuItem value={"day"}>Day</MenuItem>
+                                                                    <MenuItem value={"15Min"}>15 Minutes</MenuItem>
+                                                                </Select>
+                                                            </FormControl>
                                                         </div>
                                                         <div>
                                                             <FormControlLabel

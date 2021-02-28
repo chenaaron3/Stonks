@@ -1,4 +1,5 @@
-const Alpaca = require('@alpacahq/alpaca-trade-api')
+const Alpaca = require('@alpacahq/alpaca-trade-api');
+const { daysBetween } = require('../client/src/helpers/utils');
 const { toPST } = require('./utils')
 
 const BACKTEST_YEARS = 5;
@@ -30,34 +31,57 @@ function getPosition(symbol) {
     return alpaca.getPosition(symbol);
 }
 
-function getAlpacaBars(symbols, startDate, endDate, timeframe) {
+function getAlpacaBars(s, startDate, endDate, timeframe) {
     return new Promise(async (resolve, reject) => {
-        let lastDate = {}; // maps symbol to oldest date
+        let symbols = [s];
         let results = {}; // maps symbol to list of bar data
         let dates = {}; // maps symbol to set of existing dates
         let done = {}; // true if symbol got as far as possible
+        let faulty = {}; // true if symbol is faulty
+
+        // max day gaps for each timeframe 
+        let maxThresholds = {
+            "15Min": 100 // tight restriction for high quality
+        }
 
         // intializes
         symbols.forEach(symbol => {
             results[symbol] = [];
             done[symbol] = false;
             dates[symbol] = new Set();
+            faulty[symbol] = false;
         })
 
-        let lastUntilDate = undefined;
         let untilDate = new Date();
         while (!Object.values(done).every(v => v ? true : false)) {
             // empty list for symbols that dont exist
-            let bars = await alpaca.getBars(
-                timeframe, symbols,
-                {
-                    limit: 1000,
-                    end: lastUntilDate,
+            let bars = {};
+            let success = false;
+            while (!success) {
+                try {
+                    bars = await alpaca.getBars(
+                        timeframe, symbols,
+                        {
+                            limit: 1000,
+                            start: startDate,
+                            end: untilDate,
+                        }
+                    );
+                    success = true;
                 }
-            )
+                catch(e) {
+                    console.log(e["message"]);
+                    // too many requests
+                    if (e["statusCode"] == 429) {
+                        console.log("Resting...");
+                        await new Promise(r => setTimeout(r, 15000));
+                    }
+                }
+            }
 
             let newestEndDate = new Date("1/1/1500");
             resultingSymbols = Object.keys(bars);
+            let entryAdded = false;
             for (let symbolIndex = 0; symbolIndex < resultingSymbols.length; ++symbolIndex) {
                 symbol = resultingSymbols[symbolIndex];
                 // already done, skip
@@ -72,18 +96,21 @@ function getAlpacaBars(symbols, startDate, endDate, timeframe) {
                 }
                 // process local results
                 else {
+                    let first = undefined;
+                    let last = undefined;
                     for (let i = symbolBars.length - 1; i >= 0; --i) {
                         let bar = symbolBars[i];
                         let epochTime = bar["startEpochTime"];
                         let date = new Date(epochTime * 1000);
-                        if (date.toISOString() == "2020-04-09T11:15:00.000Z") {
-                            console.log("")
-                        }
-                        // overlap, do not add
+                        // make sure there are no overlaps/repeats
                         if (dates[symbol].has(epochTime)) {
                             continue;
                         }
                         else {
+                            if (!last) {
+                                last = date;
+                                entryAdded = true;
+                            }
                             let entry = {
                                 date: date,
                                 open: bar["openPrice"],
@@ -97,61 +124,52 @@ function getAlpacaBars(symbols, startDate, endDate, timeframe) {
                         }
                     }
 
-                    // check dupes within local
-                    let duplicates = new Set();
-                    results[symbol].forEach(entry => {
-                        if (duplicates.has(entry["date"].getTime())) {
-                            console.log(symbol, "DUPE", entry["date"]);
-                        }
-                        duplicates.add(entry["date"].getTime());
-                    })
+                    first = results[symbol][0]["date"];
 
-                    // also done if got enough data
-                    if (results[symbol].length >= 8000) {
+                    // check for faulty data
+                    if (maxThresholds[timeframe] && daysBetween(first, last) > maxThresholds[timeframe]) {
+                        console.log("Faulty", symbol, daysBetween(first, last), "over limit of", maxThresholds[timeframe]);
+                        faulty[symbol] = true;
                         done[symbol] = true;
                     }
 
-                    console.log(symbol, results[symbol][0]["date"])
-                    // keep track of newest date
+                    // also done if got enough data
+                    // if (results[symbol].length >= 8000) {
+                    //     done[symbol] = true;
+                    // }
+
+                    // keep track of newest end date
                     if (results[symbol][0]["date"] > newestEndDate) {
                         newestEndDate = results[symbol][0]["date"]
                     }
+
+                    // console.log(symbol, results[symbol][0]["date"], last)
                 }
             }
 
-            console.log("until", untilDate)
-            // newestEndDate.setDate(newestEndDate.getDate() + 1);
             untilDate = newestEndDate;
             // if no more new data
-            if (lastUntilDate == untilDate) {
+            if (!entryAdded) {
                 console.log("No more new data!");
                 break;
             }
-            // keep going back
-            else {
-                lastUntilDate = untilDate;
-            }
         }
 
-        // remove symbols that have no data
+        // remove symbols that have no data or are faulty
         Object.keys(results).forEach(symbol => {
-            if (results[symbol].length == 0) {
-                delete results[symbol];
+            if (results[symbol].length == 0 || faulty[symbol]) {
+                results[symbol] = [];
             }
             else {
-                // check duplicate dates
-                let dates = new Set();
-                results[symbol].forEach(entry => {
-                    if (dates.has(entry["date"].getTime())) {
-                        console.log(symbol, entry["date"]);
-                    }
-                    dates.add(entry["date"].getTime());
-                })
+                // print out final ranges
+                console.log(symbol, results[symbol][0]["date"], results[symbol][results[symbol].length - 1]["date"])
             }
 
         })
 
-        resolve(results);
+        // console.log("kept", Object.keys(results).length)
+
+        resolve(results[s]);
     })
 }
 
@@ -217,4 +235,4 @@ function requestMarketOrderSell(symbol) {
     })
 }
 
-module.exports = { changeAccount, getAccount, getOpenOrders, getAlpacaBars, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, requestMarketOrderSell,  };
+module.exports = { changeAccount, getAccount, getOpenOrders, getAlpacaBars, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, requestMarketOrderSell, };

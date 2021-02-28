@@ -8,13 +8,14 @@ let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual, makeid } 
 let { getIndicator } = require('./backtest');
 let { addJob } = require('../helpers/queue');
 let { getYahooBars } = require('./yahoo');
+const { getAlpacaBars } = require('./alpaca');
 
 let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
 let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
 
 // get latest price of a stock
 async function getLatestPrice(symbol) {
-    let priceCollection = await getCollection("prices");
+    let priceCollection = await getCollection("prices" + "day");
     let stockInfo = await priceCollection.find({ _id: symbol }).project({ prices: { $slice: -1 } });
     stockInfo = await stockInfo.toArray();
     if (stockInfo.length > 0) {
@@ -26,9 +27,9 @@ async function getLatestPrice(symbol) {
 }
 
 // Get price from own database
-function getPrices(symbol) {
+function getPrices(symbol, timeframe) {
     return new Promise(async (resolve, reject) => {
-        getDocument("prices", symbol)
+        getDocument("prices" + timeframe, symbol)
             .then(document => {
                 resolve(document.prices);
             })
@@ -37,12 +38,12 @@ function getPrices(symbol) {
 }
 
 // queues job to update stock prices
-async function update() {
+async function update(timeframe) {
     addJob(() => {
         return new Promise(async resolveJob => {
             // get all docs from mongo
             console.log("Retreiving symbols!");
-            let priceCollection = await getCollection("prices");
+            let priceCollection = await getCollection("prices" + timeframe);
             let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } })//.limit(10);
             stockInfo = await stockInfo.toArray();
             console.log(`Retreived ${stockInfo.length} symbols!`);
@@ -59,7 +60,7 @@ async function update() {
 
                 // spawn child to do work
                 let child = fork(path.join(__dirname, "../helpers/worker.js"));
-                child.send({ type: "startUpdate", partition, updateID });
+                child.send({ type: "startUpdate", partition, updateID, timeframe });
                 child.on('message', function (message) {
                     if (message.status == "finished") {
                         if (++finishedWorkers == process.env.NUM_THREADS) {
@@ -74,10 +75,8 @@ async function update() {
 }
 
 // update a price document if needed
-function updateStocks(doc, updateDate) {
+function updateStocks(doc, updateDate, timeframe) {
     return new Promise(async (resolve, reject) => {
-        // let symbols = docs.map(doc => doc["_id"]);
-        // batch updates based on last update entry
         // get information from document
         let symbol = doc["_id"];
         let priceData = undefined;
@@ -91,14 +90,11 @@ function updateStocks(doc, updateDate) {
                 startDate = new Date(doc["prices"][0]["date"])
             }
 
-            // dont repeat last date
-            startDate.setDate(startDate.getDate() + 1);
-            startDate.setHours(0);
-            priceData = await getUpdatedPrices(doc["_id"], startDate, updateDate);
+            priceData = await getUpdatedPrices(doc["_id"], startDate, updateDate, timeframe);
 
             // update database
             console.log(`${symbol} update size: ${priceData.length}`);
-            await updateStockInfo(doc["_id"], priceData, updateDate);
+            await updateStockInfo(doc["_id"], priceData, updateDate, timeframe);
         } catch (e) {
             console.log("Error! ", e);
         }
@@ -108,7 +104,7 @@ function updateStocks(doc, updateDate) {
 }
 
 // Get price from external api
-function getUpdatedPrices(symbol, startDate, endDate) {
+function getUpdatedPrices(symbol, startDate, endDate, timeframe) {
     console.log(symbol, "update range:", startDate, "=>", endDate);
     return new Promise((resolve, reject) => {
         // update on same day
@@ -116,11 +112,14 @@ function getUpdatedPrices(symbol, startDate, endDate) {
             return resolve([]);
         }
         try {
-            getYahooBars(symbol, startDate, endDate, 'd')
+            let vendor = undefined;
+            if (timeframe == "day") vendor = getYahooBars;
+            else vendor = getAlpacaBars;
+            vendor(symbol, startDate, endDate, timeframe)
                 .then(bars => {
                     for (let i = 0; i < bars.length; ++i) {
                         // remove updates that are out of range 
-                        if (bars[i]["date"] < startDate) {
+                        if (bars[i]["date"] <= startDate) {
                             bars.shift();
                             --i;
                         }
@@ -151,7 +150,7 @@ async function checkSplit() {
     console.log("Checking for Splits");
     addJob(() => {
         return new Promise(async resolveJob => {
-            let priceCollection = await getCollection("prices");
+            let priceCollection = await getCollection("prices" + "day");
             // check all stocks for their beginning price
             let stockInfo = await priceCollection.find({}).project({ _id: 1, prices: { $slice: 1 } });
             stockInfo = await stockInfo.toArray();
@@ -205,7 +204,7 @@ async function checkSplitForSymbol(doc) {
     previousDate.setDate(previousDate.getDate() - 2);
 
     // search up api
-    let updatedEntry = await getUpdatedPrices(symbol, previousDate, recordedDate);
+    let updatedEntry = await getUpdatedPrices(symbol, previousDate, recordedDate, "day");
     updatedEntry = updatedEntry[0];
     if (!updatedEntry) {
         return 0;
@@ -229,9 +228,9 @@ async function checkSplitForSymbol(doc) {
 
 // reset the data for a symbol
 async function resetSymbol(symbol, baseDate, today) {
-    let updatedEntry = await getUpdatedPrices(symbol, baseDate, today);
+    let updatedEntry = await getUpdatedPrices(symbol, baseDate, today, "day");
     // update mongo document
-    await setStockInfo(symbol, updatedEntry, today);
+    await setStockInfo(symbol, updatedEntry, today, "day");
 }
 
 // fix faulty data
@@ -250,7 +249,7 @@ async function fixFaulty() {
             await resetSymbol(symbol, baseDate, today);
 
             // check if fixed
-            let symbolData = (await getDocument("prices", symbol))["prices"];
+            let symbolData = (await getDocument("prices" + "day", symbol))["prices"];
             let fixed = true;
             for (let j = 0; j < symbolData.length; ++j) {
                 // not fixed, add to blacklist
@@ -277,96 +276,4 @@ async function fixFaulty() {
     return results;
 }
 
-// used for ml dataset
-async function gatherData(symbols, result, window) {
-    let backtestData = result["results"]["symbolData"];
-    let features = [];
-    let labels = [];
-    for (let symbolIndex = 0; symbolIndex < symbols.length; ++symbolIndex) {
-        let symbol = symbols[symbolIndex];
-        console.log(symbol);
-
-        // gather symbol data
-        let symbolData = (await getDocument("prices", symbol))["prices"];
-        let prices = {};
-        let opens = {};
-        let highs = {};
-        let lows = {};
-        let closes = {};
-        for (let symbolDataIndex = 0; symbolDataIndex < symbolData.length; ++symbolDataIndex) {
-            let day = symbolData[symbolDataIndex];
-            let formattedDate = new Date(day["date"]).toISOString();
-            prices[formattedDate] = day["close"];
-            opens[formattedDate] = day["open"];
-            highs[formattedDate] = day["high"];
-            lows[formattedDate] = day["low"];
-            closes[formattedDate] = day["close"];
-        }
-
-        // get sorted dates
-        let dates = Object.keys(prices).sort(function (a, b) {
-            return new Date(a) - new Date(b);
-        });
-
-        // load indicator data
-        let indicatorOptions = result["results"]["strategyOptions"]["buyIndicators"]
-        let indicatorNames = Object.keys(indicatorOptions).sort();
-        let indicators = {};
-        for (let indicatorIndex = 0; indicatorIndex < indicatorNames.length; ++indicatorIndex) {
-            let indicatorName = indicatorNames[indicatorIndex];
-            let indicator = getIndicator(indicatorName, indicatorOptions[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
-            indicators[indicatorName] = indicator;
-        }
-
-        // populate data with events
-        let events = backtestData[symbol]["events"];
-        for (let eventIndex = 0; eventIndex < events.length; ++eventIndex) {
-            let event = events[eventIndex];
-            let buyDate = event["buyDate"];
-            let buyIndex = dates.indexOf(buyDate);
-            let startIndex = buyIndex - window + 1;
-            if (startIndex < 0) {
-                continue;
-            }
-            let feature = [];
-            let priceFeatures = [];
-
-            // add price data
-            for (let i = startIndex; i <= buyIndex; ++i) {
-                priceFeatures.push(prices[dates[i]]);
-            }
-            priceFeatures = clampRange(priceFeatures);
-            feature = feature.concat(priceFeatures);
-
-            // add indicator data
-            for (let indicatorIndex = 0; indicatorIndex < indicatorNames.length; ++indicatorIndex) {
-                let indicatorName = indicatorNames[indicatorIndex];
-                let indicator = indicators[indicatorName];
-                let indicatorFeatures = []
-                // loop window size
-                for (let i = startIndex; i <= buyIndex; ++i) {
-                    indicatorFeatures.push(indicator.getValue(dates[i]));
-                }
-                // console.log(indicatorName, "Before", indicatorFeatures);
-                // normalize the data
-                indicatorFeatures = indicator.normalize(indicatorFeatures);
-                // console.log(indicatorName, "After", indicatorFeatures);
-                // add indicator features
-                feature = feature.concat(indicatorFeatures);
-            };
-
-            // dont include falsy data
-            if (feature.includes(null) || feature.includes(undefined) || feature.includes(NaN)) {
-                continue;
-            }
-            else {
-                // add to dataset
-                features.push(feature);
-                labels.push(event["profit"] > 0 ? 0 : 1);
-            }
-        }
-    };
-    return { features, labels };
-}
-
-module.exports = { update, updateStocks, getPrices, gatherData, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }
+module.exports = { update, updateStocks, getPrices, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }

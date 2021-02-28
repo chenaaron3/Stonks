@@ -36,12 +36,18 @@ class Dashboard extends React.Component {
         this.state = {
             numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winProfit: 0, lossProfit: 0, winPercentProfit: 0, lossPercentProfit: 0,
             winLossData: [], spanData: [], percentProfitData: [], profitData: [], yearData: [],
-            updateProgress: -1, type: "yearly", range: 50,
+            updateProgress: -1, type: "year", range: 50,
             ctrl: false, active: false
         }
 
-        this.types = ["yearly", "6 months", "3 months", "1 month"];
-        this.typeLookup = { "yearly": 12, "6 months": 6, "3 months": 3, "1 month": 1 };
+        this.types = ["year", "6 months", "3 months", "1 month"];
+        this.typeLookup = { "year": 12, "6 months": 6, "3 months": 3, "1 month": 1 };
+
+        let timeframe = this.props.results["strategyOptions"]["timeframe"];
+        console.log(timeframe);
+        if (timeframe && timeframe != "day") {
+            this.state["type"] = this.types[3];
+        }
     }
 
     componentDidMount() {
@@ -431,7 +437,7 @@ class Dashboard extends React.Component {
                     </div>
                     {/* profit per year */}
                     <div className="dashboard-card dashboard-graph" id="dashboard-profit-graph">
-                        <h3 className="dashboard-card-title">Profit by year</h3>
+                        <h3 className="dashboard-card-title">Profit by {this.state.type}</h3>
                         <ResponsiveContainer width="100%" height={`90%`}>
                             <AreaChart data={this.state.yearData} >
                                 <CartesianGrid />
@@ -444,7 +450,7 @@ class Dashboard extends React.Component {
                     </div>
                     {/* trades per year */}
                     <div className="dashboard-card dashboard-graph" id="dashboard-trade-graph">
-                        <h3 className="dashboard-card-title">Trades per year</h3>
+                        <h3 className="dashboard-card-title">Trades per {this.state.type}</h3>
                         <ResponsiveContainer width="100%" height={`90%`}>
                             <BarChart data={this.state.yearData}>
                                 <CartesianGrid vertical={false} horizontal={false} />

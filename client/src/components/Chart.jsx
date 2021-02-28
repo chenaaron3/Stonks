@@ -115,7 +115,7 @@ class Chart extends React.Component {
         this.props.activeIndicators.forEach(activeIndicator => {
             finalOptions[activeIndicator] = this.props.indicatorOptions[activeIndicator];
         });
-        let graphData = { symbol: this.props.symbol, indicators: finalOptions };
+        let graphData = { symbol: this.props.symbol, indicators: finalOptions, timeframe: this.props.strategyOptions["timeframe"] };
 
         fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/priceGraph`, {
             method: 'POST',
@@ -527,25 +527,7 @@ class Chart extends React.Component {
 
     getSupportResistance = () => {
         return new Promise((resolve, reject) => {
-            // let data = { indicatorName: "Swing", indicatorOptions: { "period": 3, "volatility": .05 }, symbol: this.props.symbol };
-            // fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/indicatorGraph`, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     },
-            //     body: JSON.stringify(data)
-            // })
-            //     .then(res => res.json())
-            //     .then(pivots => {
-            //         try {
-            //             this.setState({ pivots: Object.keys(pivots["pivots"]) });
-            //         }
-            //         catch {
-
-            //         }
-            //     })
-
-            let graphData = { indicatorName: "EMA", indicatorOptions: { "period": 5 }, symbol: this.props.symbol };
+            let graphData = { indicatorName: "EMA", indicatorOptions: { "period": 5 }, symbol: this.props.symbol, timeframe: this.props.strategyOptions["timeframe"] };
 
             fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/indicatorGraph`, {
                 method: 'POST',

@@ -106,8 +106,9 @@ router.post("/indicatorGraph", async (req, res) => {
     let symbol = req.body["symbol"];
     let indicatorName = req.body["indicatorName"];
     let indicatorOptions = req.body["indicatorOptions"];
+    let timeframe = req.body["timeframe"] ? req.body["timeframe"] : "day";
 
-    let stockInfo = await getDocument("prices", symbol);
+    let stockInfo = await getDocument("prices" + timeframe, symbol);
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo["prices"];
         let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);
@@ -122,9 +123,10 @@ router.post("/indicatorGraph", async (req, res) => {
 router.post("/priceGraph", async (req, res) => {
     let symbol = req.body["symbol"];
     let indicators = req.body["indicators"];
+    let timeframe = req.body["timeframe"] ? req.body["timeframe"] : "day";
 
     // get prices from database
-    let stockInfo = await getDocument("prices", symbol);
+    let stockInfo = await getDocument("prices" + timeframe, symbol);
     if (stockInfo.length != 0) {
         let pricesJSON = stockInfo["prices"];
         let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(pricesJSON, null);

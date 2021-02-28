@@ -166,9 +166,10 @@ process.on('message', async (msg) => {
 
             // get info from previous results
             let previousResults = msg.previousResults["results"]["symbolData"][symbol];
+            let strategyOptions = msg.previousResults["results"]["strategyOptions"];
 
             // find results for the symbol
-            let optimizedSymbol = await optimizeIndicatorsForSymbol(msg.indicatorOptions, symbol, previousResults);
+            let optimizedSymbol = await optimizeIndicatorsForSymbol(msg.indicatorOptions, symbol, previousResults, strategyOptions);
             optimizedData[symbol] = optimizedSymbol;
             console.log(`${symbol} => DONE`);
 
@@ -201,7 +202,7 @@ process.on('message', async (msg) => {
         for (let i = 0; i < documents.length; ++i) {
             let document = documents[i];
             // update the stock
-            await updateStocks(document, updateDate);
+            await updateStocks(document, updateDate, msg.timeframe);
         }
         // notify parent
         process.send({ status: "finished" }, null, {}, () => {

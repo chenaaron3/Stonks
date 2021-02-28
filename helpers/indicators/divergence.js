@@ -28,7 +28,7 @@ class Divergence extends Indicator {
             }
 
             // if we just realized a date
-            if (this.dates[i] == pivots[pivotDates[realizeIndex]]["realized"]) {
+            if (this.dates[i] >= pivots[pivotDates[realizeIndex]]["realized"]) {
                 realizeIndex += 1;
             }
 
@@ -47,7 +47,12 @@ class Divergence extends Indicator {
     }
 
     getGraph() {
-        return { pivots: this.pivots };
+        let debug = {};
+        for (let i = 0; i < this.dates.length; ++i) {
+            let date = this.dates[i];
+            debug[date] = this.prices[this.pivotDates[this.graph[date]]];
+        }
+        return { pivots: this.pivots, Divergence: debug };
     }
 
     getValue(date) {

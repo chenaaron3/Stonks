@@ -1,9 +1,8 @@
 const MongoClient = require('mongodb').MongoClient;
 const bson = require('bson');
-const DOC_LIMIT = 15000000;
+const DOC_LIMIT = 10000000;
 
 let stonks;
-let priceCollection;
 let resultsCollection;
 
 let mongoURL = process.env.NODE_ENV == "production" ? process.env.PROD_MONGO_DATABASE_URL : process.env.MONGO_DATABASE_URL
@@ -16,7 +15,7 @@ const client = new MongoClient(mongoURL, {
 function ensureConnected() {
 	return new Promise(resolve => {
 		// if not connected yet
-		if (!priceCollection) {
+		if (!stonks) {
 			// create a connection
 			client.connect(async function (err) {
 				if (err) {
@@ -32,9 +31,6 @@ function ensureConnected() {
 					collectionNames.push(collection["name"])
 				})
 
-				if (!collectionNames.includes("prices")) {
-					await stonks.createCollection("prices");
-				}
 				if (!collectionNames.includes("results")) {
 					await stonks.createCollection("results");
 				}
@@ -45,7 +41,6 @@ function ensureConnected() {
 					await stonks.createCollection("users");
 				}
 
-				priceCollection = stonks.collection('prices');
 				resultsCollection = stonks.collection('results');
 				resolve();
 			});
@@ -61,10 +56,7 @@ function ensureConnected() {
 function getCollection(collectionName) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
-		if (collectionName == "prices") {
-			resolve(priceCollection);
-		}
-		else if (collectionName == "results") {
+		if (collectionName == "results") {
 			resolve(resultsCollection);
 		}
 		// check if collection exists
@@ -78,6 +70,14 @@ function getCollection(collectionName) {
 					reject(`Collection ${collectionName} does not exist!`);
 				}
 			});
+	});
+}
+
+function createCollection(collectionName) {
+	return new Promise(async (resolve, reject) => {
+		await ensureConnected();
+		await stonks.createCollection(collectionName);
+		resolve();
 	});
 }
 
@@ -170,8 +170,7 @@ function deleteCollection(collectionName) {
 		getCollection(collectionName)
 			.then(async (collection) => {
 				// delete
-				await collection.remove({
-				});
+				await collection.drop();
 				resolve();
 			})
 			.catch(err => reject(err));
@@ -423,38 +422,44 @@ async function splitField(collectionName, id, fieldName, value, splitOptions) {
 }
 
 // rewrite a stock's price history
-function setStockInfo(symbol, pricesList, updateDate) {
+function setStockInfo(symbol, pricesList, updateDate, timeframe) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
-		await priceCollection.updateOne({
-			"_id": symbol
-		},
-			{
-				$set: { prices: pricesList, lastUpdated: updateDate.toString() }
-			}, (err, res) => {
-				if (err) reject(err);
-			});
-		resolve();
+		getCollection("prices" + timeframe)
+			.then(async (collection) => {
+				await collection.updateOne({
+					"_id": symbol
+				},
+					{
+						$set: { prices: pricesList, lastUpdated: updateDate.toString() }
+					}, (err, res) => {
+						if (err) reject(err);
+					});
+				resolve();
+			})
 	});
 }
 
 // updates a stock by adding prices to it
-function updateStockInfo(symbol, pricesList, updateDate) {
+function updateStockInfo(symbol, pricesList, updateDate, timeframe) {
 	return new Promise(async (resolve, reject) => {
 		await ensureConnected();
-		await priceCollection.updateOne({
-			"_id": symbol
-		}, {
-			$addToSet: {
-				"prices": {
-					$each: pricesList
-				}
-			},
-			$set: {
-				"lastUpdated": updateDate.toString()
-			}
-		});
-		resolve();
+		getCollection("prices" + timeframe)
+			.then(async (collection) => {
+				await collection.updateOne({
+					"_id": symbol
+				}, {
+					$addToSet: {
+						"prices": {
+							$each: pricesList
+						}
+					},
+					$set: {
+						"lastUpdated": updateDate.toString()
+					}
+				});
+				resolve();
+			})
 	});
 }
 
@@ -501,6 +506,7 @@ function deleteActiveResult(id) {
 }
 
 module.exports = {
+	createCollection,
 	getCollection,
 	addDocument,
 	getDocument,

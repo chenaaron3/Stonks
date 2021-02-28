@@ -326,8 +326,8 @@ function conductBacktest(strategyOptions, id) {
         getSymbols(true).then(async (symbols) => {
             // Uncomment to test a portion of symbols
             // symbols = symbols.slice(0, 50);
-            // Uncoment to test custom symbols
-            // symbols = ["NCLH"];
+            // Uncoment to test custom symbols CHANGEBACK
+            // symbols = ["WERN"];
 
             // try to get previous results
             let previousResults = await getDocument("results", id);
@@ -524,10 +524,10 @@ function conductIndicatorOptimization(id, indicatorOptions) {
 
 //#region Worker Functions
 // given an existing backtest, record all the indicator data
-function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
+function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results, strategyOptions) {
     return new Promise((resolve, reject) => {
         let indicatorFields = undefined;
-        getPrices(symbol)
+        getPrices(symbol, strategyOptions["timeframe"])
             .then(json => {
                 // if error
                 if (json["error"]) {
@@ -580,7 +580,7 @@ function optimizeIndicatorsForSymbol(indicatorOptions, symbol, results) {
 // given an existing backtest, apply different stoploss/target options
 function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbol, previousResults) {
     return new Promise((resolve, reject) => {
-        getPrices(symbol)
+        getPrices(symbol, strategyOptions["timeframe"])
             .then(json => {
                 // if error
                 if (json["error"]) {
@@ -733,7 +733,7 @@ function getOptimizedEvent(event, buyDate, buyPrice, sellDate, sellPrice, reason
 function findIntersections(strategyOptions, symbol, previousResults, lastUpdated) {
     return new Promise((resolve, reject) => {
         // find prices
-        getPrices(symbol)
+        getPrices(symbol, strategyOptions["timeframe"])
             .then(json => {
                 // if error
                 if (json["error"]) {
