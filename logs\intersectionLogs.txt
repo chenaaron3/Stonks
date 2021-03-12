@@ -5100,3 +5100,11 @@ Worker Ou7RSQXnj5: Finished backtest for tickers A to DEO in 321 seconds
 Worker Ou7RSQXnj5: Finished backtest for tickers DESP to JFR in 330 seconds
 Worker Ou7RSQXnj5: Finished backtest for tickers PZZA to ZYXI in 328 seconds
 Worker Ou7RSQXnj5: Finished backtest for tickers JFU to PZN in 340 seconds
+Worker pYMln5x4TP: Finding intersections for tickers PZZA to ZYXI
+Worker pYMln5x4TP: Finding intersections for tickers JFU to PZN
+Worker pYMln5x4TP: Finding intersections for tickers DESP to JFR
+Worker pYMln5x4TP: Finding intersections for tickers A to DEO
+Worker pYMln5x4TP: Finished backtest for tickers DESP to JFR in 169 seconds
+Worker pYMln5x4TP: Finished backtest for tickers PZZA to ZYXI in 178 seconds
+Worker pYMln5x4TP: Finished backtest for tickers A to DEO in 182 seconds
+Worker pYMln5x4TP: Finished backtest for tickers JFU to PZN in 184 seconds

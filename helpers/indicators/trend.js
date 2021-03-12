@@ -25,7 +25,7 @@ class Trend extends Indicator {
             }
 
             // if we just realized a date
-            if (this.dates[i] == pivots[pivotDates[realizeIndex]]["realized"]) {
+            if (this.dates[i] >= pivots[pivotDates[realizeIndex]]["realized"]) {
                 realizeIndex += 1;
             }
 

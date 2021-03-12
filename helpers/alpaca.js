@@ -4,10 +4,11 @@ const { toPST } = require('./utils')
 
 const BACKTEST_YEARS = 5;
 
-let alpaca = new Alpaca({
+const config = {
     keyId: process.env.APCA_API_KEY_ID,
-    secretKey: process.env.APCA_API_SECRET_KEY
-})
+    secretKey: process.env.APCA_API_SECRET_KEY,
+};
+let alpaca = new Alpaca(config)
 
 function changeAccount(credentials) {
     alpaca = new Alpaca({
@@ -59,13 +60,16 @@ function getAlpacaBars(s, startDate, endDate, timeframe) {
             let success = false;
             while (!success) {
                 try {
-                    bars = await alpaca.getBars(
-                        timeframe, symbols,
+                    console.log("trying bars v2")
+                    bars = await alpaca.getBarsV2(
+                        s,
                         {
-                            limit: 1000,
+                            timeframe: timeframe,
+                            limit: 10000,
                             start: startDate,
-                            end: untilDate,
-                        }
+                            end: untilDate
+                        },
+                        alpaca.configuration
                     );
                     success = true;
                 }
@@ -77,6 +81,10 @@ function getAlpacaBars(s, startDate, endDate, timeframe) {
                         await new Promise(r => setTimeout(r, 15000));
                     }
                 }
+            }
+
+            for await (let value of bars) {
+                console.log(value)
             }
 
             let newestEndDate = new Date("1/1/1500");

@@ -1193,3 +1193,5 @@ Worker BcukqjMiaK: Starting backtest
 Worker BcukqjMiaK: Finished backtest in 545 seconds
 Worker Ou7RSQXnj5: Starting backtest
 Worker Ou7RSQXnj5: Finished backtest in 416 seconds
+Worker pYMln5x4TP: Starting backtest
+Worker pYMln5x4TP: Finished backtest in 201 seconds

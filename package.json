@@ -8,10 +8,8 @@
     "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "dependencies": {
-    "@alpacahq/alpaca-trade-api": "^1.4.2",
+    "@alpacahq/alpaca-trade-api": "git@github.com:alpacahq/alpaca-trade-api-js.git",
     "@sendgrid/mail": "^7.4.0",
-    "@tensorflow/tfjs-node": "^3.0.0",
-    "@tensorflow/tfjs-node-gpu": "^3.0.0",
     "bson": "^4.2.2",
     "child_process": "^1.0.2",
     "chromedriver": "^85.0.1",

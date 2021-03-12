@@ -18,40 +18,8 @@ router.get('/bars', async function (req, res, next) {
     res.send("ok")
 
     let symbol = req.query.symbol;
-    let symbols = await getSymbols(false);
-    symbols = symbols.slice(0, 200);
-    console.log(symbols, symbols.length);
-    let from = new Date("5/1/2020")
-    let start = Date.now();
-
-    // console.log(start);
-    // let aggregated = await yahooFinance.historical({
-    //     symbols: symbols,
-    //     from: from,
-    //     to: new Date(),
-    //     period: 'd'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
-    // });
-    // let time = Math.floor((Date.now() - start) / 1000);
-    // console.log("aggregate time", time);
-    // res.json(aggregated);
-
-    start = Date.now();
-    console.log(start);
-    let faulty = 0;
-    for (let i = 0; i < symbols.length; ++i) {
-        let symbol = symbols[i];
-        let bars = await getAlpacaBars(symbol, from, new Date(), '15Min');
-        if (bars.length == 0) {
-            faulty += 1;
-            console.log("Faulty found", faulty, "Covered", i)
-        }
-        else {
-            console.log(symbol, bars.length);
-        }
-    }
-    console.log("Total:", symbols.length, "Faulty:", faulty);
-    let time = Math.floor((Date.now() - start) / 1000);
-    console.log("aggregate time", time);
+    
+    getAlpacaBars("AAPL", new Date("1/1/1500"), new Date(), "15Min")
 });
 
 // recalcualte summary for testing
