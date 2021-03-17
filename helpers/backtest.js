@@ -240,10 +240,10 @@ function updateBacktest(id) {
                 resolveJob();
                 return;
             }
-            // already updating
+            // already updating, probably not needed because of check above
             else if (doc["status"] == "updating") {
-                resolveJob();
-                return;
+                // resolveJob();
+                // return;
             }
 
             setDocumentField("results", id, "status", "updating");
@@ -1236,17 +1236,18 @@ function getEarlyTrades(strategyOptions, stoplossTarget, prices, highs, lows, da
         let stoploss = stoplossTarget[bd]["stoploss"];
         let target = stoplossTarget[bd]["target"];
         let midPoint = stoplossTarget[bd]["midPoint"];
-        if (stoploss && low < stoploss) {
-            earlyTrades[bd] = {
-                price: stoploss,
-                reason: "stoploss"
-            }
-        }
+        // if tie between stoploss and target, take stoploss (worse case)
         if (target && high > target) {
             earlyTrades[bd] = {
                 price: target,
                 reason: "target"
             };
+        }
+        if (stoploss && low < stoploss) {
+            earlyTrades[bd] = {
+                price: stoploss,
+                reason: "stoploss"
+            }
         }
         if (midPoint && !stoplossTarget[bd]["midPointReached"] && high > midPoint) {
             stoplossTarget[bd]["midPointReached"] = true;

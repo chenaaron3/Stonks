@@ -1,4 +1,5 @@
-let { getSwingPivots, getTrueRange, getSimpleMovingAverage, inRange, isHighLow } = require('../utils');
+const { LongWithoutOverridesClass } = require('bson');
+let { getSwingPivots, getTrueRange, getSimpleMovingAverage, inRange, isHighLow, isCrossed } = require('../utils');
 let Indicator = require('./indicator');
 
 class Trend extends Indicator {
@@ -55,6 +56,7 @@ class Trend extends Indicator {
     }
 
     getAction(date, dateIndex, isMain) {
+        let yesterdayPrice = this.prices[this.dates[dateIndex - 1]];
         let price = this.prices[date];
         let realizedIndex = this.graph[date];
         let highCursor = realizedIndex;
@@ -75,9 +77,33 @@ class Trend extends Indicator {
             let highDate = this.pivotDates[highCursor - 2];
             let highAtr = this.atr[highDate];
 
-            if (inRange(price, this.prices[highDate], highAtr) // if pullback to previous high
-                && isHighLow(this.dates, this.prices, this.period, dateIndex)["low"]) { // if is a low
-                return Indicator.BUY;
+            // if (inRange(price, this.prices[highDate], highAtr / 2) // if pullback to previous high
+            //     && isHighLow(this.dates, this.prices, this.period, dateIndex)["low"]) { // if is a low
+            //     return Indicator.BUY;
+            // }
+
+            // if cross out of zone
+            let upperZone = this.prices[highDate] + highAtr / 2;
+            let lowerZone = this.prices[highDate] - highAtr / 2
+            // exited zone, potential growth
+            if (isCrossed(yesterdayPrice, price, upperZone, upperZone, true)) {
+                let crossedDown = false;
+                let brokenZone = false;
+                let firstDayIndex = Math.max(0, dateIndex - 5);
+                for (let i = firstDayIndex; i < dateIndex; ++i) {
+                    // entered zone recently
+                    if (!crossedDown && isCrossed(this.prices[this.dates[i - 1]], this.prices[this.dates[i]], upperZone, upperZone, false)) {
+                        crossedDown = true;
+                    }
+                    // went out of zone in between
+                    if (!brokenZone && isCrossed(this.prices[this.dates[i - 1]], this.prices[this.dates[i]], lowerZone, lowerZone, false)) {
+                        brokenZone = true;
+                        break;
+                    }
+                }
+                if (crossedDown && !brokenZone) {
+                    return Indicator.BUY;
+                }
             }
 
             // reduce number of lookbacks

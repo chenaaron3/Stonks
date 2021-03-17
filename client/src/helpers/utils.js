@@ -160,7 +160,7 @@ function simulateBacktest(state, results) {
                     let event = events[i];
 
                     // check for risk
-                    if (event["risk"] && event["risk"] > state.maxRisk) {
+                    if (event["risk"] && (event["risk"] > state.maxRisk || event["risk"] < 1)) {
                         continue;
                     }
 
