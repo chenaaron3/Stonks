@@ -4,13 +4,13 @@ var router = express.Router();
 var yahooFinance = require('yahoo-finance');
 let { getYahooBars } = require('../helpers/yahoo');
 let { cancelAllBuyOrders, getOpenOrders, getAlpacaBars } = require('../helpers/alpaca');
-let { getBacktestSummary, toPST } = require('../helpers/utils');
+let { getBacktestSummary, getAdjustedData } = require('../helpers/utils');
 let { containsID, getDocument, setDocumentField, addDocument, getDocumentField } = require('../helpers/mongo');
-let { getSymbols, getIndicator, getAdjustedData } = require('../helpers/backtest');
+let { getSymbols, getIndicator } = require('../helpers/backtest');
 
 router.get('/', async (req, res) => {
     // res.send(await getYahooBars("AAPL", new Date("1/1/1500"), new Date("2/19/2021"), "15Min"));
-    res.send(await getAlpacaBars("DHX", new Date("1/1/1500"), new Date("2/19/2021"), "15Min"));
+    res.send(await getAlpacaBars("DHX", new Date("1/1/1500"), new Date("2/19/2021"), "1Hour"));
 })
 
 router.get('/bars', async function (req, res, next) {

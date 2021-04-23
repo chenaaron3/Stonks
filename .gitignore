@@ -5,6 +5,7 @@ res/metadata.json
 res/blacklist.json
 res/faulty.json
 logs/
+mlModels/
 
 # OS X
 .DS_Store*

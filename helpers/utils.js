@@ -1,6 +1,59 @@
 const { jStat } = require('jstat')
 const { findOptimalRisk } = require('../client/src/helpers/utils');
 
+// convert raw data from api to adjusted prices for backtest
+function getAdjustedData(rawData, lastUpdated, strategyOptions) {
+    // maps date to closing price
+    let prices = {};
+    let volumes = {};
+    let opens = {};
+    let highs = {};
+    let lows = {};
+    let closes = {};
+
+    // only get new data for update
+    let cutoffIndex = 0;
+    if (lastUpdated) {
+        // find first index where date is greater than last updated
+        for (let i = rawData.length - 1; i >= 0; --i) {
+            if (rawData[i]["date"] < lastUpdated) {
+                cutoffIndex = i;
+                break;
+            }
+        }
+        let flattenedValues = [];
+        // find maximum values used in strategy options
+        let flatten = indicator => {
+            flattenedValues.push(Object.values(indicator).reduce((a, b) => a + b));
+        };
+        Object.values(strategyOptions["buyIndicators"]).forEach(flatten);
+        Object.values(strategyOptions["sellIndicators"]).forEach(flatten);
+        let margin = Math.max(...flattenedValues) + 5;
+        // go back certain margin
+        cutoffIndex = Math.max(0, cutoffIndex - margin);
+    }
+
+    // parse list into dictionaries
+    for (; cutoffIndex < rawData.length; ++cutoffIndex) {
+        let day = rawData[cutoffIndex];
+        let date = new Date(day["date"]);
+
+        let formattedDate = date.toISOString();
+        prices[formattedDate] = day["close"];
+        volumes[formattedDate] = day["volume"];
+        opens[formattedDate] = day["open"];
+        highs[formattedDate] = day["high"];
+        lows[formattedDate] = day["low"];
+        closes[formattedDate] = day["close"];
+    };
+
+    let dates = Object.keys(prices).sort(function (a, b) {
+        return new Date(a) - new Date(b);
+    });
+
+    return [prices, volumes, opens, highs, lows, closes, dates];
+}
+
 // determine if line (x1, a1) => (x2, a2) crosses line (x1, b1) => (x2, b2)
 function isCrossed(a1, a2, b1, b2, crossUp) {
     if (crossUp) {
@@ -463,6 +516,6 @@ function inRange(value, reference, range) {
 }
 
 module.exports = {
-    isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, howHighLow,
+    getAdjustedData, isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, howHighLow,
     getStochasticOscillator, formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual, getBacktestSummary, inRange
 };

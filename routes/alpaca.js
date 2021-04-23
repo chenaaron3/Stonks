@@ -1,12 +1,34 @@
 var express = require('express');
 var router = express.Router();
-let { getAccount, requestBracketOrder, changeAccount } = require('../helpers/alpaca');
+let { getAccount, getClosedOrders, requestBracketOrder, changeAccount } = require('../helpers/alpaca');
+let { getDocument } = require('../helpers/mongo');
 
 router.get("/", (req, res) => {
     changeAccount({ id: process.env.APCA_API_KEY_ID, key: process.env.APCA_API_SECRET_KEY });
     getAccount().then(account => {
         res.json(account);
     })
+})
+
+router.get("/closedOrders", async (req, res) => {
+    // user is logged in
+    if (req.user) {
+        let userDoc = await getDocument("users", req.user["username"]);
+        let alpacaCredentials = userDoc["alpaca"];
+
+        // user uses alpaca
+        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+
+        if (useAlpaca) {
+            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            getClosedOrders().then(orders => {
+                res.json(orders)
+            })
+            return;
+        }
+    }
+
+    res.json({});
 })
 
 router.post("/order", function (req, res) {

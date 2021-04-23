@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import { connect } from 'react-redux';
-import { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer } from '../redux';
+import { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer, setClosedOrders } from '../redux';
 import './Results.css';
 import 'react-tabs/style/react-tabs.css';
 import eye from "../eye.svg";
@@ -66,12 +66,54 @@ class Results extends React.Component {
     componentDidMount() {
         this.analyze();
         this.getBoughtSymbols();
+        this.getClosedOrders();
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.id != this.props.id) {
             this.analyze();
             this.getBoughtSymbols();
+            this.getClosedOrders();
+        }
+    }
+
+    // if has alpaca account, get orders to compare
+    getClosedOrders = () => {
+        // if have not gotten orders yet
+        if (Object.keys(this.props.closedOrders).length == 0) {
+            fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/alpaca/closedOrders`)
+                .then(res => res.json())
+                .then(closedOrders => {
+                    let ordersBySymbol = {};
+                    // categorize each order by their symbol
+                    closedOrders.forEach(closedOrder => {
+                        let symbol = closedOrder["symbol"];
+                        let price = parseFloat(closedOrder["filled_avg_price"]);
+                        let date = new Date(closedOrder["filled_at"]);
+                        let side = closedOrder["side"];
+                        if (!ordersBySymbol.hasOwnProperty(symbol)) {
+                            ordersBySymbol[symbol] = [{}];
+                        }
+
+                        // add fresh event
+                        if (ordersBySymbol[symbol][0].hasOwnProperty("buyPrice") && ordersBySymbol[symbol][0].hasOwnProperty("sellPrice")) {
+                            ordersBySymbol[symbol].unshift({});
+                        }
+
+                        let event = ordersBySymbol[symbol][0];
+                        // sell order
+                        if (side == "sell" && price) {
+                            event["sellPrice"] = price;
+                            event["sellDate"] = date;
+                        }
+                        // buy order
+                        else if (side == "buy") {
+                            event["buyPrice"] = price;
+                            event["buyDate"] = date;
+                        }
+                    })
+                    this.props.setClosedOrders(ordersBySymbol);
+                })
         }
     }
 
@@ -392,7 +434,8 @@ class Results extends React.Component {
                                 {Object.keys(this.props.simulationTransactions).length != 0 && (
                                     // sort years from recent to old
                                     Object.keys(this.props.simulationTransactions).sort((a, b) => b - a).map((year) => {
-                                        return <Transactions year={year} transactions={this.props.simulationTransactions[year]} {...this.props} />
+                                        return <Transactions closedOrders={this.props.closedOrders} year={year}
+                                            transactions={this.props.simulationTransactions[year]} {...this.props} />
                                     })
                                 )
                                 }
@@ -453,9 +496,20 @@ class Result extends React.Component {
         let displayName = this.props.symbol;
         let color = this.props.result["percentProfit"] > 0 ? "green" : "red";
         if (this.props.transaction) {
-            let pp = this.props.result["events"][this.props.eventIndex]["percentProfit"] * 100;
+            let event = this.props.result["events"][this.props.eventIndex];
+            let pp = event["percentProfit"] * 100;
             displayName += ` (${displayDelta(pp)}%)`;
             color = pp > 0 ? "green" : "red";
+            let closedOrder = undefined;
+            // find the corresponding closed order to this transaction 
+            if (this.props.closedOrders) {
+                closedOrder = this.props.closedOrders.find(closedOrder =>
+                    closedOrder["buyDate"] && daysBetween(closedOrder["buyDate"], new Date(event["buyDate"])) <= 1
+                )
+            }
+            if (closedOrder) {
+                displayName += "*";
+            }
         }
         return (
             <div className="result" onMouseEnter={() => this.setState({ hovered: true })} onMouseLeave={() => this.setState({ hovered: false })}>
@@ -508,7 +562,8 @@ class Transactions extends React.Component {
                                 eventIndex={transaction["index"]}
                                 handleGetResult={(symbol) => {
                                     this.props.viewStock(symbol, transaction["index"]);
-                                }} />
+                                }}
+                                closedOrders={this.props.closedOrders[transaction["symbol"]]} />
                         })
                     }
                 </div>
@@ -638,7 +693,7 @@ function ExportMenu(props) {
 
 let mapStateToProps = (state) => {
     let results = state.backtestResults;
-    return { results, id: state.id, simulationTransactions: state.simulationTransactions, drawer: state.drawer };
+    return { results, id: state.id, simulationTransactions: state.simulationTransactions, drawer: state.drawer, closedOrders: state.closedOrders };
 };
 
-export default connect(mapStateToProps, { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer })(Results);
+export default connect(mapStateToProps, { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer, setClosedOrders })(Results);

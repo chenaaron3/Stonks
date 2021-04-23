@@ -12,7 +12,7 @@ import MACD from "./indicators/MACD";
 import ADX from "./indicators/ADX";
 import Stochastic from "./indicators/Stochastic";
 import Loading from './Loading';
-import { formatDate, numberWithCommas, displayDelta } from '../helpers/utils';
+import { formatDate, numberWithCommas, displayDelta, daysBetween } from '../helpers/utils';
 
 class Chart extends React.Component {
     constructor(props) {
@@ -396,7 +396,8 @@ class Chart extends React.Component {
                 let atr = this.graphs["atr"]["ATR"];
                 let stoploss = this.getStoploss(date, atr, close, low);
                 let target = this.getTarget(date, atr, close, low);
-                let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick, stoploss, target };
+                let actual = this.getActual(date, close);
+                let priceEntry = { date, price: close, redCandleBody, greenCandleBody, candleWick, stoploss, target, actual };
 
                 // for indicators
                 Object.keys(indicatorGraphs).forEach(indicatorName => {
@@ -464,7 +465,7 @@ class Chart extends React.Component {
     }
 
     getTarget = (date, atr, close, low) => {
-        // only show for buy dates
+        // only show for buy dates and holdings
         if (!this.state.buyDates.has(date) && !this.state.holdings.hasOwnProperty(date)) {
             return undefined;
         }
@@ -505,6 +506,41 @@ class Chart extends React.Component {
             // return error bar format
             return [0, target - close];
         }
+    }
+
+    getActual = (date, close) => {
+        // only show for buy/sell dates and holdings
+        if (!this.state.buyDates.has(date) && !this.state.sellDates.has(date) && !this.state.holdings.hasOwnProperty(date)) {
+            return undefined;
+        }
+
+        // no closed orders for this symbol
+        if (!this.props.closedOrders) {
+            return undefined;
+        }
+
+        let closedOrder = undefined;
+        let isBuy = this.state.buyDates.has(date);
+        // find the corresponding closed order to this date 
+        if (this.props.closedOrders) {
+            closedOrder = this.props.closedOrders.find(closedOrder => {
+                let referenceDate = isBuy ? closedOrder["buyDate"] : closedOrder["sellDate"];
+                console.log(date, referenceDate, daysBetween(new Date(referenceDate), new Date(date)))
+                return referenceDate && daysBetween(new Date(referenceDate), new Date(date)) <= 1;
+            }
+            )
+        }
+        if (closedOrder) {
+            let actualPrice = isBuy ? closedOrder["buyPrice"] : closedOrder["sellPrice"];
+            if (actualPrice > close) {
+                return [0, actualPrice - close];
+            }
+            else {
+                return [close - actualPrice, 0];
+            }
+        }
+
+        return undefined;
     }
 
     refreshGraph = () => {
@@ -717,11 +753,13 @@ class Chart extends React.Component {
             <ErrorBar dataKey="candleWick" width={1} strokeWidth={1} stroke="black" direction="y" />
             <ErrorBar dataKey="stoploss" width={15} strokeWidth={1} stroke="red" direction="y" />
             <ErrorBar dataKey="target" width={15} strokeWidth={1} stroke="green" direction="y" />
+            <ErrorBar dataKey="actual" width={15} strokeWidth={1} stroke="black" direction="y" />
         </Line>;
         if (!this.props.chartSettings["Candles"]) {
             mainLine = <Line dataKey="price" stroke="#ff7300" dot={<this.CustomizedDot size={10} />}>
                 <ErrorBar dataKey="stoploss" width={15} strokeWidth={1} stroke="red" direction="y" />
                 <ErrorBar dataKey="target" width={15} strokeWidth={1} stroke="green" direction="y" />
+                <ErrorBar dataKey="actual" width={15} strokeWidth={1} stroke="black" direction="y" />
             </Line>;
         }
 
@@ -839,10 +877,11 @@ class Chart extends React.Component {
 
 let mapStateToProps = (state) => {
     console.log("new props in chart");
+    console.log("Closed orders", state.closedOrders[state.selectedSymbol]);
     return {
         symbol: state.selectedSymbol, results: state.backtestResults["symbolData"][state.selectedSymbol],
         activeIndicators: [...state.activeIndicators], indicatorOptions: state.indicatorOptions, strategyOptions: state.backtestResults["strategyOptions"],
-        eventIndex: state.eventIndex, chartSettings: state.chartSettings
+        eventIndex: state.eventIndex, chartSettings: state.chartSettings, closedOrders: state.closedOrders[state.selectedSymbol]
     }
 };
 

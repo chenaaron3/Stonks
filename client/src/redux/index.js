@@ -12,6 +12,7 @@ const SET_CHART_SETTINGS = "SET_CHART_SETTINGS";
 const SET_SIMULATION_TRANSACTIONS = "SET_SIMULATION_TRANSACTIONS";
 const SET_DRAWER = "SET_DRAWER";
 const SET_TRADE_SETTINGS = "SET_TRADE_SETTINGS";
+const SET_CLOSED_ORDERS = "SET_CLOSED_ORDERS";
 
 const initialState = {
     id: "",
@@ -26,7 +27,8 @@ const initialState = {
     chartSettings: {},
     simulationTransactions: {},
     drawer: {},
-    tradeSettings: { scoreBy: "Win Rate", maxRisk: 15 }
+    tradeSettings: { scoreBy: "Win Rate", maxRisk: 15 },
+    closedOrders: {}
 };
 
 // Reducer
@@ -113,6 +115,11 @@ export default function reducer(state = initialState, action) {
                 ...state,
                 tradeSettings: action.settings
             }
+        case SET_CLOSED_ORDERS:
+            return {
+                ...state,
+                closedOrders: action.closedOrders
+            }
         default: return state;
     }
 }
@@ -176,4 +183,8 @@ export function setDrawer(anchor, open) {
 
 export function setTradeSettings(settings) {
     return { type: SET_TRADE_SETTINGS, settings }
+}
+
+export function setClosedOrders(closedOrders) {
+    return { type: SET_CLOSED_ORDERS, closedOrders }
 }

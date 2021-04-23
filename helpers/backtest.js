@@ -7,52 +7,15 @@ const sgMail = require('@sendgrid/mail');
 
 // own helpers
 const csv = require('csv');
+let { getIndicator } = require('../helpers/indicators');
 let { fixFaulty, getPrices } = require('../helpers/stock');
 let { getDocument, setDocumentField, addDocument } = require('../helpers/mongo');
-let { daysBetween, getBacktestSummary } = require('../helpers/utils');
+let { daysBetween, getBacktestSummary, getAdjustedData } = require('../helpers/utils');
 let { sortResultsByScore } = require('../client/src/helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
 let { cancelAllBuyOrders, requestBracketOrder, changeAccount, requestMarketOrderSell } = require('./alpaca');
-
-// indicators
-let SMA = require('../helpers/indicators/sma');
-let EMA = require('../helpers/indicators/ema');
-let RSI = require('../helpers/indicators/rsi');
-let MACD = require('../helpers/indicators/macd');
-let MACDPos = require('../helpers/indicators/macdPos');
-let GC = require('../helpers/indicators/gc');
-let ADX = require('../helpers/indicators/adx');
-let Solid = require('../helpers/indicators/solid');
-let Candle = require('./indicators/candle');
-let Structure = require('../helpers/indicators/structure');
-let ATR = require('../helpers/indicators/atr');
-let Pullback = require('../helpers/indicators/pullback');
-let Breakout = require('../helpers/indicators/breakout');
-let Swing = require('../helpers/indicators/swing');
-let Divergence = require('../helpers/indicators/divergence');
-let Stochastic = require('../helpers/indicators/stochastic');
-let Trend = require('../helpers/indicators/trend');
-let Indicator = require('../helpers/indicators/indicator');
-let INDICATOR_OBJECTS = {
-    "SMA": SMA,
-    "EMA": EMA,
-    "RSI": RSI,
-    "MACD": MACD,
-    "MACD2": MACDPos,
-    "GC": GC,
-    "ADX": ADX,
-    "Solid": Solid,
-    "Candle": Candle,
-    "Structure": Structure,
-    "ATR": ATR,
-    "Pullback": Pullback,
-    "Breakout": Breakout,
-    "Swing": Swing,
-    "Divergence": Divergence,
-    "Stochastic": Stochastic,
-    "Trend": Trend
-}
+let Indicator = require('../helpers/indicators/indicator')
 
 // paths to resources
 let PATH_TO_SYMBOLS = path.join(__dirname, "../res/symbols.json");
@@ -1051,59 +1014,6 @@ function getSymbols(applyBlacklist) {
     });
 }
 
-// convert raw data from api to adjusted prices for backtest
-function getAdjustedData(rawData, lastUpdated, strategyOptions) {
-    // maps date to closing price
-    let prices = {};
-    let volumes = {};
-    let opens = {};
-    let highs = {};
-    let lows = {};
-    let closes = {};
-
-    // only get new data for update
-    let cutoffIndex = 0;
-    if (lastUpdated) {
-        // find first index where date is greater than last updated
-        for (let i = rawData.length - 1; i >= 0; --i) {
-            if (rawData[i]["date"] < lastUpdated) {
-                cutoffIndex = i;
-                break;
-            }
-        }
-        let flattenedValues = [];
-        // find maximum values used in strategy options
-        let flatten = indicator => {
-            flattenedValues.push(Object.values(indicator).reduce((a, b) => a + b));
-        };
-        Object.values(strategyOptions["buyIndicators"]).forEach(flatten);
-        Object.values(strategyOptions["sellIndicators"]).forEach(flatten);
-        let margin = Math.max(...flattenedValues) + 5;
-        // go back certain margin
-        cutoffIndex = Math.max(0, cutoffIndex - margin);
-    }
-
-    // parse list into dictionaries
-    for (; cutoffIndex < rawData.length; ++cutoffIndex) {
-        let day = rawData[cutoffIndex];
-        let date = new Date(day["date"]);
-
-        let formattedDate = date.toISOString();
-        prices[formattedDate] = day["close"];
-        volumes[formattedDate] = day["volume"];
-        opens[formattedDate] = day["open"];
-        highs[formattedDate] = day["high"];
-        lows[formattedDate] = day["low"];
-        closes[formattedDate] = day["close"];
-    };
-
-    let dates = Object.keys(prices).sort(function (a, b) {
-        return new Date(a) - new Date(b);
-    });
-
-    return [prices, volumes, opens, highs, lows, closes, dates];
-}
-
 // create indicator objects from options
 function getIndicatorObjects(strategyOptions, type, symbol, dates, prices, opens, highs, lows, closes) {
     let mainIndicator;
@@ -1125,13 +1035,6 @@ function getIndicatorObjects(strategyOptions, type, symbol, dates, prices, opens
     });
 
     return [mainIndicator, supportingIndicators, map];
-}
-
-// gets an indicator object
-function getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes) {
-    let indicator = new INDICATOR_OBJECTS[indicatorName](symbol, dates, prices, opens, highs, lows, closes);
-    indicator.initialize(indicatorOptions);
-    return indicator;
 }
 
 // calculate stoplosses and targets
@@ -1317,5 +1220,5 @@ module.exports = {
     backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getActionsToday,
     conductBacktest, conductStoplossTargetOptimization, conductIndicatorOptimization,
     findIntersections, optimizeStoplossTargetForSymbol, optimizeIndicatorsForSymbol,
-    getSymbols, getAdjustedData, getIndicator
+    getSymbols, getIndicator
 }; 

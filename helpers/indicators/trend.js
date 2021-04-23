@@ -44,7 +44,7 @@ class Trend extends Indicator {
     }
 
     getGraph() {
-        return { pivots: this.pivots };
+        return { pivots: this.pivots, pivotDates: this.pivotDates, realizedPivots: this.graph };
     }
 
     getValue(date) {

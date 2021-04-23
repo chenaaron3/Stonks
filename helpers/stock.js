@@ -4,8 +4,8 @@ var fs = require('fs');
 const { fork } = require('child_process');
 
 var { updateStockInfo, getDocument, getCollection, setStockInfo } = require("./mongo");
-let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual, makeid } = require('./utils');
-let { getIndicator } = require('./backtest');
+let { formatDate, daysBetween, hoursBetween, clampRange, shallowEqual, makeid, getAdjustedData } = require('./utils');
+let { getIndicator } = require('../helpers/indicators');
 let { addJob } = require('../helpers/queue');
 let { getYahooBars } = require('./yahoo');
 const { getAlpacaBars } = require('./alpaca');
@@ -276,4 +276,157 @@ async function fixFaulty() {
     return results;
 }
 
-module.exports = { update, updateStocks, getPrices, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty }
+async function createDataset(id, result, window) {
+    addJob(() => {
+        return new Promise(async resolveJob => {
+            let features = [];
+            let labels = [];
+            let backtestData = result["results"]["symbolData"];
+            let symbols = Object.keys(backtestData);
+            symbols = symbols.sort();
+
+            // create threads that split up the work
+            let finishedWorkers = 0;
+            let partitionSize = Math.ceil(symbols.length / process.env.NUM_THREADS);
+            for (let i = 0; i < process.env.NUM_THREADS; ++i) {
+                // divy up the symbols for each thread to work on
+                let partition = symbols.slice(i * partitionSize, (i + 1) * partitionSize);
+
+                // spawn child to do work
+                let child = fork(path.join(__dirname, "../helpers/worker.js"));
+                child.on('message', async (msg) => {
+                    if (msg.status == "finished") {
+                        // assign partition's results to collective results
+                        features = features.concat(msg.features);
+                        labels = labels.concat(msg.labels);
+                        // if all worker threads are finished
+                        if (++finishedWorkers == process.env.NUM_THREADS) {
+                            // balance the number of win/loss events
+                            let numWins = labels.filter(x => x == 0).length;
+                            let numLosses = labels.length - numWins;
+                            let numResults = Math.min(numWins, numLosses);
+
+                            let trimmedFeatures = [];
+                            let trimmedLabels = [];
+
+                            numWins = 0;
+                            numLosses = 0;
+                            for (let i = 0; i < labels.length; ++i) {
+                                if (labels[i] == 0 && numWins < numResults) {
+                                    trimmedFeatures.push(features[i]);
+                                    trimmedLabels.push(0);
+                                    numWins += 1;
+                                }
+                                else if (labels[i] == 1 && numLosses < numResults) {
+                                    trimmedFeatures.push(features[i]);
+                                    trimmedLabels.push(1);
+                                    numLosses += 1;
+                                }
+                            }
+
+                            // write to file
+                            if (!fs.existsSync(path.join(__dirname, "../data"))) {
+                                fs.mkdirSync(path.join(__dirname, "../data"));
+                            }
+                            fs.writeFileSync(path.join(__dirname, "../data", `${id}.json`), JSON.stringify({ features: trimmedFeatures, labels: trimmedLabels }));
+                            console.log("Finished creating dataset!");
+                            resolveJob();
+                        }
+                    }
+                })
+                child.send({ type: "startCreatingDataset", partition, result, window });
+            }
+        })
+    })
+}
+
+// used for ml dataset
+async function gatherData(symbols, result, window) {
+    let backtestData = result["results"]["symbolData"];
+    let features = [];
+    let labels = [];
+    for (let symbolIndex = 0; symbolIndex < symbols.length; ++symbolIndex) {
+        let symbol = symbols[symbolIndex];
+        console.log(symbol, result["results"]["strategyOptions"]["timeframe"]);
+
+        // gather symbol data
+        let json = await getPrices(symbol, result["results"]["strategyOptions"]["timeframe"]);
+        // if error
+        if (json["error"]) {
+            console.log("stock.js:gatherData: " + json["error"]);
+        }
+        // if valid prices
+        else {
+            // get price and indicator setup
+            let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, undefined);
+
+            // populate data with events
+            let events = backtestData[symbol]["events"];
+            for (let eventIndex = 0; eventIndex < events.length; ++eventIndex) {
+                let event = events[eventIndex];
+                let buyDate = event["buyDate"];
+                let buyIndex = dates.indexOf(buyDate);
+
+                let feature = [];
+                let priceFeatures = [];
+
+                // let startIndex = buyIndex - window + 1;
+                // if (startIndex < 0) {
+                //     continue;
+                // }
+                // for (let i = startIndex; i <= buyIndex; ++i) {
+                //     // add price data
+                //     priceFeatures.push(prices[dates[i]]);                    
+                // }
+
+                let trendIndicator = getIndicator("Trend", { period: 5 }, symbol, dates, prices, opens, highs, lows, closes);
+                let {pivots, pivotDates, realizedPivots} = trendIndicator.getGraph();
+
+                let pivotCounts = 0;
+                let pivotIndex = -1;
+                let dateIndex = buyIndex
+                while (dateIndex >= 0) {
+                    // new pivot
+                    if (realizedPivots[dates[dateIndex]] != pivotIndex) {
+                        pivotIndex = realizedPivots[dates[dateIndex]];
+                        // no more pivots
+                        if (pivotIndex == -1) {
+                            continue;
+                        }
+                        priceFeatures.unshift(pivots[pivotDates[pivotIndex]]["price"]);
+                        pivotCounts += 1;
+                        // gathered enough pivots
+                        if (pivotCounts == window) {
+                            break;
+                        }
+                    }
+                    dateIndex -= 1;
+                }
+
+                // not enough features
+                if (priceFeatures.length != window) {
+                    continue;
+                }
+
+                priceFeatures = clampRange(priceFeatures);
+                feature = feature.concat(priceFeatures);
+
+                // dont include falsy data
+                if (feature.includes(null) || feature.includes(undefined) || feature.includes(NaN)) {
+                    continue;
+                }
+                else if (Math.abs(event["percentProfit"]) > .15) {
+                    continue;
+                }
+                else {
+                    // add to dataset
+                    features.push(feature);
+                    labels.push(event["profit"] > 0 ? 0 : 1);
+                }
+            }
+        }
+    };
+    return { features, labels };
+}
+
+module.exports = { update, updateStocks, getPrices, getUpdatedPrices, getLatestPrice, checkSplit, checkSplitForSymbol, resetSymbol, fixFaulty, gatherData, createDataset }

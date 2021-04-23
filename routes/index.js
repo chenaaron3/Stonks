@@ -6,9 +6,9 @@ const { fork } = require('child_process');
 // own helpers
 const csv = require('csv');
 let { containsID, addDocument, getDocument, addActiveResult, deleteActiveResult, deleteDocument, getDocumentField, setDocumentField } = require('../helpers/mongo');
-let { makeid, daysBetween, getBacktestSummary } = require('../helpers/utils');
+let { makeid, daysBetween, getBacktestSummary, getAdjustedData } = require('../helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
-let { backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getIndicator, getAdjustedData } = require('../helpers/backtest');
+let { backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest, getIndicator } = require('../helpers/backtest');
 let { getLatestPrice, fixFaulty } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 

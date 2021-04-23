@@ -1216,3 +1216,7 @@ Worker VcOa0IoOnr: Starting backtest
 Worker VcOa0IoOnr: Finished backtest in 193 seconds
 Worker CGn8woFsVj: Starting backtest
 Worker CGn8woFsVj: Finished backtest in 239 seconds
+Worker DdfA3K6RCD: Starting backtest
+Worker OX4NaBAo2I: Starting backtest
+Worker OX4NaBAo2I: Starting backtest
+Worker OX4NaBAo2I: Finished backtest in 286 seconds

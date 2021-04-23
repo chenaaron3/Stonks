@@ -28,6 +28,13 @@ function getOpenOrders() {
     })
 }
 
+function getClosedOrders() {
+    return alpaca.getOrders({
+        status: 'closed',
+        limit: 500   
+    })
+}
+
 function getPosition(symbol) {
     return alpaca.getPosition(symbol);
 }
@@ -65,7 +72,7 @@ function getAlpacaBars(s, startDate, endDate, timeframe) {
                         s,
                         {
                             timeframe: timeframe,
-                            limit: 10000,
+                            limit: 1000,
                             start: startDate,
                             end: untilDate
                         },
@@ -243,4 +250,4 @@ function requestMarketOrderSell(symbol) {
     })
 }
 
-module.exports = { changeAccount, getAccount, getOpenOrders, getAlpacaBars, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, requestMarketOrderSell, };
+module.exports = { changeAccount, getAccount, getOpenOrders, getClosedOrders, getAlpacaBars, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, requestMarketOrderSell, };
