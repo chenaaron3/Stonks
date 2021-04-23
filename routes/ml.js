@@ -7,7 +7,7 @@ let { getDocument } = require('../helpers/mongo');
 let { getIndicator } = require('../helpers/backtest');
 let { clampRange } = require('../helpers/utils');
 const { fork } = require('child_process');
-const tf = require('@tensorflow/tfjs-node-gpu');
+// const tf = require('@tensorflow/tfjs-node-gpu');
 const csv = require('csv');
 
 router.get("/createDataset", async (req, res) => {

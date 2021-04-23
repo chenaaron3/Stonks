@@ -3,7 +3,7 @@ var router = express.Router();
 
 var yahooFinance = require('yahoo-finance');
 let { getYahooBars } = require('../helpers/yahoo');
-let { cancelAllBuyOrders, getOpenOrders, getAlpacaBars } = require('../helpers/alpaca');
+let { getOpenOrders, getAlpacaBars } = require('../helpers/alpaca');
 let { getBacktestSummary, getAdjustedData } = require('../helpers/utils');
 let { containsID, getDocument, setDocumentField, addDocument, getDocumentField } = require('../helpers/mongo');
 let { getSymbols, getIndicator } = require('../helpers/backtest');

@@ -14,7 +14,7 @@ let { daysBetween, getBacktestSummary, getAdjustedData } = require('../helpers/u
 let { sortResultsByScore } = require('../client/src/helpers/utils');
 let { triggerChannel } = require('../helpers/pusher');
 let { addJob } = require('../helpers/queue');
-let { cancelAllBuyOrders, requestBracketOrder, changeAccount, requestMarketOrderSell } = require('./alpaca');
+let { cancelPreviousOrders, requestBracketOrder, getPositions, changeAccount, requestMarketOrderSell } = require('./alpaca');
 let Indicator = require('../helpers/indicators/indicator')
 
 // paths to resources
@@ -76,13 +76,16 @@ async function getActionsToday(id, email) {
                 // change accounts using credentials
                 changeAccount(alpacaCredentials);
                 // clear all alpaca buy orders carried over from previous day
-                await cancelAllBuyOrders();
+                await cancelPreviousOrders();
+
+                let positions = await getPositions();
 
                 // execute alpaca orders for buys
                 let scoreBy = (tradeSettings && tradeSettings["scoreBy"]) ? tradeSettings["scoreBy"] : "Percent Profit";
                 let sortedSymbols = sortResultsByScore(doc["results"], scoreBy);
                 actions["buy"].sort((a, b) => sortedSymbols.indexOf(a) - sortedSymbols.indexOf(b))
 
+                let buyOrders = [];
                 actions["buy"].forEach(async buySymbol => {
                     let holding = buyData[buySymbol]["holding"];
                     // qualify for bracket orders
@@ -97,13 +100,18 @@ async function getActionsToday(id, email) {
 
                         // adjust parameters
                         if (tradeSettings) {
+                            // trade if below risk parameter
                             if (tradeSettings["maxRisk"]) shouldTrade = risk <= parseInt(tradeSettings["maxRisk"]);
+                            // check if portfolio is maxed out already
+                            if (tradeSettings["maxPositions"]) shouldTrade = positions.length + buyOrders.length <= tradeSettings["maxPositions"];
+                            // adjust position size by how many positions desired in portfolio
                             if (tradeSettings["maxPositions"]) positionSize = 1 / (parseInt(tradeSettings["maxPositions"]));
                         }
 
                         if (shouldTrade) {
                             try {
                                 await requestBracketOrder(buySymbol, buyPrice, positionSize, stoploss, target);
+                                buyOrders.push(buySymbol);
                             }
                             catch (e) {
                                 console.log(e["message"])
@@ -112,6 +120,7 @@ async function getActionsToday(id, email) {
                         }
                     }
                 })
+                actions["buy"] = buyOrders;
 
                 // execute alpaca orders for sells (overdue)
                 actions["sell"].forEach(async sellSymbol => {

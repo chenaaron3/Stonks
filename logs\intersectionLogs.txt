@@ -5212,3 +5212,11 @@ Worker OX4NaBAo2I: Finished backtest for tickers A to DEO in 194 seconds
 Worker OX4NaBAo2I: Finished backtest for tickers DESP to JFKKW in 192 seconds
 Worker OX4NaBAo2I: Finished backtest for tickers JFR to PZN in 212 seconds
 Worker OX4NaBAo2I: Finished backtest for tickers PZZA to ZYXI in 223 seconds
+Worker aPTbMkvb9M: Finding intersections for tickers DESP to JFKKW
+Worker aPTbMkvb9M: Finding intersections for tickers JFR to PZN
+Worker aPTbMkvb9M: Finding intersections for tickers A to DEO
+Worker aPTbMkvb9M: Finding intersections for tickers PZZA to ZYXI
+Worker aPTbMkvb9M: Finished backtest for tickers DESP to JFKKW in 288 seconds
+Worker aPTbMkvb9M: Finished backtest for tickers A to DEO in 302 seconds
+Worker aPTbMkvb9M: Finished backtest for tickers PZZA to ZYXI in 312 seconds
+Worker aPTbMkvb9M: Finished backtest for tickers JFR to PZN in 312 seconds

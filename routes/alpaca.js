@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-let { getAccount, getClosedOrders, requestBracketOrder, changeAccount } = require('../helpers/alpaca');
+let { getAccount, getClosedOrders, getPositions, requestBracketOrder, changeAccount, getOpenOrders } = require('../helpers/alpaca');
 let { getDocument } = require('../helpers/mongo');
 
 router.get("/", (req, res) => {
@@ -28,7 +28,71 @@ router.get("/closedOrders", async (req, res) => {
         }
     }
 
-    res.json({});
+    res.json([]);
+})
+
+router.get("/closedOrders", async (req, res) => {
+    // user is logged in
+    if (req.user) {
+        let userDoc = await getDocument("users", req.user["username"]);
+        let alpacaCredentials = userDoc["alpaca"];
+
+        // user uses alpaca
+        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+
+        if (useAlpaca) {
+            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            getClosedOrders().then(orders => {
+                res.json(orders)
+            })
+            return;
+        }
+    }
+
+    res.json([]);
+})
+
+router.get("/openOrders", async (req, res) => {
+    // user is logged in
+    if (req.user) {
+        let userDoc = await getDocument("users", req.user["username"]);
+        let alpacaCredentials = userDoc["alpaca"];
+
+        // user uses alpaca
+        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+
+        if (useAlpaca) {
+            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            getOpenOrders().then(orders => {
+                res.json(orders)
+            })
+            return;
+        }
+    }
+
+    res.json([]);
+})
+
+
+router.get("/positions", async (req, res) => {
+    // user is logged in
+    if (req.user) {
+        let userDoc = await getDocument("users", req.user["username"]);
+        let alpacaCredentials = userDoc["alpaca"];
+
+        // user uses alpaca
+        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+
+        if (useAlpaca) {
+            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            getPositions().then(positions => {
+                res.json(positions)
+            })
+            return;
+        }
+    }
+
+    res.json([]);
 })
 
 router.post("/order", function (req, res) {

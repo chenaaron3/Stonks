@@ -35,6 +35,10 @@ function getClosedOrders() {
     })
 }
 
+function getPositions() {
+    return alpaca.getPositions();
+}
+
 function getPosition(symbol) {
     return alpaca.getPosition(symbol);
 }
@@ -188,13 +192,14 @@ function getAlpacaBars(s, startDate, endDate, timeframe) {
     })
 }
 
-function cancelAllBuyOrders() {
+function cancelPreviousOrders() {
     alpaca.getOrders({
         status: 'open'
     }).then(async orders => {
         let cancelledOrders = 0;
         for (let i = 0; i < orders.length; ++i) {
             let order = orders[i];
+            // simply cancel buy
             if (order["side"] == "buy") {
                 await alpaca.cancelOrder(order["id"]);
                 cancelledOrders += 1;
@@ -223,7 +228,7 @@ function requestBracketOrder(symbol, buyPrice, positionSize, stoploss, target) {
                 order_class: 'bracket',
                 stop_loss: {
                     stop_price: stoploss,
-                    limit_price: stoploss * .999
+                    // limit_price: stoploss * .999 // trying stop instead of stop-limit
                 },
                 take_profit: {
                     limit_price: target
@@ -250,4 +255,4 @@ function requestMarketOrderSell(symbol) {
     })
 }
 
-module.exports = { changeAccount, getAccount, getOpenOrders, getClosedOrders, getAlpacaBars, cancelAllOrders, cancelAllBuyOrders, requestBracketOrder, requestMarketOrderSell, };
+module.exports = { changeAccount, getAccount, getOpenOrders, getClosedOrders, getPositions, getAlpacaBars, cancelAllOrders, cancelPreviousOrders, requestBracketOrder, requestMarketOrderSell, };
