@@ -86,7 +86,8 @@ async function getActionsToday(id, email) {
                 actions["buy"].sort((a, b) => sortedSymbols.indexOf(a) - sortedSymbols.indexOf(b))
 
                 let buyOrders = [];
-                actions["buy"].forEach(async buySymbol => {
+                for (let i = 0; i < actions["buy"].length; ++i) {
+                    let buySymbol = actions["buy"][i];
                     let holding = buyData[buySymbol]["holding"];
                     // qualify for bracket orders
                     if (holding["stoplossTarget"]) {
@@ -112,14 +113,15 @@ async function getActionsToday(id, email) {
                             try {
                                 await requestBracketOrder(buySymbol, buyPrice, positionSize, stoploss, target);
                                 buyOrders.push(buySymbol);
+                                console.log("Successfully Ordered:", buySombol);
                             }
                             catch (e) {
-                                console.log(e["message"])
+                                console.log("Order Failed:", e["message"])
                                 // insufficient buying power                            
                             }
                         }
                     }
-                })
+                }
                 actions["buy"] = buyOrders;
 
                 // execute alpaca orders for sells (overdue)
@@ -1230,4 +1232,4 @@ module.exports = {
     conductBacktest, conductStoplossTargetOptimization, conductIndicatorOptimization,
     findIntersections, optimizeStoplossTargetForSymbol, optimizeIndicatorsForSymbol,
     getSymbols, getIndicator
-}; 
+};
