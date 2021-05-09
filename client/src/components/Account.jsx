@@ -89,7 +89,7 @@ class Account extends React.Component {
                     .then(res => res.json())
                     .then(json => {
                         let tradeSettings = json["tradeSettings"][this.props.id] ? json["tradeSettings"][this.props.id] : {};
-                        this.setState({ alpaca: json["alpaca"], tradeSettings })
+                        this.setState({ email: json["_id"], alpaca: json["alpaca"], tradeSettings })
                     })
             }
         })
@@ -185,6 +185,7 @@ class Account extends React.Component {
                 </Button>
                 }
             </div >
+            {/* Forms for Login/Register */}
             {(!this.state.isLoggedIn && !this.state.loading) && <div className="account-forms">
                 {this.state.mode == "login" && <div className="account-form">
                     <span onClick={() => { this.setState({ mode: "register" }) }}>
@@ -231,8 +232,13 @@ class Account extends React.Component {
                 </div>}
             </div>
             }
+            {/* Account Info */}
             {
                 (this.state.isLoggedIn && !this.state.loading) && <div className="account-info">
+                    <div className="account-card">
+                        <h3 className="account-card-title">Account Information</h3>
+                        Email: {this.state.email}
+                    </div>
                     {
                         Object.keys(this.formData).map(formID => {
                             let form = this.formData[formID];

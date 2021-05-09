@@ -520,7 +520,7 @@ class Chart extends React.Component {
         }
 
         let closedOrder = undefined;
-        let isBuy = this.state.buyDates.has(date);
+        let isBuy = this.state.buyDates.has(date) || this.state.holdings.hasOwnProperty(date);
         // find the corresponding closed order to this date 
         if (this.props.closedOrders) {
             closedOrder = this.props.closedOrders.find(closedOrder => {

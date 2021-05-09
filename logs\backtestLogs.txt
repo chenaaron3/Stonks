@@ -1222,3 +1222,5 @@ Worker OX4NaBAo2I: Starting backtest
 Worker OX4NaBAo2I: Finished backtest in 286 seconds
 Worker aPTbMkvb9M: Starting backtest
 Worker aPTbMkvb9M: Finished backtest in 363 seconds
+Worker auIsMTJZLm: Starting backtest
+Worker auIsMTJZLm: Finished backtest in 329 seconds

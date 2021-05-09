@@ -87,6 +87,11 @@ class Results extends React.Component {
                     let ordersBySymbol = {};
                     // categorize each order by their symbol
                     closedOrders.forEach(closedOrder => {
+                        // dont care about cancelled orders
+                        if (closedOrder["status"] == "cancelled") {
+                            return;
+                        }
+
                         let symbol = closedOrder["symbol"];
                         let price = parseFloat(closedOrder["filled_avg_price"]);
                         let date = new Date(closedOrder["filled_at"]);
@@ -328,6 +333,7 @@ class Results extends React.Component {
                         <Tab style={{ minWidth: "0vw" }} label="Sim" {...a11yProps(4)} />
                     </Tabs>
                     {/* </Paper> */}
+                    {/* All Symbols */}
                     <TabPanel value={this.state.tabIndex} index={0} style={tabPanelStyle}>
                         <div className="results-list">
                             {this.state.sortedSymbols.length == 0 && (<span>
@@ -350,6 +356,7 @@ class Results extends React.Component {
                             }
                         </div>
                     </TabPanel>
+                    {/* Bought Symbols */}
                     <TabPanel value={this.state.tabIndex} index={1} style={tabPanelStyle}>
                         <div className="results-list">
                             {this.state.sortedSymbols.length == 0 && (<span>
@@ -373,6 +380,7 @@ class Results extends React.Component {
                             }
                         </div>
                     </TabPanel>
+                    {/* Sell Symbols */}
                     <TabPanel value={this.state.tabIndex} index={2} style={tabPanelStyle}>
                         <div className="results-list">
                             {this.state.sortedSymbols.length == 0 && (<span>
@@ -403,6 +411,7 @@ class Results extends React.Component {
                             </>
                         </div>
                     </TabPanel>
+                    {/* Watchlist Symbols */}
                     <TabPanel value={this.state.tabIndex} index={3} style={tabPanelStyle}>
                         <div className="results-list">
                             {this.state.sortedSymbols.length == 0 && (<span>
@@ -412,7 +421,9 @@ class Results extends React.Component {
                             <>
                                 {this.state.sortedSymbols.length != 0 && (
                                     this.state.sortedSymbols.map((symbol, index) => {
-                                        if (this.state.boughtSymbols.hasOwnProperty(symbol)) {
+                                        // if in watchlist or on alpaca with open position
+                                        if (this.state.boughtSymbols.hasOwnProperty(symbol) ||
+                                            (this.props.closedOrders.hasOwnProperty(symbol)) && this.props.results["symbolData"][symbol]["holdings"].length > 0) {
                                             return <Result sell key={index} symbol={symbol} index={index} result={this.props.results["symbolData"][symbol]}
                                                 handleGetResult={this.handleGetResult} buySymbol={this.buySymbol} sellSymbol={this.sellSymbol}
                                                 boughtSymbols={this.state.boughtSymbols} />
@@ -423,6 +434,7 @@ class Results extends React.Component {
                             </>
                         </div>
                     </TabPanel>
+                    {/* Simulation Symbols */}
                     <TabPanel value={this.state.tabIndex} index={4} style={tabPanelStyle}>
                         <div className="results-list">
                             {
