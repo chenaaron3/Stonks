@@ -84,8 +84,7 @@ function updateStocks(doc, updateDate, timeframe) {
         // try to get price data
         try {
             // get last recorded date
-            let baseDate = "1/1/1500";
-            let startDate = new Date(baseDate);
+            let startDate = new Date(doc["lastUpdated"]);
             if (doc["prices"].length > 0) {
                 startDate = new Date(doc["prices"][0]["date"])
             }

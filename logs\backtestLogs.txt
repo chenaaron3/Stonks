@@ -1224,3 +1224,14 @@ Worker aPTbMkvb9M: Starting backtest
 Worker aPTbMkvb9M: Finished backtest in 363 seconds
 Worker auIsMTJZLm: Starting backtest
 Worker auIsMTJZLm: Finished backtest in 329 seconds
+Worker HboBl0wJMs: Starting backtest
+Worker p6yK3KhxLQ: Starting backtest
+Worker p6yK3KhxLQ: Finished backtest in 406 seconds
+Worker CH81dDgg3K: Starting backtest
+Worker CH81dDgg3K: Finished backtest in 292 seconds
+Worker Fhm6NSv2uS: Starting backtest
+Worker Fhm6NSv2uS: Finished backtest in 193 seconds
+Worker 2KnDtTrzC9: Starting backtest
+Worker pG1y4PW7jX: Starting backtest
+Worker lW19Zat3CD: Starting backtest
+Worker lW19Zat3CD: Finished backtest in 298 seconds

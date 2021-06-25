@@ -106,7 +106,7 @@ class CreateBacktest extends React.Component {
             let f = fieldsToCheck[i];
             let newValue = parseFloat(this.state[f]);
             // error fields
-            if (typeof this.state[f] != "number" && !newValue) {
+            if (typeof this.state[f] != "number" && !newValue && newValue != 0) {
                 errors[f] = true;
                 numericalFields[f] = 0;
                 errored = true;
@@ -396,7 +396,7 @@ class CreateBacktest extends React.Component {
                                                                     }}
                                                                 >
                                                                     <MenuItem value={"day"}>Day</MenuItem>
-                                                                    <MenuItem value={"15Min"}>15 Minutes</MenuItem>
+                                                                    <MenuItem value={"1Hour"}>1 Hour</MenuItem>
                                                                 </Select>
                                                             </FormControl>
                                                         </div>

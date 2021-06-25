@@ -40,8 +40,8 @@ router.get("/isAutoUpdate", async (req, res) => {
 
     let found = false;
     if (req.user) {
-        try {
-            let activeResults = await getDocument("results", "activeResults");
+        let activeResults = await getDocument("results", "activeResults");
+        if (activeResults) {
             activeResults = activeResults["activeResults"];
             for (let i = 0; i < activeResults.length; ++i) {
                 let activeResult = activeResults[i];
@@ -50,10 +50,6 @@ router.get("/isAutoUpdate", async (req, res) => {
                     break;
                 }
             }
-        }
-        catch (e) {
-            // no active results
-            found = false;
         }
     }
 
@@ -258,8 +254,8 @@ router.delete("/deleteResults/:id", async (req, res) => {
     let results = [];
     let activeResults;
     // find list of people subscribed to this backtest
-    try {
-        activeResults = await getDocument("results", "activeResults");
+    activeResults = await getDocument("results", "activeResults");
+    if (activeResults) {
         activeResults = activeResults["activeResults"];
         for (let i = 0; i < activeResults.length; ++i) {
             let activeResult = activeResults[i];
@@ -268,10 +264,6 @@ router.delete("/deleteResults/:id", async (req, res) => {
                 results.push(activeResult);
             }
         }
-    }
-    catch (e) {
-        // no active results with id
-        dependents = [];
     }
 
     // if user subscribed, unsubscribe them

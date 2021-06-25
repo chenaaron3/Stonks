@@ -300,8 +300,8 @@ function conductBacktest(strategyOptions, id) {
         getSymbols(true).then(async (symbols) => {
             // Uncomment to test a portion of symbols
             // symbols = symbols.slice(0, 50);
-            // Uncoment to test custom symbols CHANGEBACK
-            // symbols = ["WERN"];
+            // Uncoment to test custom symbols
+            // symbols = ["AMZN"];
 
             // try to get previous results
             let previousResults = await getDocument("results", id);
@@ -1131,6 +1131,9 @@ function setStoplossTarget(stoplossTarget, strategyOptions, buyPrice, buyDate, a
             entry["midPointReached"] = false;
         }
         stoplossTarget[buyDate] = entry;
+    }
+    else {
+        stoplossTarget[buyDate] = {};
     }
 }
 

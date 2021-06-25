@@ -19,7 +19,8 @@ router.get('/bars', async function (req, res, next) {
 
     let symbol = req.query.symbol;
     
-    getAlpacaBars("AAPL", new Date("1/1/1500"), new Date(), "15Min")
+    let alpacaBars = await getAlpacaBars("AAPL", new Date("1/1/2018"), new Date("5/30/2021"), "1Hour")
+    let yahooBars = await getYahooBars("AAPL", new Date("4/1/2021"), new Date(), "1Day")
 });
 
 // recalcualte summary for testing

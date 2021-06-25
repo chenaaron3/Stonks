@@ -102,7 +102,8 @@ router.get('/actions', async function (req, res, next) {
 async function fill(timeframe) {
 	console.log("Filling!");
 	let symbols = await getSymbols(false);
-	let baseDate = "1/1/1500";
+	let baseDate = timeframe == "day" ? "1/1/1500" : "1/1/2019";
+	console.log(baseDate)
 	for (let i = 0; i < symbols.length; ++i) {
 		let symbol = symbols[i];
 		await addDocument("prices" + timeframe, { _id: symbol, prices: [], lastUpdated: baseDate });

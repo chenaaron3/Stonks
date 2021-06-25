@@ -1,6 +1,7 @@
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 const { daysBetween } = require('../client/src/helpers/utils');
-const { toPST } = require('./utils')
+const { toPST } = require('./utils');
+const axios = require('axios');
 
 const BACKTEST_YEARS = 5;
 
@@ -31,7 +32,7 @@ function getOpenOrders() {
 function getClosedOrders() {
     return alpaca.getOrders({
         status: 'closed',
-        limit: 500   
+        limit: 500
     })
 }
 
@@ -43,152 +44,106 @@ function getPosition(symbol) {
     return alpaca.getPosition(symbol);
 }
 
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2)
+        month = '0' + month;
+    if (day.length < 2)
+        day = '0' + day;
+
+    return [year, month, day].join('-');
+}
+
+function getBarsV2(symbol, params) {
+    const url = `https://data.alpaca.markets/v2/stocks/${symbol}/bars`
+    const options = {
+        headers: {
+            'APCA-API-KEY-ID': alpaca.configuration.keyId,
+            'APCA-API-SECRET-KEY': alpaca.configuration.secretKey
+        },
+        params: params
+    }
+
+    return new Promise(async (resolve, reject) => {
+        await axios.get(url, options)
+            .then((response) => {
+                // Map response to my data format
+                const result = response.data
+                resolve(result);
+            })
+            .catch((err) => {
+                console.log("err: ", err.response.data);
+                reject(err);
+            });
+    })
+}
+
 function getAlpacaBars(s, startDate, endDate, timeframe) {
     return new Promise(async (resolve, reject) => {
-        let symbols = [s];
-        let results = {}; // maps symbol to list of bar data
-        let dates = {}; // maps symbol to set of existing dates
-        let done = {}; // true if symbol got as far as possible
-        let faulty = {}; // true if symbol is faulty
+        let results = [];
+        let finished = false;
+        let pageToken = undefined;
 
-        // max day gaps for each timeframe 
-        let maxThresholds = {
-            "15Min": 100 // tight restriction for high quality
-        }
-
-        // intializes
-        symbols.forEach(symbol => {
-            results[symbol] = [];
-            done[symbol] = false;
-            dates[symbol] = new Set();
-            faulty[symbol] = false;
-        })
-
-        let untilDate = new Date();
-        while (!Object.values(done).every(v => v ? true : false)) {
+        while (!finished) {
             // empty list for symbols that dont exist
-            let bars = {};
+            let bars = [];
             let success = false;
             while (!success) {
                 try {
-                    console.log("trying bars v2")
-                    bars = await alpaca.getBarsV2(
+                    bars = await getBarsV2(
                         s,
                         {
+                            limit: 10000,
+                            start: formatDate(startDate),
+                            end: formatDate(endDate),
                             timeframe: timeframe,
-                            limit: 1000,
-                            start: startDate,
-                            end: untilDate
+                            page_token: pageToken
                         },
                         alpaca.configuration
                     );
+
                     success = true;
                 }
-                catch(e) {
-                    console.log(e["message"]);
-                    // too many requests
-                    if (e["statusCode"] == 429) {
-                        console.log("Resting...");
-                        await new Promise(r => setTimeout(r, 15000));
+                catch (e) {
+                    // end is too late for subscription
+                    console.log(e.response.status)
+                    if (e.response.status == 422) {
+                        endDate.setDate(endDate.getDate() - 1);
+                    }
+                    else if (e.response.status == 429) {
+                        await new Promise(r => setTimeout(r, 30000));
                     }
                 }
             }
 
-            for await (let value of bars) {
-                console.log(value)
+            let transformed = bars['bars'].map(raw => {
+                return {
+                    date: (new Date(raw["t"])),
+                    open: raw["o"],
+                    high: raw["h"],
+                    low: raw["l"],
+                    close: raw["c"],
+                    volume: raw["v"]
+                }
+            });
+
+            results.push.apply(results, transformed);
+
+            if (bars['next_page_token']) {
+                pageToken = bars['next_page_token'];
             }
-
-            let newestEndDate = new Date("1/1/1500");
-            resultingSymbols = Object.keys(bars);
-            let entryAdded = false;
-            for (let symbolIndex = 0; symbolIndex < resultingSymbols.length; ++symbolIndex) {
-                symbol = resultingSymbols[symbolIndex];
-                // already done, skip
-                if (done[symbol]) {
-                    continue;
-                }
-
-                let symbolBars = bars[symbol];
-                // no more results for symbol
-                if (symbolBars.length == 0) {
-                    done[symbol] = true;
-                }
-                // process local results
-                else {
-                    let first = undefined;
-                    let last = undefined;
-                    for (let i = symbolBars.length - 1; i >= 0; --i) {
-                        let bar = symbolBars[i];
-                        let epochTime = bar["startEpochTime"];
-                        let date = new Date(epochTime * 1000);
-                        // make sure there are no overlaps/repeats
-                        if (dates[symbol].has(epochTime)) {
-                            continue;
-                        }
-                        else {
-                            if (!last) {
-                                last = date;
-                                entryAdded = true;
-                            }
-                            let entry = {
-                                date: date,
-                                open: bar["openPrice"],
-                                high: bar["highPrice"],
-                                low: bar["lowPrice"],
-                                close: bar["closePrice"],
-                                volume: bar["volume"]
-                            }
-                            results[symbol].unshift(entry);
-                            dates[symbol].add(epochTime);
-                        }
-                    }
-
-                    first = results[symbol][0]["date"];
-
-                    // check for faulty data
-                    if (maxThresholds[timeframe] && daysBetween(first, last) > maxThresholds[timeframe]) {
-                        console.log("Faulty", symbol, daysBetween(first, last), "over limit of", maxThresholds[timeframe]);
-                        faulty[symbol] = true;
-                        done[symbol] = true;
-                    }
-
-                    // also done if got enough data
-                    // if (results[symbol].length >= 8000) {
-                    //     done[symbol] = true;
-                    // }
-
-                    // keep track of newest end date
-                    if (results[symbol][0]["date"] > newestEndDate) {
-                        newestEndDate = results[symbol][0]["date"]
-                    }
-
-                    // console.log(symbol, results[symbol][0]["date"], last)
-                }
-            }
-
-            untilDate = newestEndDate;
-            // if no more new data
-            if (!entryAdded) {
-                console.log("No more new data!");
-                break;
+            else {
+                finished = true;
             }
         }
 
-        // remove symbols that have no data or are faulty
-        Object.keys(results).forEach(symbol => {
-            if (results[symbol].length == 0 || faulty[symbol]) {
-                results[symbol] = [];
-            }
-            else {
-                // print out final ranges
-                console.log(symbol, results[symbol][0]["date"], results[symbol][results[symbol].length - 1]["date"])
-            }
+        // console.log(results[0], results[results.length - 1])
 
-        })
-
-        // console.log("kept", Object.keys(results).length)
-
-        resolve(results[s]);
+        resolve(results);
     })
 }
 

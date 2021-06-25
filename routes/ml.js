@@ -13,11 +13,8 @@ const csv = require('csv');
 router.get("/createDataset", async (req, res) => {
     let id = req.query.id;
     let window = req.query.window;
-    let result;
-    try {
-        result = await getDocument("results", id);
-    }
-    catch {
+    let result = await getDocument("results", id);
+    if (!result) {
         res.json({ error: "ID not valid!" });
         return;
     }

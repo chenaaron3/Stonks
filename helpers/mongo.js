@@ -155,7 +155,8 @@ function getDocument(collectionName, documentID) {
 					resolve(doc);
 				}
 				else {
-					reject(`Document ${documentID} does not exist in Collection ${collectionName}`);
+					console.log(`Document ${documentID} does not exist in Collection ${collectionName}`);
+					resolve(undefined);
 				}
 
 			})
