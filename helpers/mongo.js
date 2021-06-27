@@ -5,7 +5,7 @@ const DOC_LIMIT = 10000000;
 let stonks;
 let resultsCollection;
 
-let mongoURL = process.env.NODE_ENV == "production" ? process.env.PROD_MONGO_DATABASE_URL : process.env.MONGO_DATABASE_URL
+let mongoURL = process.env.MONGO_DATABASE_URL
 
 const client = new MongoClient(mongoURL, {
 	useUnifiedTopology: true
