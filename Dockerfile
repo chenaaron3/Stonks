@@ -16,6 +16,7 @@ COPY . ./
 
 # Build client
 WORKDIR /usr/src/app/client
+ARG REACT_APP_SUBDIRECTORY=/stocks
 RUN npm run build
 
 # Start server
