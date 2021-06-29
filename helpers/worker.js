@@ -56,18 +56,21 @@ process.on('message', async (msg) => {
                 lastUpdated = new Date(msg.previousResults["results"]["lastUpdated"]);
             }
 
-            // find results for the symbol
-            let intersection = await findIntersections(msg.strategyOptions, symbol, previousResults, lastUpdated);
-            // only record if if has buy/sell events
-            if (intersection["events"].length > 0) {
-                intersections[symbol] = intersection;
-            }
-            console.log(`${symbol} => ${intersection["events"].length}`);
+            try {
+                // find results for the symbol
+                let intersection = await findIntersections(msg.strategyOptions, symbol, previousResults, lastUpdated);
+                // only record if if has buy/sell events
+                if (intersection["events"].length > 0) {
+                    intersections[symbol] = intersection;
+                }
+                console.log(`${symbol} => ${intersection["events"].length}`);
 
-            // update progress
-            if (i != 0 && i % updateStep == 0) {
-                process.send({ status: "progress", progress: updateStep });
+                // update progress
+                if (i != 0 && i % updateStep == 0) {
+                    process.send({ status: "progress", progress: updateStep });
+                }
             }
+            catch { }
         }
         // notify parent
         process.send({ status: "finished", intersections }, null, {}, () => {
@@ -114,14 +117,17 @@ process.on('message', async (msg) => {
             let previousResults = msg.previousResults["results"]["symbolData"][symbol];
 
             // find results for the symbol
-            let optimizedSymbol = await optimizeStoplossTargetForSymbol(msg.previousResults["results"]["strategyOptions"], msg.optimizeOptions, symbol, previousResults);
-            optimizedData[symbol] = optimizedSymbol["results"];
-            console.log(`${symbol} => ${(optimizedSymbol["effective"] / optimizedSymbol["count"] * 100).toFixed(0)}% (${optimizedSymbol["effective"] + "/" + optimizedSymbol["count"]})`);
-
-            // update progress
-            if (i != 0 && i % updateStep == 0) {
-                process.send({ status: "progress", progress: updateStep });
+            try {
+                let optimizedSymbol = await optimizeStoplossTargetForSymbol(msg.previousResults["results"]["strategyOptions"], msg.optimizeOptions, symbol, previousResults);
+                optimizedData[symbol] = optimizedSymbol["results"];
+                console.log(`${symbol} => ${(optimizedSymbol["effective"] / optimizedSymbol["count"] * 100).toFixed(0)}% (${optimizedSymbol["effective"] + "/" + optimizedSymbol["count"]})`);
+    
+                // update progress
+                if (i != 0 && i % updateStep == 0) {
+                    process.send({ status: "progress", progress: updateStep });
+                }
             }
+            catch {}
         }
         // notify parent
         process.send({ status: "finished", optimizedData }, null, {}, () => {
@@ -169,14 +175,17 @@ process.on('message', async (msg) => {
             let strategyOptions = msg.previousResults["results"]["strategyOptions"];
 
             // find results for the symbol
-            let optimizedSymbol = await optimizeIndicatorsForSymbol(msg.indicatorOptions, symbol, previousResults, strategyOptions);
-            optimizedData[symbol] = optimizedSymbol;
-            console.log(`${symbol} => DONE`);
-
-            // update progress
-            if (i != 0 && i % updateStep == 0) {
-                process.send({ status: "progress", progress: updateStep });
+            try {
+                let optimizedSymbol = await optimizeIndicatorsForSymbol(msg.indicatorOptions, symbol, previousResults, strategyOptions);
+                optimizedData[symbol] = optimizedSymbol;
+                console.log(`${symbol} => DONE`);
+    
+                // update progress
+                if (i != 0 && i % updateStep == 0) {
+                    process.send({ status: "progress", progress: updateStep });
+                }
             }
+            catch {}
         }
         // notify parent
         process.send({ status: "finished", optimizedData }, null, {}, () => {

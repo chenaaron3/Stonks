@@ -31,7 +31,12 @@ function getPrices(symbol, timeframe) {
     return new Promise(async (resolve, reject) => {
         getDocument("prices" + timeframe, symbol)
             .then(document => {
-                resolve(document.prices);
+                if (document) {
+                    resolve(document.prices);
+                }
+                else {
+                    resolve({ error: `${symbol} does not exist in timeframe ${timeframe}` });
+                }
             })
             .catch(err => reject(err));
     });
@@ -379,7 +384,7 @@ async function gatherData(symbols, result, window) {
                 // }
 
                 let trendIndicator = getIndicator("Trend", { period: 5 }, symbol, dates, prices, opens, highs, lows, closes);
-                let {pivots, pivotDates, realizedPivots} = trendIndicator.getGraph();
+                let { pivots, pivotDates, realizedPivots } = trendIndicator.getGraph();
 
                 let pivotCounts = 0;
                 let pivotIndex = -1;
