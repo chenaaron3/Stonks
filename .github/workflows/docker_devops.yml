@@ -10,7 +10,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: env.DEBUG == false
+    if: ${{ env.DEBUG == false }}
     steps:
       - name: Cache Docker layers
         uses: actions/cache@v2
