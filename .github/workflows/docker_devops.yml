@@ -59,3 +59,5 @@ jobs:
           script: |
             cd ~/Desktop/server
             sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPOSITORY }}
+            sudo docker-compose down
+            sudo docker-compose up -d
