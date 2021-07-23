@@ -4,19 +4,24 @@ var path = require('path');
 var fs = require('fs');
 const { fork } = require('child_process');
 
-let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection, createCollection } = require('../helpers/mongo');
+let { getCollection, addDocument, getDocument, deleteDocument, deleteCollection, createCollection, setDocumentField } = require('../helpers/mongo');
 let { makeid, daysBetween, hoursBetween } = require('../helpers/utils');
 let { getSymbols, updateBacktest, getActionsToday } = require('../helpers/backtest');
 let { getUpdatedPrices, fixFaulty, checkSplit, update } = require('../helpers/stock');
 let { addJob } = require('../helpers/queue');
 
-let PATH_TO_METADATA = path.join(__dirname, "../res/metadata.json");
-
 ensureUpdated();
 // ensure our database is constantly updated
 async function ensureUpdated() {
 	console.log("Retreiving metadata...");
-	let metadata = JSON.parse(fs.readFileSync(PATH_TO_METADATA));
+	let metadata = await getDocument('metadata', 'metadata');
+	// create metadata if missing
+	if (!metadata) {
+		metadata =  { "_id": "metadata", "lastUpdated": new Date() };
+		await createCollection('metadata')
+		await addDocument("metadata", metadata);
+	}
+	console.log(metadata)
 	let date = new Date();
 	let pstHour = date.getUTCHours() - 8;
 	if (pstHour < 0) pstHour += 24;
@@ -26,8 +31,7 @@ async function ensureUpdated() {
 		if (pstHour >= 13) {
 			console.log("Update required!");
 			update("day");
-			metadata["lastUpdated"] = new Date().toString();
-			fs.writeFileSync(PATH_TO_METADATA, JSON.stringify(metadata));
+			await setDocumentField('metadata', "metadata", "lastUpdated",  new Date().toString());
 
 			// check for splits on saturdays
 			if (date.getDay() == 6) {

@@ -27,6 +27,9 @@ class SavedResult extends React.Component {
     }
 
     render() {
+        if (!this.props.id) {
+            return <></>;
+        }
         return <>
             <div className="saved-result-background" style={{
                 backgroundImage: `linear-gradient(to right, #2ecc71 ${this.state.progress}%, rgb(0, 0, 0, 0) ${this.state.progress}%)`

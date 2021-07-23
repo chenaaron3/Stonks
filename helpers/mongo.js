@@ -160,7 +160,10 @@ function getDocument(collectionName, documentID) {
 				}
 
 			})
-			.catch(err => reject(err));
+			.catch(err => {
+				console.log(`${err}: Could not get collection ${collectionName}`);
+				resolve(undefined)
+			});
 	});
 }
 
