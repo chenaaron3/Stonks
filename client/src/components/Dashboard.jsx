@@ -262,7 +262,7 @@ class Dashboard extends React.Component {
     }
 
     onCopyLink = (e) => {
-        navigator.clipboard.writeText("chenaaron.com/stocks/" + this.props.id);
+        navigator.clipboard.writeText(`${process.env.DOMAIN}${process.env.REACT_APP_SUBDIRECTORY}/` + this.props.id);
     }
 
     keydownHandler = (e) => {
