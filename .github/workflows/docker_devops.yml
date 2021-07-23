@@ -4,13 +4,10 @@ name: Docker CI/CD
 
 on: [push, pull_request]
 
-env:
-  DEBUG: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ env.DEBUG == false }}
+    if: ${{ false }}
     steps:
       - name: Cache Docker layers
         uses: actions/cache@v2
