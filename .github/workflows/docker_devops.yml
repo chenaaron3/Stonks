@@ -2,11 +2,7 @@
 
 name: Docker CI/CD
 
-on:
-  push:
-    branches: [stonksv2]
-  pull_request:
-    branches: [stonksv2]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -41,7 +37,7 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/stocks:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPOSITORY }}:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
@@ -61,4 +57,4 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/Desktop/server
-            sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ DOCKER_HUB_REPOSITORY }}
+            sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPOSITORY }}
