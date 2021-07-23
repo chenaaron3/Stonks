@@ -5279,3 +5279,13 @@ Worker lW19Zat3CD: Finished backtest for tickers A to DENN in 135 seconds
 Worker lW19Zat3CD: Finished backtest for tickers DEO to JFKKR in 150 seconds
 Worker lW19Zat3CD: Finished backtest for tickers JFKKU to PYT in 225 seconds
 Worker lW19Zat3CD: Finished backtest for tickers PYZ to ZYXI in 240 seconds
+Worker lW19Zat3CD: Finding intersections for tickers A to DENN
+Worker lW19Zat3CD: Finding intersections for tickers DEO to JFKKR
+Worker auIsMTJZLm: Finding intersections for tickers A to DENN
+Worker auIsMTJZLm: Finding intersections for tickers DEO to JFKKR
+Worker auIsMTJZLm: Finding intersections for tickers PYZ to ZYXI
+Worker auIsMTJZLm: Finding intersections for tickers JFKKU to PYT
+Worker auIsMTJZLm: Finished backtest for tickers DEO to JFKKR in 137 seconds
+Worker auIsMTJZLm: Finished backtest for tickers PYZ to ZYXI in 139 seconds
+Worker auIsMTJZLm: Finished backtest for tickers JFKKU to PYT in 143 seconds
+Worker auIsMTJZLm: Finished backtest for tickers A to DENN in 148 seconds

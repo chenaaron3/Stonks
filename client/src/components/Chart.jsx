@@ -11,6 +11,7 @@ import RSI from "./indicators/RSI";
 import MACD from "./indicators/MACD";
 import ADX from "./indicators/ADX";
 import Stochastic from "./indicators/Stochastic";
+import Volume from "./indicators/Volume";
 import Loading from './Loading';
 import { formatDate, numberWithCommas, displayDelta, daysBetween } from '../helpers/utils';
 
@@ -37,6 +38,7 @@ class Chart extends React.Component {
 
         this.state = {
             priceGraph: [],
+            volumeGraph: [],
             buyDates: new Set(),
             sellDates: new Set(),
             holdings: {},
@@ -260,15 +262,8 @@ class Chart extends React.Component {
         if (this.eventsLookup.hasOwnProperty(label) && this.eventsLookup[label]["type"] == "sell") {
             profit = this.eventsLookup[label]["event"]["profit"];
         }
-        let volume = this.graphs["volumes"][label];
-        if (volume) {
-            volume = ` (${numberWithCommas(volume)})`
-        }
-        else {
-            volume = "";
-        }
         return <>
-            {formatDate(label) + volume}
+            {formatDate(label)}
             <br />
             {target ? (<>{`🎯: $${target.toFixed(2)} (${this.stoplossTarget[label]["target%"].toFixed(2)}%)`}<br /></>) : ""}
             {stoploss ? (<>{`🛑: $${stoploss.toFixed(2)} (${this.stoplossTarget[label]["stoploss%"].toFixed(2)}%)`}<br /></>) : ""}
@@ -331,6 +326,7 @@ class Chart extends React.Component {
     loadChunk = () => {
         return new Promise(res => {
             let priceGraph = [];
+            let volumeGraph = [];
             let myindicatorGraphs = {};
             let indicatorGraphs = this.graphs["indicators"];
 
@@ -421,10 +417,11 @@ class Chart extends React.Component {
                 });
 
                 priceGraph.push(priceEntry);
+                volumeGraph.push({ date, volume: this.graphs["volumes"][date] });
             });
 
             this.setState(myindicatorGraphs);
-            this.setState({ priceGraph }, () => {
+            this.setState({ priceGraph, volumeGraph }, () => {
                 res();
                 this.setState({ loading: false });
             });
@@ -714,7 +711,7 @@ class Chart extends React.Component {
         }
         let margins = { top: 20, right: 40, bottom: 20, left: 20 };
         let sideChartHeight = 15;
-        let mainChartHeight = 100 - (this.props.activeIndicators.filter(i => !this.overlayCharts.includes(i)).length + 1) * sideChartHeight;
+        let mainChartHeight = 100 - (this.props.activeIndicators.filter(i => !this.overlayCharts.includes(i)).length + 2) * sideChartHeight; // + 2 (scroll, volume)
 
         // Brushes
         let mainBrush = <Brush gap={1} height={65} dataKey="date" startIndex={this.state.startBrushIndex} endIndex={this.state.endBrushIndex} onChange={this.onBrushChange} tickFormatter={this.brushFormatter}>
@@ -800,6 +797,9 @@ class Chart extends React.Component {
                         {hiddenBrush}
                         {tooltip}
                     </LineChart>
+                </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={`${sideChartHeight}%`} key={`volume-chart`} >
+                    <Volume graph={this.state.volumeGraph} xAxisTickFormatter={this.xAxisTickFormatter} brush={hiddenBrush} tooltip={simpleTooltip} />
                 </ResponsiveContainer>
                 {/* Sub Charts */}
                 {

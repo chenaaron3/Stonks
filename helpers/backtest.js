@@ -104,7 +104,7 @@ async function getActionsToday(id, email) {
                             // trade if below risk parameter
                             if (tradeSettings["maxRisk"]) shouldTrade = risk <= parseInt(tradeSettings["maxRisk"]);
                             // check if portfolio is maxed out already
-                            if (tradeSettings["maxPositions"]) shouldTrade = positions.length + buyOrders.length <= tradeSettings["maxPositions"];
+                            if (tradeSettings["maxPositions"]) shouldTrade = shouldTrade && (positions.length + buyOrders.length <= tradeSettings["maxPositions"]);
                             // adjust position size by how many positions desired in portfolio
                             if (tradeSettings["maxPositions"]) positionSize = 1 / (parseInt(tradeSettings["maxPositions"]));
                         }

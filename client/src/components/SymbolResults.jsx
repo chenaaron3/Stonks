@@ -11,7 +11,7 @@ import IconButton from '@material-ui/core/IconButton';
 class SymbolResults extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { numWins: 0, numLosses: 0, averageSpan: 0 }
+        this.state = { numWins: 0, numLosses: 0, averageSpan: 0, latestPrice: 0 }
     }
 
     // statistical analysis
@@ -29,10 +29,15 @@ class SymbolResults extends React.Component {
             averageSpan += event["span"];
         })
         this.setState({ numWins, numLosses, averageSpan: averageSpan / this.props.results["events"].length });
+
+        // fetch latest price
+        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/symbol/latestPrice?symbol=${this.props.symbol}`)
+            .then(res => res.json())
+            .then(latestPrice => this.setState({ latestPrice: latestPrice["close"] }))
     }
 
     componentDidMount() {
-        this.analyze();
+        this.analyze();        
     }
 
     componentDidUpdate(prevProps) {
@@ -58,7 +63,7 @@ class SymbolResults extends React.Component {
                     <IconButton className="symbol-results-random" style={{ position: "absolute" }} onClick={this.onDiceRoll}>
                         <CasinoIcon />
                     </IconButton>
-                    <h2 className="symbol-results-title">{this.props.symbol}</h2>
+                    <h2 className="symbol-results-title">{this.props.symbol}<br/>${this.state.latestPrice.toFixed(2)}</h2>
                     <div className="symbol-results-body">
                         <div>Wins: {this.state.numWins}</div>
                         <div>Losses: {this.state.numLosses}</div>
