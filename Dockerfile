@@ -17,8 +17,11 @@ COPY . ./
 # Build client
 WORKDIR /usr/src/app/client
 ENV REACT_APP_SUBDIRECTORY=/stocks
+ARG REACT_APP_SUBDIRECTORY=/stocks
 ENV REACT_APP_DEMO_ID=YPHbBGbF0l
+ARG REACT_APP_DEMO_ID=YPHbBGbF0l
 ENV REACT_APP_DOMAIN=chenaaron.com
+ARG REACT_APP_DOMAIN=chenaaron.com
 RUN npm run build
 
 # Start server
