@@ -1238,3 +1238,18 @@ Worker lW19Zat3CD: Finished backtest in 298 seconds
 Worker lW19Zat3CD: Starting backtest
 Worker auIsMTJZLm: Starting backtest
 Worker auIsMTJZLm: Finished backtest in 234 seconds
+Worker s9EQw7pVsI: Starting backtest
+Worker NmEb1qTUBn: Starting backtest
+Worker CR6qpKIRXz: Starting backtest
+Worker XGEN2n6TR9: Starting backtest
+Worker 5U92g2GZRd: Starting backtest
+Worker kN3Nr9cDpF: Starting backtest
+Worker btRKWnXG2E: Starting backtest
+Worker kQU8OXtH86: Starting backtest
+Worker kQU8OXtH86: Finished backtest in 493 seconds
+Worker auIsMTJZLm: Starting backtest
+Worker auIsMTJZLm: Finished backtest in 245 seconds
+Worker 9LKfVH8Hv2: Starting backtest
+Worker 9LKfVH8Hv2: Finished backtest in 345 seconds
+Worker luBJAPGEKR: Starting backtest
+Worker luBJAPGEKR: Finished backtest in 313 seconds

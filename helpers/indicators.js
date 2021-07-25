@@ -16,6 +16,7 @@ let Swing = require('./indicators/swing');
 let Divergence = require('./indicators/divergence');
 let Stochastic = require('./indicators/stochastic');
 let Trend = require('./indicators/trend');
+let High = require('./indicators/high');
 let INDICATOR_OBJECTS = {
     "SMA": SMA,
     "EMA": EMA,
@@ -33,7 +34,8 @@ let INDICATOR_OBJECTS = {
     "Swing": Swing,
     "Divergence": Divergence,
     "Stochastic": Stochastic,
-    "Trend": Trend
+    "Trend": Trend,
+    "High": High
 }
 
 // gets an indicator object

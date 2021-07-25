@@ -566,6 +566,10 @@ function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbo
                     let [prices, volumes, opens, highs, lows, closes, dates] = getAdjustedData(json, undefined);
                     let [mainSellIndicator, supportingSellIndicators, sellMap] = getIndicatorObjects(strategyOptions, "sell", symbol, dates, prices, opens, highs, lows, closes)
                     let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes);
+                    let high = undefined;
+                    if (strategyOptions["highPeriod"]) {
+                        high = getIndicator("High", { period: strategyOptions["highPeriod"] }, symbol, dates, prices, opens, highs, lows, closes);
+                    }
                     // list of symbol data for each stoploss/target combination  
                     let results = [];
                     let count = 0;
@@ -614,7 +618,14 @@ function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbo
                                 strategyOptions["riskRewardRatio"] = ratio;
                                 let stoplossTarget = stoplossTargets[index];
                                 setStoplossTarget(stoplossTarget, strategyOptions, price, date, atr, lows, highs, dates, dateIndex);
-                                sold.push(false);
+                                if (high && stoplossTarget.hasOwnProperty(date) && stoplossTarget[date]["target"] && stoplossTarget[date]["target"] > high.getGraph()["High"][date]) {
+                                    delete stoplossTarget[date];
+                                    sold.push(true);
+                                    soldCount -= 1;
+                                }
+                                else {
+                                    sold.push(false);
+                                }
                                 index += 1;
                             }
 
@@ -671,11 +682,31 @@ function optimizeStoplossTargetForSymbol(strategyOptions, optimizeOptions, symbo
 
                         // append list of symboldata to results 
                         for (let i = 0; i < optimizedEvents.length; ++i) {
+                            let holdings = [];    
+                            // set stoploss for holdings     
+                            previousResults["holdings"].forEach((holding) => {
+                                let stoplossTarget = {};
+                                let date = holding["buyDate"];
+                                let price = prices[date];
+                                let dateIndex = dates.indexOf(date);
+                                // get new stoploss and targets for new options
+                                setStoplossTarget(stoplossTarget, strategyOptions, price, date, atr, lows, highs, dates, dateIndex);
+                                if (high && stoplossTarget.hasOwnProperty(date) && stoplossTarget[date]["target"] && stoplossTarget[date]["target"] > high.getGraph()["High"][date]) {
+                                    delete stoplossTarget[date];
+                                    return;
+                                }
+                                let newHolding = {
+                                    buyDate: date,
+                                    stoplossTarget: stoplossTarget[date]
+                                }
+                                holdings.push(newHolding);
+                            })                   
+                            
                             results.push({
                                 "profit": profits[i]["profit"],
                                 "percentProfit": profits[i]["percentProfit"] / optimizedEvents[i].length,
                                 "events": optimizedEvents[i],
-                                "holdings": previousResults["holdings"],
+                                "holdings": holdings,
                                 "faulty": false
                             });
                         }
@@ -723,6 +754,10 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
                     let [mainSellIndicator, supportingSellIndicators, sellMap] = getIndicatorObjects(strategyOptions, "sell", symbol, dates, prices, opens, highs, lows, closes)
                     let stopLossIndicator = undefined; //getIndicator("SMA", { period: 180, minDuration: 3 }, symbol, dates, prices, opens, highs, lows, closes);
                     let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes);
+                    let high = undefined;
+                    if (strategyOptions["highPeriod"]) {
+                        high = getIndicator("High", { period: strategyOptions["highPeriod"] }, symbol, dates, prices, opens, highs, lows, closes);
+                    }
 
                     // if this symbol contains faulty data
                     let faulty = false;
@@ -816,9 +851,16 @@ function findIntersections(strategyOptions, symbol, previousResults, lastUpdated
 
                             // if all supports agree, buy the stock
                             if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions["multipleBuys"])) {
-                                buyPrices.push(prices[day]);
-                                buyDates.push(day);
                                 setStoplossTarget(stoplossTarget, strategyOptions, prices[day], day, atr, lows, highs, dates, i);
+                                if (high && stoplossTarget.hasOwnProperty(day) && stoplossTarget[day]["target"] && stoplossTarget[day]["target"] > high.getGraph()["High"][day]) {
+                                    delete stoplossTarget[day];
+                                    continue;
+                                }
+                                else {
+                                    buyPrices.push(prices[day]);
+                                    buyDates.push(day);
+                                }
+
                                 buySignal = false;
                                 buyExpiration = expiration;
                                 Object.keys(buyMap).forEach(indicator => {

@@ -37,6 +37,7 @@ class CreateBacktest extends React.Component {
             stopLossAtr: 0,
             targetAtr: 0,
             riskRewardRatio: 0,
+            highPeriod: 0,
             limitOrder: false,
             trailingStopLoss: false,
             timeframe: "day",
@@ -137,6 +138,7 @@ class CreateBacktest extends React.Component {
                 "stopLossAtr": this.state.stopLossAtr == 0 ? undefined : this.state.stopLossAtr,
                 "targetAtr": this.state.targetAtr == 0 ? undefined : this.state.targetAtr,
                 "riskRewardRatio": this.state.riskRewardRatio == 0 ? undefined : this.state.riskRewardRatio,
+                "highPeriod": this.state.highPeriod == 0 ? undefined : this.state.highPeriod,
                 "timeframe": this.state.timeframe,
                 "stopLossSwing": this.state.stopLossSwing,
                 "targetSwing": this.state.targetSwing,
@@ -354,14 +356,14 @@ class CreateBacktest extends React.Component {
                                                 <h3 className="create-backtest-subtitle">Additional Options</h3>
                                                 <div className="create-backtest-form-body-split">
                                                     <div className="create-backtest-additional-options">
-                                                        <div>
+                                                        {/* <div>
                                                             <TextField label="Target Pips" value={this.state.stopLossHigh}
                                                                 onChange={(e) => {
                                                                     this.setState({ stopLossHigh: e.target.value })
                                                                 }}
                                                                 helperText="20 to sell at 20% profit. 0 to disable."
                                                                 error={this.state.errors["stopLossHigh"]} />
-                                                        </div>
+                                                        </div> */}
                                                         {/* <div>
                                                             <TextField label="Stop Loss" value={this.state.stopLossLow}
                                                             onChange={(e) => {
@@ -400,7 +402,7 @@ class CreateBacktest extends React.Component {
                                                                 </Select>
                                                             </FormControl>
                                                         </div>
-                                                        <div>
+                                                        {/* <div>
                                                             <FormControlLabel
                                                                 control={
                                                                     <Checkbox
@@ -413,7 +415,7 @@ class CreateBacktest extends React.Component {
                                                                 }
                                                                 label="Stop Above Swing High"
                                                             />
-                                                        </div>
+                                                        </div> */}
                                                         <div>
                                                             <FormControlLabel
                                                                 control={
@@ -442,7 +444,7 @@ class CreateBacktest extends React.Component {
                                                                 label="Use Limit Order"
                                                             />
                                                         </div>
-                                                        <div>
+                                                        {/* <div>
                                                             <FormControlLabel
                                                                 control={
                                                                     <Checkbox
@@ -455,17 +457,17 @@ class CreateBacktest extends React.Component {
                                                                 }
                                                                 label="Use Trailing Stop"
                                                             />
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                     <div className="create-backtest-additional-options">
-                                                        <div>
+                                                        {/* <div>
                                                             <TextField label="Target ATR" value={this.state.targetAtr}
                                                                 onChange={(e) => {
                                                                     this.setState({ targetAtr: e.target.value })
                                                                 }}
                                                                 helperText="1 to sell at 1 ATR above. 0 to disable."
                                                                 error={this.state.errors["targetAtr"]} />
-                                                        </div>
+                                                        </div> */}
                                                         <div>
                                                             <TextField label="Risk Reward Ratio" value={this.state.riskRewardRatio}
                                                                 onChange={(e) => {
@@ -473,6 +475,14 @@ class CreateBacktest extends React.Component {
                                                                 }}
                                                                 helperText="2 for 2:1 ratio. 0 to disable."
                                                                 error={this.state.errors["riskRewardRatio"]} />
+                                                        </div>
+                                                        <div>
+                                                            <TextField label="High Period" value={this.state.highPeriod}
+                                                                onChange={(e) => {
+                                                                    this.setState({ highPeriod: e.target.value })
+                                                                }}
+                                                                helperText="Cancel buy if target > x day high."
+                                                                error={this.state.errors["highPeriod"]} />
                                                         </div>
                                                         <div>
                                                             <TextField label="Max Days" value={this.state.maxDays}

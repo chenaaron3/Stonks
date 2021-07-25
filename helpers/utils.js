@@ -28,7 +28,7 @@ function getAdjustedData(rawData, lastUpdated, strategyOptions) {
         };
         Object.values(strategyOptions["buyIndicators"]).forEach(flatten);
         Object.values(strategyOptions["sellIndicators"]).forEach(flatten);
-        let margin = Math.max(...flattenedValues) + 5;
+        let margin = Math.max(...flattenedValues) + 100;
         // go back certain margin
         cutoffIndex = Math.max(0, cutoffIndex - margin);
     }
