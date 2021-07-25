@@ -14,6 +14,10 @@ let checkLogs = path.join(logDirectory, "checkLogs.txt");
 let optimizeLogs = path.join(logDirectory, "optimizeLogs.txt");
 let datasetPath = path.join(logDirectory, "datasetLogs.txt");
 
+if (!fs.existsSync(logDirectory)){
+    fs.mkdirSync(logDirectory);
+}
+
 process.on('message', async (msg) => {
     // thread to run backtest
     if (msg.type == "startBacktest") {
