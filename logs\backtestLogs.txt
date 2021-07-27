@@ -1253,3 +1253,5 @@ Worker 9LKfVH8Hv2: Starting backtest
 Worker 9LKfVH8Hv2: Finished backtest in 345 seconds
 Worker luBJAPGEKR: Starting backtest
 Worker luBJAPGEKR: Finished backtest in 313 seconds
+Worker auIsMTJZLm: Starting backtest
+Worker auIsMTJZLm: Finished backtest in 143 seconds

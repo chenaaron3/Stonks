@@ -242,6 +242,9 @@ async function fixFaulty() {
     let results = { "fixed": 0, "blacklisted": 0 };
     if (fs.existsSync(PATH_TO_FAULTY)) {
         let faulty = JSON.parse(fs.readFileSync(PATH_TO_FAULTY, { encoding: "utf-8" }));
+        if (!fs.existsSync(PATH_TO_BLACKLIST)) {
+            fs.writeFileSync(PATH_TO_BLACKLIST, JSON.stringify([]), { encoding: "utf-8" });
+        }
         let blacklist = JSON.parse(fs.readFileSync(PATH_TO_BLACKLIST, { encoding: "utf-8" }));
         let today = new Date();
         let baseDate = new Date("1/1/1500");

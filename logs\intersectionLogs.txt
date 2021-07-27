@@ -5349,3 +5349,11 @@ Worker luBJAPGEKR: Finished backtest for tickers DFFN to JFR in 272 seconds
 Worker luBJAPGEKR: Finished backtest for tickers A to DEX in 274 seconds
 Worker luBJAPGEKR: Finished backtest for tickers QADB to ZYXI in 286 seconds
 Worker luBJAPGEKR: Finished backtest for tickers JFU to QADA in 290 seconds
+Worker auIsMTJZLm: Finding intersections for tickers A to DEX
+Worker auIsMTJZLm: Finding intersections for tickers DFFN to JFR
+Worker auIsMTJZLm: Finding intersections for tickers JFU to QADA
+Worker auIsMTJZLm: Finding intersections for tickers QADB to ZYXI
+Worker auIsMTJZLm: Finished backtest for tickers DFFN to JFR in 67 seconds
+Worker auIsMTJZLm: Finished backtest for tickers A to DEX in 72 seconds
+Worker auIsMTJZLm: Finished backtest for tickers JFU to QADA in 70 seconds
+Worker auIsMTJZLm: Finished backtest for tickers QADB to ZYXI in 64 seconds
