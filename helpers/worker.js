@@ -15,7 +15,12 @@ let optimizeLogs = path.join(logDirectory, "optimizeLogs.txt");
 let datasetPath = path.join(logDirectory, "datasetLogs.txt");
 
 if (!fs.existsSync(logDirectory)){
-    fs.mkdirSync(logDirectory);
+    try {
+        fs.mkdirSync(logDirectory);
+    }
+    catch {
+        
+    }
 }
 
 process.on('message', async (msg) => {
