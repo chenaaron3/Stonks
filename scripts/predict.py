@@ -19,7 +19,7 @@ dir = os.path.dirname(__file__)
 print(dir)
 
 # Load dataset
-data = json.load(open(os.path.join(dir, "../data", id + ".json"), "r"))
+data = json.load(open(os.path.join(dir, "..", "dist", "data", id + ".json"), "r"))
 
 # Organize our data
 labels = data['labels']

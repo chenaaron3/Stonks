@@ -1,0 +1,169 @@
+.dashboard {
+    width: 100%;
+    height: 100%;
+    background-color: #dee4ec;
+    padding-top: 7vh;
+    padding-left: 5vw;
+    padding-right: 5vw;
+}
+
+.dashboard-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.dashboard-settings {
+    display: flex;
+    flex-direction: row;
+}
+
+.dashboard-title {
+    font-weight: bold;
+    font-size: 2em;
+}
+
+.dashboard-update {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.dashboard-progress {
+    width: 5vw;
+}
+
+.dashboard-pie-cards, .dashboard-graph-cards {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.dashboard-card {
+    display: inline-flex;
+    justify-content: space-between;
+    flex-direction: column;
+    margin: 2vh;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 3vh;
+    background-color: #ecf0f1;
+    box-shadow: 10px 10px 5px 0px rgba(0, 0, 0, 0.07);
+    transition: all 200ms;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 20px 20px 10px 0px rgba(0, 0, 0, 0.07);
+}
+
+.dashboard-card-title {
+    font-size: 1.3em;
+}
+
+.dashboard-card-subtitle {
+    font-size: .9em;
+    margin-top: 1vh;
+}
+
+.dashboard-pie-label {
+    font-weight: 900;
+    font-size: 1.5vw;
+}
+
+.dashboard-card-caption {
+    text-align: center;
+}
+
+.dashboard-body {
+    display: grid;
+    grid-template-columns: repeat(5, 16vw);
+    grid-template-rows: repeat(2, 40vh);
+    grid-template-areas: "profitPie percentProfitPie profitGraph profitGraph indicators" "tradeGraph tradeGraph tradePie spanPie indicators";
+    column-gap: 2vw;
+    row-gap: 2vh;
+}
+
+#dashboard-profit-pie {
+    grid-area: profitPie;
+}
+
+#dashboard-percent-profit-pie {
+    grid-area: percentProfitPie;
+}
+
+#dashboard-profit-graph {
+    grid-area: profitGraph;
+}
+
+#dashboard-trade-graph {
+    grid-area: tradeGraph;
+}
+
+#dashboard-trade-pie {
+    grid-area: tradePie;
+}
+
+#dashboard-span-pie {
+    grid-area: spanPie;
+}
+
+#dashboard-indicators {
+    grid-area: indicators;
+    justify-content: start;
+}
+
+.dashboard-indicator {
+    font-size: 1em;
+}
+
+.dasbhaord-sub-section {
+    margin-left: 1vw;
+}
+
+@media only screen and (max-width: 600px) {
+    .dashboard {
+        padding-top: 3vh;
+        overflow: auto;
+    }
+    .dashboard-header {
+        flex-direction: column;
+    }
+    .dashboard-title {
+        font-size: 1.75em;
+    }
+    .dashboard-settings {
+        display: none;
+    }
+    .dashboard-update {
+        justify-content: space-around;
+    }
+    .dashboard-body {
+        display: grid;
+        grid-template-columns: repeat(2, 45vw);
+        grid-template-rows: repeat(6, 40vh);
+        grid-template-areas: "profitPie percentProfitPie" "profitGraph profitGraph" "tradePie spanPie" "tradeGraph tradeGraph " "indicators indicators""indicators indicators";
+        column-gap: 2vw;
+        row-gap: 2vh;
+        margin-top: 3vh;
+    }
+    .dashboard-card {
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .dashboard-card-title {
+        font-size: 1em;
+        text-align: center;
+    }
+    .dashboard-pie-label {
+        font-weight: 900;
+        font-size: 1em;
+    }
+    .dashboard-card-caption {
+        font-size: .75em;
+    }
+    .dasbhaord-sub-section{
+        margin-left: 10vw;
+    }
+}

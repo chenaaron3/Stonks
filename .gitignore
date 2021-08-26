@@ -36,3 +36,5 @@ coverage
 benchmarks/graphs
 logs/backtestLogs.txt
 logs/intersectionLogs.txt
+
+dist/

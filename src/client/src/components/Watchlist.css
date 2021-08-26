@@ -1,0 +1,19 @@
+.watchlist {
+    width: 100%;
+    height: 100%;
+    background-color: #dee4ec;
+    padding-top: 7vh;
+    padding-bottom: 7vh;
+    padding-left: 5vw;
+    padding-right: 5vw;
+    overflow: auto;
+}
+
+.watchlist-title {
+    font-weight: bold;
+    font-size: 2em;
+}
+
+.watchlist-row {
+    height: 5vh;
+}

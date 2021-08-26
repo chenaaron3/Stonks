@@ -1,0 +1,12 @@
+.saved-results {
+    overflow: auto;
+    max-height: 100vh;
+    background-color: #34495e;
+    color: white;
+}
+
+.saved-results-title {
+    margin: 3vh;
+    margin-left: 5vh;
+    margin-bottom: 1vh;
+}
