@@ -541,11 +541,13 @@ function optimizeIndicatorsForSymbol(indicatorOptions: IndicatorTypes.Indicators
                         indicatorNames.forEach(indicatorName => {
                             let value = indicators[indicatorName].getValue(buyDate);
                             if (typeof (value) == "number") {
-                                data[indicatorName] = value;
+                                let numericalValue = value;
+                                data[indicatorName] = numericalValue;
                             }
                             else if (typeof (value) == "object") {
-                                Object.keys(value).forEach(key => {
-                                    data[key] = value[key];
+                                let objectValue = value;
+                                Object.keys(objectValue).forEach(key => {
+                                    data[key] = objectValue[key];
                                 })
                             }
                         });
@@ -1146,7 +1148,7 @@ function setStoplossTarget(stoplossTarget: { [key: string]: Backtest.StoplossTar
         }
 
         // below low - atr * multiplyer 
-        let sl = low - multiplier * atr.getValue(buyDate);
+        let sl = low - multiplier * (atr.getValue(buyDate) as number);
         stoploss = sl;
     }
 

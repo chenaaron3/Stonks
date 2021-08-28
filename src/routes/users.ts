@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express, { Request, Response } from 'express';
 import { addToStocksTrackerWatchlist } from '../helpers/stockstracker';
 import { addToFinvizWatchlist } from '../helpers/finviz';
 import { addJob } from '../helpers/queue';
@@ -6,7 +6,9 @@ import { setDocumentField, addDocument, getDocument } from '../helpers/mongo';
 import passport from 'passport';
 import Account from '../models/account';
 
-import { ExportLogin } from '../types/types';
+import { MongoUser } from '../types/types';
+
+import API from '@shared/api';
 
 let router = express.Router();
 
@@ -27,14 +29,9 @@ let userSchema = {
 }
 
 // add to watchlist
-interface WatchlistBody {
-    destination: 'StocksTracker' | 'Finviz';
-    symbols: string[];
-    login: ExportLogin;
-    watchlist: string;
-}
-
-router.post('/watchlist', async function (req: Request<{}, {}, WatchlistBody>, res) {
+router.post('/watchlist', async function (
+    req: Request<{}, {}, API.Users.PostWatchlist>,
+    res: Response<API.Users._PostWatchlist>) {
     let destination = req.body.destination;
     let symbols = req.body.symbols;
     let login = req.body.login;
@@ -54,7 +51,9 @@ router.post('/watchlist', async function (req: Request<{}, {}, WatchlistBody>, r
 })
 
 // check logged in user
-router.get('/', (req, res) => {
+router.get('/', (
+    req: Request<{}, {}, API.Users.Get>,
+    res: Response<API.Users._Get>) => {
     if (req.user) {
         res.json(req.user);
     }
@@ -64,7 +63,9 @@ router.get('/', (req, res) => {
 })
 
 // check login status
-router.get('/isLoggedIn', (req, res) => {
+router.get('/isLoggedIn', (
+    req: Request<{}, {}, API.Users.GetIsLoggedIn>,
+    res: Response<API.Users._GetIsLoggedIn>) => {
     if (req.user) {
         res.json({ isLoggedIn: true });
     }
@@ -74,7 +75,10 @@ router.get('/isLoggedIn', (req, res) => {
 })
 
 // login
-router.post('/login', (req, res, next) => {
+router.post('/login', (
+    req: Request<{}, {}, API.Users.PostLogin>,
+    res: Response<API.Users._PostLogin>,
+    next) => {
     passport.authenticate('local',
         (err, user, info) => {
             if (err) {
@@ -89,21 +93,23 @@ router.post('/login', (req, res, next) => {
             req.logIn(user, function (err) {
                 // wrong password
                 if (err) {
-                    return res.json({ error: err })
+                    return res.json({ error: err['message'] })
                 }
 
-                return res.json({ status: "Successfully Logged In", user: req.user });
+                return res.json({ status: "Successfully Logged In" });
             });
 
         })(req, res, next);
 });
 
 // register new user
-router.post('/register', async (req: Request<{}, {}, { username: string; password: string }>, res) => {
+router.post('/register', async (
+    req: Request<{}, {}, API.Users.PostRegister>,
+    res: Response<API.Users._PostRegister>) => {
     try {
         await Account.register({ username: req.body.username } as any, req.body.password);
         // add base doc to user db
-        await addDocument("users", { ...userSchema, _id: req.body.username })
+        await addDocument<MongoUser>("users", { ...userSchema, _id: req.body.username })
         res.json({ status: "Successfully Registered" });
     }
     catch (err) {
@@ -112,24 +118,35 @@ router.post('/register', async (req: Request<{}, {}, { username: string; passwor
 })
 
 // logout
-router.get('/logout', async (req, res) => {
+router.get('/logout', async (
+    req: Request<{}, {}, API.Users.GetLogout>,
+    res: Response<API.Users._GetLogout>) => {
     req.logout();
     res.json({ status: "Successfully Logged Out" })
 })
 
-router.post("/data", (req: Request<{}, {}, { field: string; value: any }>, res) => {
+// add user data
+router.post("/data", (
+    req: Request<{}, {}, API.Users.PostData>,
+    res: Response<API.Users._PostData>) => {
     if (req.user) {
         setDocumentField("users", req.user.username, req.body.field, req.body.value, undefined);
-    }
-    res.json({ stats: "ok" })
-})
-
-router.get("/data", async (req, res) => {
-    if (req.user) {
-        res.json(await getDocument("users", req.user.username));
+        res.json({ status: "ok" })
     }
     else {
-        res.json({ stats: "ok" })
+        res.json({ error: 'User does not exist' });
+    }
+})
+
+// get user data
+router.get("/data", async (
+    req: Request<{}, {}, API.Users.GetData>,
+    res: Response<API.Users._GetData>) => {
+    if (req.user) {
+        res.json(await getDocument<MongoUser>("users", req.user.username));
+    }
+    else {
+        res.json({ error: 'User does not exist' });
     }
 })
 

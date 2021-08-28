@@ -38,13 +38,13 @@ abstract class Indicator {
 	// private method -- SHOULD BE OVERIDDEN
 	abstract calculate(): any;
 
-	abstract getGraph(): any;
+	abstract getGraph(): IndicatorType.GraphData;
 
 	abstract getAction(date: string, dateIndex: number, isMain: boolean): string;
 
-	abstract getValue(date: string): any;
+	abstract getValue(date: string): number | { [key: string]: number };
 
-    abstract normalize(data: number[]): number[];
+	abstract normalize(data: number[]): number[];
 }
 
 export = Indicator;

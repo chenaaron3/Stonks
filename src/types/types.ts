@@ -1,4 +1,4 @@
-import { BarData, TradeSettingsData, BoughtSymbolData, SavedResultsData } from '@shared/common';
+import { BarData, BoughtSymbolData, UserData } from '@shared/common';
 import Backtest from '@shared/backtest';
 
 export interface GenericObject {
@@ -20,31 +20,6 @@ declare module 'express-session' {
         username: string;
         buys: BoughtSymbolData;
     }
-}
-
-export interface AlpacaCredentialsData {
-    id: string;
-    key: string;
-    paper?: boolean;
-}
-
-export interface ExportLogin {
-    username: string;
-    password: string;
-}
-
-/**
- * Indicators 
- */
-export interface PivotsData {
-    [key: string]: PivotData
-}
-
-export interface PivotData {
-    type: 'high' | 'low';
-    date: string;
-    price: number;
-    realized: string;
 }
 
 /**
@@ -77,17 +52,11 @@ export interface MongoResults extends Backtest.ResultsRoot, MongoDocumentData {
 }
 
 export interface MongoPrices extends MongoDocumentData {
-    prices: BarData[]
+    prices: BarData[];
+    lastUpdated: Date | string;
 }
 
-export interface MongoUser extends MongoDocumentData {
-    buys: BoughtSymbolData,
-    backtestIDs: SavedResultsData,
-    alpaca: AlpacaCredentialsData;
-    tradeSettings: {
-        [key: string]: TradeSettingsData;
-    }
-}
+export interface MongoUser extends UserData, MongoDocumentData {}
 
 export interface MongoActiveResults extends MongoDocumentData {
     activeResults: ActiveResultData[];

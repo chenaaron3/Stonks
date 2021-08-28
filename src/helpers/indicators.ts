@@ -12,7 +12,6 @@ import Structure from './indicators/structure';
 import ATR from './indicators/atr';
 import Pullback from './indicators/pullback';
 import Breakout from './indicators/breakout';
-import Swing from './indicators/swing';
 import Divergence from './indicators/divergence';
 import Stochastic from './indicators/stochastic';
 import Trend from './indicators/trend';
@@ -36,7 +35,6 @@ let INDICATOR_OBJECTS = {
     "ATR": ATR,
     "Pullback": Pullback,
     "Breakout": Breakout,
-    "Swing": Swing,
     "Divergence": Divergence,
     "Stochastic": Stochastic,
     "Trend": Trend,

@@ -1,5 +1,10 @@
 import { AlpacaAccount, AlpacaOrder, AlpacaPosition } from '@alpacahq/alpaca-trade-api';
 import Backtest from './backtest';
+import {
+    BarData, Timeframe, BoughtSymbolData, StockData, ValueOf,
+    PivotsData, ExportLogin, PassportUserData, UserData
+} from './common';
+import Indicator from './indicator';
 
 export interface ErrorResponse {
     error: string;
@@ -84,7 +89,7 @@ namespace API {
             id: string
         }
         export type _GetOptimizedIndicators = Backtest.OptimizeRoot | ErrorResponse;
-    
+
         export interface GetUpdateBacktest {
             id: string;
         }
@@ -101,15 +106,153 @@ namespace API {
     }
 
     export namespace Mongo {
+        export interface PurseReset {
+            timeframe: Timeframe;
+        }
+        export interface _PurseReset {
+            status: string;
+        }
 
+        export interface GetFill {
+            timeframe: Timeframe;
+        }
+        export interface _GetFill {
+            status: string;
+        }
+
+        export interface GetActions { }
+        export interface _GetActions {
+            status: string;
+        }
+
+        export interface GetUpdate {
+            timeframe: Timeframe;
+        }
+        export interface _GetUpdate {
+            status: string;
+        }
+
+        export interface GetPop {
+            amount: string;
+            timeframe: Timeframe;
+        }
+        export interface _GetPop {
+            status: string;
+        }
+
+        export interface GetTrim {
+            timeframe: Timeframe;
+        }
+        export interface _GetTrim {
+            status: string;
+        }
+
+        export interface GetCheckSplit { }
+        export interface _GetCheckSplit {
+            status: string;
+        }
+
+        export interface GetFixFaulty { }
+        export interface _GetFixFaulty {
+            status: string;
+        }
+
+        export interface GetClearActiveResults { }
+        export interface _GetClearActiveResults {
+            status: string;
+        }
     }
 
     export namespace Symbol {
+        export interface GetLatestPrice {
+            symbol: string;
+        }
+        export type _GetLatestPrice = BarData;
 
+        export interface GetBoughtSymbols { }
+        export type _GetBoughtSymbols = BoughtSymbolData;
+
+        export interface GetBuySymbol {
+            symbol: string;
+        }
+        export type _GetBuySymbol = BoughtSymbolData;
+
+        export interface GetSellSymbol {
+            symbol: string;
+        }
+        export type _GetSellSymbol = BoughtSymbolData;
+
+        export interface PostIndicatorGraph {
+            symbol: string;
+            indicatorName: Indicator.IndicatorNames
+            indicatorOptions: Indicator.IndicatorParams;
+            timeframe: Timeframe;
+        }
+        export type _PostIndicatorGraph = Indicator.GraphData;
+
+        export interface PostPriceGraph {
+            symbol: string;
+            indicators: Indicator.Indicators;
+            timeframe: Timeframe;
+        }
+        export interface _PostPriceGraph {
+            price: BarData[];
+            indicators: {
+                [key: string]: Indicator.GraphData;
+            }
+            atr: Indicator.GraphData;
+            pivots: PivotsData;
+            volumes: StockData;
+        }
     }
 
     export namespace Users {
-        
+        export interface PostWatchlist {
+            destination: 'StocksTracker' | 'Finviz';
+            symbols: string[];
+            login: ExportLogin;
+            watchlist: string;
+        }
+        export interface _PostWatchlist {
+            status: string;
+        }
+
+        export interface Get { }
+        export type _Get = PassportUserData | ErrorResponse;
+
+        export interface GetIsLoggedIn { }
+        export interface _GetIsLoggedIn {
+            isLoggedIn: boolean;
+        }
+
+        export interface PostLogin { }
+        export type _PostLogin = {
+            status: string;
+        } | ErrorResponse
+
+        export interface PostRegister {
+            username: string;
+            password: string;
+        }
+        export type _PostRegister = {
+            status: string;
+        } | ErrorResponse
+
+        export interface GetLogout { }
+        export interface _GetLogout {
+            status: string;
+        }
+
+        export interface PostData {
+            field: keyof UserData;
+            value: ValueOf<UserData>;
+        }
+        export type _PostData = {
+            status: string;
+        } | ErrorResponse
+
+        export interface GetData { }
+        export type _GetData = UserData | ErrorResponse;
     }
 }
 export default API;

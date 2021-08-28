@@ -2,6 +2,7 @@ import { isCrossed, getSimpleMovingAverage, clampRange } from '../utils';
 import Indicator from './indicator';
 
 import IndicatorType from '@shared/indicator';
+import { StockData } from '@shared/common';
 
 interface GraphData {
     [key: string]: {
@@ -47,7 +48,19 @@ class Candle extends Indicator {
     }
 
     getGraph() {
-        return this.graph;
+        let candles: StockData = {};
+        let legs: StockData = {};
+        let heads: StockData = {};
+        let legRatios: StockData = {};
+        let headRatios: StockData = {};
+        this.dates.forEach(date => {
+            candles[date] = this.graph[date].candle;
+            legs[date] = this.graph[date].leg;
+            heads[date] = this.graph[date].head;
+            legRatios[date] = this.graph[date].legRatio;
+            headRatios[date] = this.graph[date].headRatio;
+        })
+        return { candles, legs, heads, legRatios, headRatios }
     }
 
     getValue(date: string) {

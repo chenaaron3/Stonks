@@ -2,8 +2,7 @@ import { isCrossed, getExponentialMovingAverage, daysBetween, getSwingPivots, ho
 import Indicator from './indicator';
 
 import IndicatorType from '@shared/indicator';
-import { StockData } from '@shared/common';
-import { PivotsData, PivotData } from '../../types/types';
+import { StockData, PivotsData, PivotData } from '@shared/common';
 
 interface GraphData {
     [key: string]: {
@@ -168,7 +167,7 @@ class Structure extends Indicator {
             resistance[date] = this.graph[date].resistance;
         })
 
-        return { support, resistance, pivots: this.pivots };
+        return { support, resistance };
     }
 
     getValue(date: string) {

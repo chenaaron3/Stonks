@@ -1,12 +1,12 @@
+import { PassportUserData } from '@shared/common';
+
 declare global {
     namespace Express {
         // req.user
         interface Request {
-            user?: {
-                username: string
-            }
+            user?: PassportUserData;
         }
     }
 }
 
-export {}
+export { }

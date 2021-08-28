@@ -2,8 +2,7 @@ import { getSwingPivots, getTrueRange, getSimpleMovingAverage, inRange, isHighLo
 import Indicator from './indicator';
 
 import IndicatorType from '@shared/indicator';
-import { StockData } from '@shared/common';
-import { PivotsData, PivotData } from '../../types/types';
+import { StockData, PivotsData, PivotData } from '@shared/common';
 
 class Trend extends Indicator {
     name = 'Trend';
@@ -54,7 +53,7 @@ class Trend extends Indicator {
     }
 
     getGraph() {
-        return { pivots: this.pivots, pivotDates: this.pivotDates, realizedPivots: this.graph };
+        return { 'Trend': this.graph };
     }
 
     getValue(date: string) {

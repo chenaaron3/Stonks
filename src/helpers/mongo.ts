@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+import { MongoClient, Db, Collection, Filter, OptionalId } from 'mongodb';
 import bson from 'bson';
 
 import { GenericObject, MongoDocumentData, MongoFragmentData, MongoSplitOptions, COLLECTION_NAMES, ActiveResultData } from '../types/types';
@@ -92,17 +92,19 @@ function createCollection(collectionName: string) {
 	});
 }
 
-function addDocument(collectionName: COLLECTION_NAMES, document: MongoDocumentData) {
+function addDocument<T extends MongoDocumentData>(collectionName: COLLECTION_NAMES, document: T) {
 	return new Promise<void>(async (resolve, reject) => {
 		await ensureConnected();
 		// get collection
-		getCollection(collectionName)
+		getCollection<T>(collectionName)
 			.then(async (collection) => {
 				// if document not in collection already
-				let count = await collection.countDocuments({ "_id": document["_id"] });
+				let count = await collection.countDocuments({
+					"_id": document["_id"]
+				} as Filter<T>);
 				if (count == 0) {
 					// Add the document
-					collection.insertOne(document, (error) => {
+					collection.insertOne(document as OptionalId<T>, (error) => {
 						if (error) {
 							console.log("Add Doc Error", error);
 							reject(error);
@@ -127,7 +129,7 @@ function getDocument<T extends MongoDocumentData>(collectionName: COLLECTION_NAM
 				// get document
 				let results = collection.find({
 					"_id": documentID
-				} as any);
+				} as Filter<T>);
 				let documents = await results.toArray();
 				if (documents.length > 0) {
 					// check if fragmented
@@ -323,7 +325,7 @@ async function getDocumentField<T extends MongoDocumentData>(collectionName: COL
 				fieldNames.forEach(fn => projection[fn] = true)
 				let results = collection.find({
 					"_id": id
-				} as any).project(projection);
+				} as Filter<T>).project(projection);
 
 				// TODO if field is fragmented, need to reconstruct
 

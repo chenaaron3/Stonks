@@ -1,7 +1,7 @@
-import express, { Request } from 'express';
+import express, { Request, Response } from 'express';
 
 import { getDocument, getDocumentField, setDocumentField } from '../helpers/mongo';
-import { getAdjustedData } from '../helpers/utils';
+import { getAdjustedData, getSwingPivots } from '../helpers/utils';
 import { getIndicator } from '../helpers/backtest';
 import { getLatestPrice } from '../helpers/stock';
 
@@ -9,18 +9,24 @@ import { COLLECTION_NAMES, MongoPrices, MongoUser } from '../types/types';
 import { BoughtSymbolData, Timeframe } from '@shared/common';
 import Indicator from '@shared/indicator';
 
-var router = express.Router();
+import API from '@shared/api';
+
+const router = express.Router();
 
 //#region Watchlist
 // gets the most updated price for a stock
-router.get("/latestPrice", async (req: Request<{}, {}, {}, { symbol: string }>, res) => {
+router.get("/latestPrice", async (
+    req: Request<{}, {}, {}, API.Symbol.GetLatestPrice>,
+    res: Response<API.Symbol._GetLatestPrice>) => {
     let symbol = req.query.symbol;
     let entry = await getLatestPrice(symbol);
     res.json(entry);
 })
 
 // gets a user's bought symbol list
-router.get("/boughtSymbols", async (req, res) => {
+router.get("/boughtSymbols", async (
+    req: Request<{}, {}, {}, API.Symbol.GetBoughtSymbols>,
+    res: Response<API.Symbol._GetBoughtSymbols>) => {
     // if not logged in
     if (!req.user) {
         if (!req.session.hasOwnProperty("buys")) {
@@ -36,7 +42,9 @@ router.get("/boughtSymbols", async (req, res) => {
 })
 
 // buy
-router.get("/buySymbol", async (req: Request<{}, {}, {}, { symbol: string }>, res) => {
+router.get("/buySymbol", async (
+    req: Request<{}, {}, {}, API.Symbol.GetBuySymbol>,
+    res: Response<API.Symbol._GetBuySymbol>) => {
     let symbol = req.query.symbol;
     let entry = await getLatestPrice(symbol);
     let date = entry["date"];
@@ -61,7 +69,7 @@ router.get("/buySymbol", async (req: Request<{}, {}, {}, { symbol: string }>, re
     }
 
     // add date
-    if (!buyDict[symbol].includes(date)) {
+    if (!buyDict[symbol].some(e => e.date == date)) {
         buyDict[symbol].push({ date, price });
     }
 
@@ -71,11 +79,12 @@ router.get("/buySymbol", async (req: Request<{}, {}, {}, { symbol: string }>, re
     }
 
     res.json(buyDict);
-
 });
 
 // sell
-router.get("/sellSymbol", async (req: Request<{}, {}, {}, { symbol: string }>, res) => {
+router.get("/sellSymbol", async (
+    req: Request<{}, {}, {}, API.Symbol.GetSellSymbol>,
+    res: Response<API.Symbol._GetSellSymbol>) => {
     let symbol = req.query.symbol;
 
     if (!req.user) {
@@ -98,7 +107,6 @@ router.get("/sellSymbol", async (req: Request<{}, {}, {}, { symbol: string }>, r
     // check symbol buy
     if (!buyDict.hasOwnProperty(symbol)) {
         res.json(buyDict);
-        return;
     }
     else {
         delete buyDict[symbol];
@@ -111,15 +119,10 @@ router.get("/sellSymbol", async (req: Request<{}, {}, {}, { symbol: string }>, r
 //#endregion
 
 //#region Graphs
-interface IndicatorGraphBody {
-    symbol: string;
-    indicatorName: Indicator.IndicatorNames
-    indicatorOptions: Indicator.IndicatorParams;
-    timeframe: Timeframe;
-}
-
 // get graph for an indicator
-router.post("/indicatorGraph", async (req: Request<{}, {}, IndicatorGraphBody>, res) => {
+router.post("/indicatorGraph", async (
+    req: Request<{}, {}, API.Symbol.PostIndicatorGraph>,
+    res: Response<API.Symbol._PostIndicatorGraph>) => {
     let symbol = req.body["symbol"];
     let indicatorName = req.body["indicatorName"];
     let indicatorOptions = req.body["indicatorOptions"];
@@ -136,14 +139,10 @@ router.post("/indicatorGraph", async (req: Request<{}, {}, IndicatorGraphBody>, 
     }
 })
 
-interface PriceGraphBody {
-    symbol: string;
-    indicators: Indicator.Indicators;
-    timeframe: Timeframe;
-}
-
-// get price data for a company
-router.post("/priceGraph", async (req: Request<{}, {}, PriceGraphBody>, res) => {
+// get price data for a symbol
+router.post("/priceGraph", async (
+    req: Request<{}, {}, API.Symbol.PostPriceGraph>,
+    res: Response<API.Symbol._PostPriceGraph>) => {
     let symbol = req.body["symbol"];
     let indicators = req.body["indicators"];
     let timeframe = req.body["timeframe"] ? req.body["timeframe"] : "1Day";
@@ -154,17 +153,18 @@ router.post("/priceGraph", async (req: Request<{}, {}, PriceGraphBody>, res) => 
         let pricesJSON = stockInfo["prices"];
         let { prices, volumes, opens, highs, lows, closes, dates } = getAdjustedData(pricesJSON, undefined, undefined);
         let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes).getGraph();
+        let pivots = getSwingPivots(dates, prices, 12);
 
-        let indicatorGraphs: { [key: string]: any } = {};
+        let indicatorGraphs: { [key: string]: Indicator.GraphData } = {};
         (Object.keys(indicators) as Indicator.IndicatorNames[]).forEach((indicatorName) => {
             let indicator = getIndicator(indicatorName, indicators[indicatorName], symbol, dates, prices, opens, highs, lows, closes);
             indicatorGraphs[indicatorName] = indicator.getGraph();
         })
 
-        res.json({ price: pricesJSON, atr: atr, volumes: volumes, indicators: indicatorGraphs });
+        res.json({ price: pricesJSON, indicators: indicatorGraphs, atr, pivots, volumes });
     }
     else {
-        res.json({ price: [], volumes: [], indicators: {} });
+        res.json({ price: [], indicators: {}, atr: {}, pivots: {}, volumes: {} });
     }
 });
 //#endregion

@@ -1,3 +1,4 @@
+import { StockData, ValueOf } from './common';
 
 namespace Indicator {
     export interface Indicators {
@@ -17,8 +18,7 @@ namespace Indicator {
         Solid?: SolidParams;
         Stochastic?: StochasticParams;
         Structure?: StructureParams;
-        Swing?: SwingParams;
-        Trend?: TrendParams;    
+        Trend?: TrendParams;
     }
 
     export interface BaseIndicatorParams {
@@ -30,97 +30,96 @@ namespace Indicator {
         threshold: number;
     }
 
-    export interface ATRParams extends BaseIndicatorParams{
+    export interface ATRParams extends BaseIndicatorParams {
         period: number;
     }
 
-    export interface BreakoutParams extends BaseIndicatorParams{
+    export interface BreakoutParams extends BaseIndicatorParams {
         period: number;
         tests: number;
     }
 
-    export interface CandleParams extends BaseIndicatorParams{
+    export interface CandleParams extends BaseIndicatorParams {
         expiration: number;
     }
 
-    export interface DivergenceParams extends BaseIndicatorParams{
+    export interface DivergenceParams extends BaseIndicatorParams {
         period: number;
         lookback: number;
     }
 
-    export interface EMAParams extends BaseIndicatorParams{
+    export interface EMAParams extends BaseIndicatorParams {
         period: number;
         minDuration: number;
     }
 
-    export interface GCParams extends BaseIndicatorParams{
+    export interface GCParams extends BaseIndicatorParams {
         ma1Period: number;
         ma2Period: number;
     }
 
-    export interface HighParams extends BaseIndicatorParams{
+    export interface HighParams extends BaseIndicatorParams {
         period: number;
     }
 
-    export interface MACDParams extends BaseIndicatorParams{
+    export interface MACDParams extends BaseIndicatorParams {
         ema1: number;
         ema2: number;
         signalPeriod: number;
     }
 
-    export interface MACD2Params extends BaseIndicatorParams{
+    export interface MACD2Params extends BaseIndicatorParams {
         ema1: number;
         ema2: number;
         signalPeriod: number;
         buyThreshold: number;
     }
 
-    export interface PullbackParams extends BaseIndicatorParams{
+    export interface PullbackParams extends BaseIndicatorParams {
         period: number;
         length: number;
     }
 
-    export interface RSIParams extends BaseIndicatorParams{
+    export interface RSIParams extends BaseIndicatorParams {
         period: number;
         underbought: number;
         overbought: number;
     }
 
-    export interface SMAParams extends BaseIndicatorParams{
+    export interface SMAParams extends BaseIndicatorParams {
         period: number;
         minDuration: number;
     }
 
-    export interface SolidParams extends BaseIndicatorParams{
+    export interface SolidParams extends BaseIndicatorParams {
         minLength: number;
         maxRatio: number;
     }
 
-    export interface StochasticParams extends BaseIndicatorParams{
+    export interface StochasticParams extends BaseIndicatorParams {
         period: number;
         underbought: number;
         overbought: number;
     }
 
-    export interface StructureParams extends BaseIndicatorParams{
+    export interface StructureParams extends BaseIndicatorParams {
         period: number;
         volatility: number;
         minCount: number;
     }
 
-    export interface SwingParams extends BaseIndicatorParams{
-        period: number;
-    }
-
-    export interface TrendParams extends BaseIndicatorParams{
+    export interface TrendParams extends BaseIndicatorParams {
         period: number;
         lookback: number;
     }
 
-    type ValueOf<T> = T[keyof T];
     export type IndicatorParams = ValueOf<Indicators>;
 
     export type IndicatorNames = keyof Indicators;
+
+    export interface GraphData {
+        [x: string]: StockData;
+    }
 }
 
 export default Indicator;

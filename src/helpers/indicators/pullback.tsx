@@ -39,7 +39,7 @@ class Pullback extends Indicator {
     }
 
     getGraph() {
-        return this.graph;
+        return { 'pullback': this.graph };
     }
 
     getValue(date: string) {

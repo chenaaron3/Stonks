@@ -2,7 +2,7 @@ import 'chromedriver';
 import webdriver from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 
-import { ExportLogin } from '../types/types';
+import { ExportLogin } from '@shared/common';
 
 const STOCKSTRACKER_URL = "https://www.stockstracker.com/";
 const XPATHS = { "watchlists": "/html/body/div[2]/table/tbody/tr/td[1]/div[2]/div[1]/div[2]/a" }

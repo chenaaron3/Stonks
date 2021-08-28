@@ -19,14 +19,21 @@ let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
 let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
 
 // get latest price of a stock
-async function getLatestPrice(symbol: string) {
-    let priceCollection = await getCollection("prices1Day");
+async function getLatestPrice(symbol: string): Promise<BarData> {
+    let priceCollection = await getCollection<MongoPrices>("prices1Day");
     let stockInfo = await priceCollection.find({ _id: symbol }).project({ prices: { $slice: -1 } }).toArray();
     if (stockInfo.length > 0) {
         return stockInfo[0]["prices"][0];
     }
     else {
-        return {};
+        return {
+            date: new Date(),
+            open: 0,
+            low: 0,
+            close: 0,
+            high: 0,
+            volume: 0
+        };
     }
 }
 
@@ -48,15 +55,15 @@ function getPrices(symbol: string, timeframe: Timeframe) {
 
 // create skeleton docs
 async function fill(timeframe: Timeframe) {
-	console.log("Filling!");
-	let symbols = await getSymbols(false);
-	let baseDate = timeframe == "1Day" ? "1/1/1500" : "1/1/2019";
-	console.log(baseDate)
-	for (let i = 0; i < symbols.length; ++i) {
-		let symbol = symbols[i];
-		await addDocument(("prices" + timeframe) as COLLECTION_NAMES, { _id: symbol, prices: [], lastUpdated: baseDate });
-	}
-	console.log("Finished Filling!");
+    console.log("Filling!");
+    let symbols = await getSymbols(false);
+    let baseDate = timeframe == "1Day" ? "1/1/1500" : "1/1/2019";
+    console.log(baseDate)
+    for (let i = 0; i < symbols.length; ++i) {
+        let symbol = symbols[i];
+        await addDocument<MongoPrices>(("prices" + timeframe) as COLLECTION_NAMES, { _id: symbol, prices: [], lastUpdated: baseDate });
+    }
+    console.log("Finished Filling!");
 }
 
 // queues job to update stock prices
@@ -65,7 +72,7 @@ async function update(timeframe: Timeframe) {
         return new Promise(async resolveJob => {
             // get all docs from mongo
             console.log("Retreiving symbols from mongo!");
-            
+
             let priceCollection = await getCollection(("prices" + timeframe) as COLLECTION_NAMES);
             let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } }).toArray()//.limit(10);
             console.log(`Retreived ${stockInfo.length} symbols!`);
@@ -394,7 +401,7 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
         // if valid prices
         else {
             // get price and indicator setup
-            let {prices, volumes, opens, highs, lows, closes, dates} = getAdjustedData(json as BarData[], undefined, undefined);
+            let { prices, volumes, opens, highs, lows, closes, dates } = getAdjustedData(json as BarData[], undefined, undefined);
 
             // populate data with events
             let events = backtestData[symbol]["events"];
@@ -406,37 +413,13 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
                 let feature: number[] = [];
                 let priceFeatures = [];
 
-                // let startIndex = buyIndex - window + 1;
-                // if (startIndex < 0) {
-                //     continue;
-                // }
-                // for (let i = startIndex; i <= buyIndex; ++i) {
-                //     // add price data
-                //     priceFeatures.push(prices[dates[i]]);                    
-                // }
-
-                let trendIndicator = getIndicator("Trend", { period: 5 }, symbol, dates, prices, opens, highs, lows, closes);
-                let { pivots, pivotDates, realizedPivots } = (trendIndicator as Trend).getGraph();
-
-                let pivotCounts = 0;
-                let pivotIndex = -1;
-                let dateIndex = buyIndex
-                while (dateIndex >= 0) {
-                    // new pivot
-                    if (realizedPivots[dates[dateIndex]] != pivotIndex) {
-                        pivotIndex = realizedPivots[dates[dateIndex]];
-                        // no more pivots
-                        if (pivotIndex == -1) {
-                            continue;
-                        }
-                        priceFeatures.unshift(pivots[pivotDates[pivotIndex]]["price"]);
-                        pivotCounts += 1;
-                        // gathered enough pivots
-                        if (pivotCounts == window) {
-                            break;
-                        }
-                    }
-                    dateIndex -= 1;
+                let startIndex = buyIndex - window + 1;
+                if (startIndex < 0) {
+                    continue;
+                }
+                for (let i = startIndex; i <= buyIndex; ++i) {
+                    // add price data
+                    priceFeatures.push(prices[dates[i]]);                    
                 }
 
                 // not enough features

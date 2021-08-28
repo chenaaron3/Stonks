@@ -2,8 +2,7 @@ import { isCrossed, getSwingPivots, getRSI, getTrueRange, getSimpleMovingAverage
 import Indicator from './indicator';
 
 import IndicatorType from '@shared/indicator';
-import { StockData } from '@shared/common';
-import { PivotsData } from '../../types/types';
+import { StockData, PivotsData } from '@shared/common';
 
 class Divergence extends Indicator {
     name = 'Divergence';
@@ -64,7 +63,7 @@ class Divergence extends Indicator {
             let date = this.dates[i];
             debug[date] = this.prices[this.pivotDates[this.graph[date]]];
         }
-        return { pivots: this.pivots, Divergence: debug };
+        return { Divergence: debug };
     }
 
     getValue(date: string) {

@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express, { Request, Response } from 'express';
 
 import { getCollection, addDocument, getDocument, deleteDocument, deleteCollection, createCollection, setDocumentField } from '../helpers/mongo';
 import { daysBetween } from '../helpers/utils';
@@ -9,7 +9,9 @@ import { addJob } from '../helpers/queue';
 import { MongoActiveResults, COLLECTION_NAMES } from '../types/types';
 import { Timeframe } from '@shared/common';
 
-var router = express.Router();
+import API from '@shared/api';
+
+const router = express.Router();
 
 ensureUpdated();
 // ensure our database is constantly updated
@@ -62,8 +64,44 @@ async function ensureUpdated() {
 	setTimeout(() => { ensureUpdated() }, 1000 * 60 * 60 * 1);
 }
 
-router.purge("/reset", async function (req: Request<{}, {}, {}, { timeframe: Timeframe }>, res) {
-	res.send("Resetting!");
+router.get('/update', async function (
+	req: Request<{}, {}, {}, API.Mongo.GetUpdate>,
+	res: Response<API.Mongo._GetUpdate>) {
+	// respond so doesnt hang
+	res.json({ status: "Updating!" });
+	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
+	update(timeframe);
+});
+
+// gets the actions for active results
+router.get('/actions', async function (
+	req: Request<{}, {}, {}, API.Mongo.GetActions>,
+	res: Response<API.Mongo._GetActions>) {
+	// respond so doesnt hang
+	res.json({ status: "Getting actions!" });
+	let activeResultsDoc = await getDocument<MongoActiveResults>("results", "activeResults");
+	if (activeResultsDoc) {
+		let activeResults = activeResultsDoc["activeResults"];
+		for (let i = 0; i < activeResults.length; ++i) {
+			let { id, email } = activeResults[i];
+			getActionsToday(id, email); // send email notifications about sells, send buy orders to alpaca
+		}
+	}
+});
+
+// clear active results
+router.get("/clearActiveResults", async function (
+	req: Request<{}, {}, {}, API.Mongo.GetClearActiveResults>,
+	res: Response<API.Mongo._GetClearActiveResults>) {
+	await deleteDocument("results", "activeResults");
+	res.send({ status: "Cleared" });
+})
+
+// reset prices collection
+router.purge("/reset", async function (
+	req: Request<{}, {}, {}, API.Mongo.PurseReset>,
+	res: Response<API.Mongo._PurseReset>) {
+	res.json({ status: "Resetting!" });
 	let timeframe: Timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
 	console.log(timeframe)
 	// clear prices collection;
@@ -84,35 +122,21 @@ router.purge("/reset", async function (req: Request<{}, {}, {}, { timeframe: Tim
 	update(timeframe);
 })
 
-router.get("/fill", async function (req: Request<{}, {}, {}, { timeframe: Timeframe }>, res) {
-	res.send("Filling!");
+// fills symbols for a price collection
+router.get("/fill", async function (
+	req: Request<{}, {}, {}, API.Mongo.GetFill>,
+	res: Response<API.Mongo._GetFill>) {
+	res.json({ status: "Filling!" });
 	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
 	await fill(timeframe);
 })
 
-router.get('/actions', async function (req, res, next) {
+// pop x items from a price collection
+router.get('/pop', async function (
+	req: Request<{}, {}, {}, API.Mongo.GetPop>,
+	res: Response<API.Mongo._GetPop>) {
 	// respond so doesnt hang
-	res.send("Getting actions!");
-	let activeResultsDoc = await getDocument<MongoActiveResults>("results", "activeResults");
-	if (activeResultsDoc) {
-		let activeResults = activeResultsDoc["activeResults"];
-		for (let i = 0; i < activeResults.length; ++i) {
-			let { id, email } = activeResults[i];
-			getActionsToday(id, email); // send email notifications about sells, send buy orders to alpaca
-		}
-	}
-});
-
-router.get('/update', async function (req: Request<{}, {}, {}, { timeframe: Timeframe }>, res, next) {
-	// respond so doesnt hang
-	res.send("Updating!");
-	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
-	update(timeframe);
-});
-
-router.get('/pop', async function (req: Request<{}, {}, {}, { amount: string; timeframe: Timeframe }>, res) {
-	// respond so doesnt hang
-	res.send("Popping!");
+	res.json({ status: "Popping!" });
 	let amount = req.query["amount"] ? parseInt(req.query["amount"]) : 1;
 	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
 
@@ -143,8 +167,10 @@ router.get('/pop', async function (req: Request<{}, {}, {}, { amount: string; ti
 });
 
 // trim database of stocks with no data
-router.get('/trim', async function (req, res) {
-	res.send("Trimming");
+router.get('/trim', async function (
+	req: Request<{}, {}, {}, API.Mongo.GetTrim>,
+	res: Response<API.Mongo._GetTrim>) {
+	res.json({ status: "Trimming" });
 	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
 
 	// get all docs
@@ -167,22 +193,20 @@ router.get('/trim', async function (req, res) {
 });
 
 // check if any symbols needs an update because of a split
-router.get("/checkSplit", async function (req, res) {
-	res.send("Checking for Splits");
+router.get("/checkSplit", async function (
+	req: Request<{}, {}, {}, API.Mongo.GetCheckSplit>,
+	res: Response<API.Mongo._GetCheckSplit>) {
+	res.json({ status: "Checking for Splits" });
 	checkSplit();
 });
 
 // try to fix faulty data
-router.get("/fixFaulty", async function (req, res) {
-	res.send("Fixing faulty data");
+router.get("/fixFaulty", async function (
+	req: Request<{}, {}, {}, API.Mongo.GetCheckSplit>,
+	res: Response<API.Mongo._GetCheckSplit>) {
+	res.json({ status: "Fixing faulty data" });
 	let results = await fixFaulty();
 	console.log(results);
 });
 
-// clear active results
-router.get("/clearActiveResults", async function (req, res) {
-	await deleteDocument("results", "activeResults");
-	res.send("Cleared");
-})
-
-export =router;
+export = router;

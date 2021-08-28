@@ -1,8 +1,8 @@
 import { findOptimalRisk } from '../client/src/helpers/utils';
-import { BarData, StockData } from '@shared/common';
+import { BarData, StockData, PivotsData } from '@shared/common';
 import Backtest from '@shared/backtest';
 import Indicator from '@shared/indicator';
-import { PivotsData, GenericObject } from '../types/types';
+import { GenericObject } from '../types/types';
 
 // convert raw data from api to adjusted prices for backtest
 function getAdjustedData(rawData: BarData[], lastUpdated: Date | undefined, strategyOptions: Backtest.StrategyOptions | undefined) {

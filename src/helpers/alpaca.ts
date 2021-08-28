@@ -1,8 +1,7 @@
 import Alpaca, { BarsV2Response, GetHistoricalOptions, Timeframe, TradeDirection, TradeType, TimeInForce, AlpacaOrder } from '@alpacahq/alpaca-trade-api';
 import axios from 'axios';
 
-import { AlpacaCredentialsData } from '../types/types';
-import { BarData } from '@shared/common';
+import { BarData, AlpacaCredentialsData } from '@shared/common';
 
 const config = {
     keyId: process.env.APCA_API_KEY_ID,

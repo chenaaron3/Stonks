@@ -106,7 +106,7 @@ class Account extends React.Component {
         }).then(res => res.json())
             .then(json => {
                 if (json["error"]) {
-                    alert(json["error"]["message"]);
+                    alert(json["error"]);
                 }
                 else {
                     this.checkLoggedIn();
