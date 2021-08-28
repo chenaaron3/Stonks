@@ -22,7 +22,6 @@ const initialState = {
     activeIndicators: new Set(),
     savedResults: [],
     eventIndex: -1,
-    boughtSymbols: {},
     pageIndex: 1,
     chartSettings: {},
     simulationTransactions: {},
@@ -125,34 +124,42 @@ export default function reducer(state = initialState, action) {
 }
 
 // Action Creators
+// done
 export function setBacktestResults(id, backtestResults) {
     return { type: SET_BACKTEST_RESULTS, id, backtestResults };
 }
 
+// done
 export function viewStock(symbol, eventIndex = -1) {
     return { type: VIEW_STOCK, symbol, eventIndex };
 }
 
+// done
 export function viewEvent(eventIndex) {
     return { type: VIEW_EVENT, eventIndex };
 }
 
+// done
 export function setID(id) {
     return { type: SET_ID, id };
 }
 
+// done
 export function setIndicatorOption(indicator, field, value) {
     return { type: SET_INDICATOR_OPTION, indicator, field, value };
 }
 
+// done
 export function setIndicatorOn(indicator, on) {
     return { type: SET_INDICATOR_ON, indicator, on };
 }
 
+// done
 export function clearIndicators() {
     return { type: CLEAR_INDICATORS }
 }
 
+// done
 export function setSavedResults(savedResults) {
     // sync with cloud
     fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`, {
@@ -165,26 +172,32 @@ export function setSavedResults(savedResults) {
     return { type: SET_SAVED_RESULTS, savedResults }
 }
 
+// done
 export function setPageIndex(pageIndex) {
     return { type: SET_PAGE_INDEX, pageIndex }
 }
 
+// done
 export function setChartSettings(chartSettings) {
     return { type: SET_CHART_SETTINGS, chartSettings }
 }
 
+// done
 export function setSimulationTransactions(simulationTransactions) {
     return { type: SET_SIMULATION_TRANSACTIONS, simulationTransactions }
 }
 
+// done
 export function setDrawer(anchor, open) {
     return { type: SET_DRAWER, anchor, open }
 }
 
+// done
 export function setTradeSettings(settings) {
     return { type: SET_TRADE_SETTINGS, settings }
 }
 
+// done
 export function setClosedOrders(closedOrders) {
     return { type: SET_CLOSED_ORDERS, closedOrders }
 }

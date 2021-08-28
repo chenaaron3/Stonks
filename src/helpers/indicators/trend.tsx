@@ -1,7 +1,7 @@
 import { getSwingPivots, getTrueRange, getSimpleMovingAverage, inRange, isHighLow, isCrossed } from '../utils';
 import Indicator from './indicator';
 
-import { TrendParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 import { PivotsData, PivotData } from '../../types/types';
 
@@ -14,7 +14,7 @@ class Trend extends Indicator {
     pivotDates: string[] = [];
     atr: StockData = {};
 
-    initialize(options: TrendParams) {
+    initialize(options: IndicatorType.TrendParams) {
         this.period = options["period"];
         this.lookback = options["lookback"]; // look back on up to x lows
         this.graph = this.calculate();

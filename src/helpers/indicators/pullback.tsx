@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, getTrueRange, daysBetween } from '../utils';
 import Indicator from './indicator';
 
-import { PullbackParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class Pullback extends Indicator {
@@ -18,7 +18,7 @@ class Pullback extends Indicator {
     lastBuy: Date = null!;
     buyChain = 0;
 
-    initialize(options: PullbackParams) {
+    initialize(options: IndicatorType.PullbackParams) {
         this.period = options.period; // period of sma to check pullback
         this.length = options.length; // length of pullback check
         this.graph = this.calculate();

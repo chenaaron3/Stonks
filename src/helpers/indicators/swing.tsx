@@ -1,7 +1,7 @@
 import { getSwingPivots } from '../utils';
 import Indicator from './indicator';
 
-import { SwingParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { PivotsData } from '../../types/types';
 
 class Swing extends Indicator {
@@ -9,7 +9,7 @@ class Swing extends Indicator {
     period = 0;
     graph: PivotsData = {};
 
-    initialize(options: SwingParams) {
+    initialize(options: IndicatorType.SwingParams) {
         this.period = options.period;
         this.graph = this.calculate();
     }

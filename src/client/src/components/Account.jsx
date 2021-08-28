@@ -160,6 +160,8 @@ class Account extends React.Component {
         // if done editting, update the database
         if (newValue == false) {
             let body = { field: formName, value: this.state[formName] };
+
+            // add id as subfield
             if (formName == "tradeSettings") {
                 body["field"] += "." + this.props.id;
                 this.props.setTradeSettings(this.state[formName]);

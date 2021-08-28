@@ -1,4 +1,4 @@
-import { BarData, Timeframe, SortBy, BoughtSymbolData, BacktestID } from '@shared/common';
+import { BarData, TradeSettingsData, BoughtSymbolData, SavedResultsData } from '@shared/common';
 import Backtest from '@shared/backtest';
 
 export interface GenericObject {
@@ -31,12 +31,6 @@ export interface AlpacaCredentialsData {
 export interface ExportLogin {
     username: string;
     password: string;
-}
-
-export interface TradeSetting {
-    scoreBy?: SortBy;
-    maxRisk?: string;
-    maxPositions?: string;
 }
 
 /**
@@ -88,10 +82,10 @@ export interface MongoPrices extends MongoDocumentData {
 
 export interface MongoUser extends MongoDocumentData {
     buys: BoughtSymbolData,
-    backtestIDs: BacktestID[],
+    backtestIDs: SavedResultsData,
     alpaca: AlpacaCredentialsData;
     tradeSettings: {
-        [key: string]: TradeSetting;
+        [key: string]: TradeSettingsData;
     }
 }
 

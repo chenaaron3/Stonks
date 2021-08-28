@@ -1,7 +1,7 @@
 import { isCrossed, getSwingPivots, getRSI, getTrueRange, getSimpleMovingAverage, isHighLow } from '../utils';
 import Indicator from './indicator';
 
-import { DivergenceParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 import { PivotsData } from '../../types/types';
 
@@ -18,7 +18,7 @@ class Divergence extends Indicator {
     rsi: StockData = {};
     atr: StockData = {};
 
-    initialize(options: DivergenceParams) {
+    initialize(options: IndicatorType.DivergenceParams) {
         this.period = options.period;
         this.lookback = options.lookback; // look back on up to x lows
         this.graph = this.calculate();

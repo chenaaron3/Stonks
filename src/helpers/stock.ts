@@ -64,7 +64,7 @@ async function update(timeframe: Timeframe) {
     addJob(() => {
         return new Promise(async resolveJob => {
             // get all docs from mongo
-            console.log("Retreiving symbols!");
+            console.log("Retreiving symbols from mongo!");
             
             let priceCollection = await getCollection(("prices" + timeframe) as COLLECTION_NAMES);
             let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1, prices: { $slice: -1 } }).toArray()//.limit(10);

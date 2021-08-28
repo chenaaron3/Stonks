@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, clampRange } from '../utils';
 import Indicator from './indicator';
 
-import { SMAParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class SMA extends Indicator {
@@ -11,7 +11,7 @@ class SMA extends Indicator {
     strict = false;
     graph: StockData = {};
 
-    initialize(options: SMAParams) {
+    initialize(options: IndicatorType.SMAParams) {
         this.period = options.period;
         this.minDuration = options.minDuration;
         this.strict = false;

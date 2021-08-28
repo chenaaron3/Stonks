@@ -27,6 +27,17 @@ export interface StockData {
 /**
  * User Data
  */
+export interface ClosedOrdersData {
+    [key: string]: ClosedOrderData[]
+}
+
+export interface ClosedOrderData {
+    buyPrice: number;
+    buyDate: string;
+    sellPrice: number;
+    sellDate: string;
+}
+
 export interface BoughtSymbolData {
     [key: string]: BuyEntryData[];
 }
@@ -35,6 +46,17 @@ export interface BuyEntryData {
     price: number;
     date: string;
 }
+
+export interface TradeSettingsData {
+    scoreBy?: SortBy;
+    maxRisk?: string;
+    maxPositions?: string;
+}
+
+/**
+ * Backtest Data
+ */
+export type SavedResultsData = BacktestID[];
 
 export interface BacktestID {
     id: string;

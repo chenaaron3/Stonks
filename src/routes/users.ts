@@ -5,7 +5,6 @@ import { addJob } from '../helpers/queue';
 import { setDocumentField, addDocument, getDocument } from '../helpers/mongo';
 import passport from 'passport';
 import Account from '../models/account';
-import { PassportLocalDocument } from 'mongoose';
 
 import { ExportLogin } from '../types/types';
 

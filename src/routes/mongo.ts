@@ -117,7 +117,7 @@ router.get('/pop', async function (req: Request<{}, {}, {}, { amount: string; ti
 	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
 
 	// get all docs from mongo
-	console.log("Retreiving symbols!");
+	console.log("Retreiving symbols from mongo!");
 	let priceCollection = await getCollection(("prices" + timeframe) as COLLECTION_NAMES);
 	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 }).toArray()//.limit(10);
 	console.log(`Retreived ${stockInfo.length} symbols!`);
@@ -148,7 +148,7 @@ router.get('/trim', async function (req, res) {
 	let timeframe = req.query.timeframe ? req.query.timeframe : "1Day";
 
 	// get all docs
-	console.log("Retreiving symbols!");
+	console.log("Retreiving symbols from mongo!");
 	let priceCollection = await getCollection(("prices" + timeframe) as COLLECTION_NAMES);
 	let stockInfo = await priceCollection.find({}).project({ _id: 1, lastUpdated: 1 }).toArray();
 	console.log(`Retreived ${stockInfo.length} symbols!`);

@@ -1,18 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import ReviewPage from './pages/ReviewPage';
 import CreatePage from './pages/CreatePage';
-import SummaryPage from './pages/SummaryPage';
-import SimulatePage from './pages/SimulatePage';
-import OptimizePage from './pages/OptimizePage';
-import WatchlistPage from './pages/WatchlistPage';
-import AccountPage from './pages/AccountPage';
+// import ReviewPage from './pages/ReviewPage';
+// import SummaryPage from './pages/SummaryPage';
+// import SimulatePage from './pages/SimulatePage';
+// import OptimizePage from './pages/OptimizePage';
+// import WatchlistPage from './pages/WatchlistPage';
+// import AccountPage from './pages/AccountPage';
 
-import * as serviceWorker from './serviceWorker';
+// import * as serviceWorker from './serviceWorker';
+
 import { Provider } from 'react-redux'
-import { createStore, applyMiddleware } from 'redux'
-import reducer from './redux'
+import { store } from './redux/store';
 import { setPusherClient } from 'react-pusher';
 import Pusher from 'pusher-js';
 import {
@@ -25,9 +25,6 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import green from '@material-ui/core/colors/green';
 import red from '@material-ui/core/colors/red';
-
-// Redux
-const store = createStore(reducer, composeWithDevTools());
 
 // Pusher
 const pusherClient = new Pusher("27c0991e4a760dce09df", {
@@ -46,14 +43,18 @@ ReactDOM.render(
       <ThemeProvider theme={theme}>
         <Router basename={"/stocks"}>
           <Switch>
-            <Route exact path="/" component={CreatePage} />
-            <Route path="/review" component={ReviewPage} />
-            <Route path="/summary" component={SummaryPage} />
-            <Route path="/simulate" component={SimulatePage} />
-            <Route path="/optimize" component={OptimizePage} />
-            <Route path="/watchlist" component={WatchlistPage} />
-            <Route path="/account" component={AccountPage} />
-            <Route path="/:backtestID" render={(props) => <CreatePage {...props} />} />
+            <div className='app-root'>
+              <Route exact path="/" component={CreatePage} />
+              {/* 
+              <Route path="/summary" component={SummaryPage} />
+              <Route path="/review" component={ReviewPage} />
+              <Route path="/simulate" component={SimulatePage} />
+              <Route path="/optimize" component={OptimizePage} />
+              <Route path="/watchlist" component={WatchlistPage} />
+              <Route path="/account" component={AccountPage} /> 
+            */}
+              <Route path="/:backtestID" render={(props) => <CreatePage {...props} />} />
+            </div>
           </Switch>
         </Router>
       </ThemeProvider>
@@ -65,4 +66,4 @@ ReactDOM.render(
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+// serviceWorker.unregister();

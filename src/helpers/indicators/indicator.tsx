@@ -1,6 +1,5 @@
 import { StockData } from '@shared/common';
-import { IndicatorParams } from '@shared/indicator';
-
+import IndicatorType from '@shared/indicator';
 
 abstract class Indicator {
 	/**
@@ -34,7 +33,7 @@ abstract class Indicator {
 	}
 
 	// initializes parameters and calculates graph
-	abstract initialize(options: IndicatorParams): void;
+	abstract initialize(options: IndicatorType.IndicatorParams): void;
 
 	// private method -- SHOULD BE OVERIDDEN
 	abstract calculate(): any;

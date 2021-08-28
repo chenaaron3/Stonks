@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, clampRange } from '../utils';
 import Indicator from './indicator';
 
-import { CandleParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 
 interface GraphData {
     [key: string]: {
@@ -29,7 +29,7 @@ class Candle extends Indicator {
         "legRatio": .1
     }
 
-    initialize(options: CandleParams) {
+    initialize(options: IndicatorType.CandleParams) {
         this.expiration = options.expiration;
         this.graph = this.calculate();
     }

@@ -1,7 +1,7 @@
 import { isCrossed, getExponentialMovingAverage, daysBetween, getSwingPivots, howHighLow } from '../utils';
 import Indicator from './indicator';
 
-import { StructureParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 import { PivotsData, PivotData } from '../../types/types';
 
@@ -22,7 +22,7 @@ class Structure extends Indicator {
     freshness = 720;
     limitLevel: number = null!;
 
-    initialize(options: StructureParams) {
+    initialize(options: IndicatorType.StructureParams) {
         this.period = options.period;
         this.volatility = options.volatility;
         this.minCount = options.minCount;

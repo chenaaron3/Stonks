@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import './Indicators.css';
-import caret from "../arrow.svg";
+import caret from "../images/arrow.svg";
 import { connect } from 'react-redux';
 import { setIndicatorOption, setIndicatorOn, setID } from '../redux';
 import Indicator from "./Indicator";

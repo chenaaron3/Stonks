@@ -1,7 +1,7 @@
 import { isCrossed, getExponentialMovingAverage, clampRange } from '../utils';
 import Indicator from './indicator';
 
-import { EMAParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class EMA extends Indicator {
@@ -10,7 +10,7 @@ class EMA extends Indicator {
     minDuration = 0;
     graph: StockData = {};
 
-    initialize(options: EMAParams) {
+    initialize(options: IndicatorType.EMAParams) {
         this.period = options["period"];
         this.minDuration = options["minDuration"];
         this.graph = this.calculate();

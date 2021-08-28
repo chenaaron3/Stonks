@@ -1070,7 +1070,7 @@ function getSymbols(applyBlacklist: boolean) {
                     output.forEach((stock: string[]) => {
                         let symbol = stock[0];
                         // exclude index and sub stocks
-                        if (!symbol.includes(".") && !symbol.includes("^")) {
+                        if (!symbol.includes(".") && !symbol.includes("^") && !symbol.includes('~')) {
                             if (applyBlacklist && blacklist.includes(symbol)) {
                                 return;
                             }

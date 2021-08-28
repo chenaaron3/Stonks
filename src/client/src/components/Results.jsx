@@ -3,10 +3,10 @@ import { connect } from 'react-redux';
 import { viewStock, viewEvent, setBacktestResults, setChartSettings, setDrawer, setClosedOrders } from '../redux';
 import './Results.css';
 import 'react-tabs/style/react-tabs.css';
-import eye from "../eye.svg";
-import buy from "../buy.svg";
-import bought from "../bought.svg";
-import sell from "../sell.svg";
+import eye from "../images/eye.svg";
+import buy from "../images/buy.svg";
+import bought from "../images/bought.svg";
+import sell from "../images/sell.svg";
 import { formatDate, daysBetween, displayDelta, sortResultsByScore } from "../helpers/utils";
 import Pusher from 'react-pusher';
 

@@ -1,7 +1,7 @@
 import { getRSI } from '../utils';
 import Indicator from './indicator';
 
-import { RSIParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class RSI extends Indicator {
@@ -11,7 +11,7 @@ class RSI extends Indicator {
 	overbought = 0;
 	graph: StockData = {};
 
-	initialize(options: RSIParams) {
+	initialize(options: IndicatorType.RSIParams) {
 		this.period = options.period;
 		this.underbought = options.underbought;
 		this.overbought = options.overbought;

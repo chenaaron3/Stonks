@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --ignore res/ --ignore client/ --ignore scripts/ --ignore data/ ./bin/www",
+    "start": "nodemon --ignore res/ --ignore src/client/ --ignore scripts/ --ignore dist/data/ ./bin/www",
     "setup": "npm install && cd client && npm install && npm run build",
     "heroku-postbuild": "cd client && npm install && npm run build",
     "build": "tsc",

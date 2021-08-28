@@ -110,6 +110,13 @@ namespace Backtest {
         endRatio: number;
         strideRatio: number;
     }
+
+    export interface OptimizeStoplossTargetResults {
+        [key: string]: {
+            summary: Backtest.SummaryData;
+            strategyOptions: Backtest.StrategyOptions
+        }
+    }
 }
 
-export = Backtest;
+export default Backtest;

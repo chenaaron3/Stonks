@@ -314,7 +314,7 @@ function setDocumentField(collectionName: COLLECTION_NAMES, id: string, fieldNam
 }
 
 async function getDocumentField<T extends MongoDocumentData>(collectionName: COLLECTION_NAMES, id: string, fieldNames: string[]) {
-	return new Promise<T | undefined>(async (resolve, reject) => {
+	return new Promise<T>(async (resolve, reject) => {
 		await ensureConnected();
 		getCollection<T>(collectionName)
 			.then(async (collection) => {
@@ -333,7 +333,7 @@ async function getDocumentField<T extends MongoDocumentData>(collectionName: COL
 					resolve(array[0] as T);
 				}
 				else {
-					resolve(undefined);
+					reject('Cannot find document');
 				}
 			})
 	});

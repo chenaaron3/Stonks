@@ -1,4 +1,4 @@
-import Alpaca, { BarsV2Response, GetHistoricalOptions, Timeframe, TradeDirection, TradeType, TimeInForce } from '@alpacahq/alpaca-trade-api';
+import Alpaca, { BarsV2Response, GetHistoricalOptions, Timeframe, TradeDirection, TradeType, TimeInForce, AlpacaOrder } from '@alpacahq/alpaca-trade-api';
 import axios from 'axios';
 
 import { AlpacaCredentialsData } from '../types/types';
@@ -119,8 +119,8 @@ function getAlpacaBars(s: string, startDate: Date, endDate: Date, timeframe: Tim
             }
 
             let transformed: BarData[] = [];
-            if (bars) {
-                bars['bars'].map(raw => {
+            if (bars && bars['bars']) {
+                transformed = bars['bars'].map(raw => {
                     return {
                         date: (new Date(raw["t"])),
                         open: raw["o"],
@@ -176,7 +176,7 @@ function cancelAllOrders() {
 }
 
 function requestBracketOrder(symbol: string, buyPrice: number, positionSize: number, stoploss: number, target: number) {
-    return new Promise((resolve, reject) => {
+    return new Promise<AlpacaOrder>((resolve, reject) => {
         getAccount().then(account => {
             let totalEquity = parseFloat(account["equity"]);
             let qty = (totalEquity * positionSize) / buyPrice;

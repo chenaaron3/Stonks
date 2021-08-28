@@ -1,7 +1,7 @@
 import { getStochasticOscillator } from '../utils';
 import Indicator from './indicator';
 
-import { StochasticParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class Stochastic extends Indicator {
@@ -11,7 +11,7 @@ class Stochastic extends Indicator {
 	overbought = 0;
 	graph: StockData = {};
 
-	initialize(options: StochasticParams) {
+	initialize(options: IndicatorType.StochasticParams) {
 		this.period = options.period;
 		this.underbought = options.underbought;
 		this.overbought = options.overbought;

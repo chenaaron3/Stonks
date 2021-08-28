@@ -1,7 +1,7 @@
 import { isCrossed, getTrueRange, getDirectionalMovement, getWilderSmoothing } from '../utils';
 import Indicator from './indicator';
 
-import { ADXParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class ADX extends Indicator {
@@ -13,7 +13,7 @@ class ADX extends Indicator {
     ndi: StockData = {};
     histogram: StockData = {};
 
-    initialize(options: ADXParams) {
+    initialize(options: IndicatorType.ADXParams) {
         this.period = options.period;
         this.threshold = options.threshold;
         this.graph = this.calculate();

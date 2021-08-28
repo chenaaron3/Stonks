@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, clampRange } from '../utils';
 import Indicator from './indicator';
 
-import { HighParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class High extends Indicator {
@@ -9,7 +9,7 @@ class High extends Indicator {
     period = 0;
     graph: StockData = {};
 
-    initialize(options: HighParams) {
+    initialize(options: IndicatorType.HighParams) {
         this.period = options.period;
         this.graph = this.calculate();
     }

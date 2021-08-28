@@ -92,7 +92,7 @@ class Optimize extends React.Component {
                     return;
                 }
 
-                let data = optimized["data"];
+                let data = optimized;
                 let symbols = Object.keys(data);
                 let fields = data[symbols[0]]["fields"];
                 let allIndicatorData = { events: [], stats: {}, generalStats: {} }; // contains all events, stats for all fields

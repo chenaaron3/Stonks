@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, clampRange } from '../utils';
 import Indicator from './indicator';
 
-import { SolidParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class Solid extends Indicator {
@@ -9,7 +9,7 @@ class Solid extends Indicator {
 	minLength = 0;
 	maxRatio = 0;
 
-	initialize(options: SolidParams) {
+	initialize(options: IndicatorType.SolidParams) {
 		this.minLength = options.minLength;
 		this.maxRatio = options.maxRatio;
 	}

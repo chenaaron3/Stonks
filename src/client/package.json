@@ -7,11 +7,15 @@
     "@emotion/styled": "^10.0.27",
     "@material-ui/core": "^4.11.0",
     "@material-ui/icons": "^4.9.1",
+    "@reduxjs/toolkit": "^1.6.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "@types/axios": "^0.14.0",
+    "axios": "^0.21.1",
     "color-interpolate": "^1.0.5",
     "distinct-colors": "^3.0.0",
+    "immer": "^9.0.5",
     "neumorphism-react": "^1.1.1",
     "pusher-js": "^6.0.3",
     "react": "^16.13.1",
@@ -50,5 +54,16 @@
     ]
   },
   "proxy": "http://localhost:8080",
-  "homepage": "http://chenaaron.com/stocks"
+  "homepage": "http://chenaaron.com/stocks",
+  "devDependencies": {
+    "@types/react": "^17.0.19",
+    "@types/react-dom": "^17.0.9",
+    "@types/react-redux": "^7.1.18",
+    "@types/react-responsive": "^8.0.3",
+    "@types/react-router-dom": "^5.1.8",
+    "@types/recharts": "^2.0.0",
+    "@types/redux": "^3.6.0",
+    "tsc": "^2.0.3",
+    "typescript": "^3.9.10"
+  }
 }

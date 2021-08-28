@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, getTrueRange } from '../utils';
 import Indicator from './indicator';
 
-import { BreakoutParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class Breakout extends Indicator {
@@ -14,7 +14,7 @@ class Breakout extends Indicator {
     testCount = 0;
     lastTest = 0;
 
-    initialize(options: BreakoutParams) {
+    initialize(options: IndicatorType.BreakoutParams) {
         this.period = options.period; // period of sma to check breakout
         this.tests = options.tests; // min number of test on sma
         this.margin = 12; // min days between each test

@@ -1,7 +1,7 @@
 import { isCrossed, getSimpleMovingAverage, normalizeRange } from '../utils';
 import Indicator from './indicator';
 
-import { GCParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class GC extends Indicator {
@@ -11,7 +11,7 @@ class GC extends Indicator {
 	ma1: StockData = {};
 	ma2: StockData = {};
 
-	initialize(options: GCParams) {
+	initialize(options: IndicatorType.GCParams) {
 		this.ma1Period = options.ma1Period;
 		this.ma2Period = options.ma2Period;
 		this.calculate();

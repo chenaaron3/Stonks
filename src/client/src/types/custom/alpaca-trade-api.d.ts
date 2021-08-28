@@ -153,7 +153,7 @@ declare module '@alpacahq/alpaca-trade-api' {
         change_today: string;
     }
 
-    interface AlpacaAccount {
+    export interface AlpacaAccount {
         account_blocked: boolean;
         account_number: string;
         buying_power: string;

@@ -1,7 +1,7 @@
 import { getMACD, getExponentialMovingAverage, isCrossed, clampRange } from '../utils';
 import Indicator from './indicator';
 
-import { MACD2Params } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class MACD2 extends Indicator {
@@ -14,7 +14,7 @@ class MACD2 extends Indicator {
 	signalLine: StockData = {};
 	histogram: StockData = {};
 
-	initialize(options: MACD2Params) {
+	initialize(options: IndicatorType.MACD2Params) {
 		this.ema1 = options.ema1;
 		this.ema2 = options.ema2;
 		this.signalPeriod = options.signalPeriod;

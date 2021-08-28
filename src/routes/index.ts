@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express, { Request, Response } from 'express';
 const router = express.Router();
 
 // own helpers
@@ -6,12 +6,16 @@ import { containsID, addDocument, getDocument, addActiveResult, deleteActiveResu
 import { makeid, getBacktestSummary } from '../helpers/utils';
 import { backtest, optimizeStoplossTarget, optimizeIndicators, updateBacktest } from '../helpers/backtest';
 
-import { MongoActiveResults, MongoResults } from '../types/types';
-import Backtest, { StrategyOptions } from '@shared/backtest';
+import { MongoActiveResults, MongoResults, MongoIndicators } from '../types/types';
+import Backtest from '@shared/backtest';
 import Indicator from '@shared/indicator';
 
+import API from '@shared/api';
+
 //#region Backtest Status
-router.post("/autoUpdate", async (req: Request<{}, {}, { id: string, subscribe: boolean }>, res) => {
+router.post("/autoUpdate", async (
+    req: Request<{}, {}, API.Index.PostAutoUpdate>,
+    res: Response<API.Index._PostAutoUpdate>) => {
     if (req.user) {
         // id of the result
         let id = req.body.id;
@@ -32,7 +36,9 @@ router.post("/autoUpdate", async (req: Request<{}, {}, { id: string, subscribe: 
     }
 });
 
-router.get("/isAutoUpdate", async (req: Request<{}, {}, {}, { id: string }>, res) => {
+router.get("/isAutoUpdate", async (
+    req: Request<{}, {}, {}, API.Index.GetIsAutoUpdate>,
+    res: Response<API.Index._GetIsAutoUpdate>) => {
     // each session and backtest can only have 1 email
     let id = req.query.id;
 
@@ -51,13 +57,15 @@ router.get("/isAutoUpdate", async (req: Request<{}, {}, {}, { id: string }>, res
         }
     }
 
-    res.json({ status: found });
+    res.json({ found: found });
 })
 //#endregion
 
 //#region Create Backtest
 // gets the backtest results for all companies
-router.post("/backtest", async (req: Request<{}, {}, StrategyOptions>, res) => {
+router.post("/backtest", async (
+    req: Request<{}, {}, API.Index.PostBacktest>,
+    res: Response<API.Index._PostBacktest>) => {
     // get options from client
     let strategyOptions = req.body;
 
@@ -85,10 +93,12 @@ router.post("/backtest", async (req: Request<{}, {}, StrategyOptions>, res) => {
 });
 
 // optimize a backtest for optimal stoploss/target
-router.post("/optimizeStoplossTarget", async (req, res) => {
+router.post("/optimizeStoplossTarget", async (
+    req: Request<{}, {}, API.Index.PostOptimizeStoplossTarget>,
+    res: Response<API.Index._PostOptimizeStoplossTarget>) => {
     // get options from client
     let optimizeOptions = req.body;
-    let id = req.body["id"];
+    let id = req.body.id;
 
     // get the base id
     if (id.includes("optimized")) {
@@ -114,9 +124,11 @@ router.post("/optimizeStoplossTarget", async (req, res) => {
 })
 
 // optimize a backtest for optimal indicators
-router.post("/optimizeIndicators", async (req, res) => {
+router.post("/optimizeIndicators", async (
+    req: Request<{}, {}, API.Index.PostOptimizeIndicators>,
+    res: Response<API.Index._PostOptimizeIndicators>) => {
     // get options from client
-    let id = req.body["id"];
+    let id = req.body.id;
     let indicatorOptions: Indicator.Indicators = {
         "RSI": {
             "period": 14,
@@ -163,7 +175,9 @@ router.post("/optimizeIndicators", async (req, res) => {
 
 //#region Read Backtest
 // get backtest results
-router.get("/results", async (req: Request<{}, {}, {}, { id: string }>, res) => {
+router.get("/results", async (
+    req: Request<{}, {}, {}, API.Index.GetResults>,
+    res) => {
     let id = req.query.id;
     try {
         let doc = await getDocument<MongoResults>("results", id);
@@ -183,7 +197,9 @@ router.get("/results", async (req: Request<{}, {}, {}, { id: string }>, res) => 
 })
 
 // get optimization results
-router.get("/optimizedStoplossTarget", async (req: Request<{}, {}, {}, { id: string }>, res) => {
+router.get("/optimizedStoplossTarget", async (
+    req: Request<{}, {}, {}, API.Index.GetOptimizedStoplossTarget>,
+    res: Response<API.Index._GetOptimizedStoplossTarget>) => {
     let id = req.query.id;
     let doc = await getDocument<MongoResults>("results", id);
     if (!doc) {
@@ -200,7 +216,7 @@ router.get("/optimizedStoplossTarget", async (req: Request<{}, {}, {}, { id: str
             }
             optimized = doc["_optimized"]!;
         }
-        let results: { [key: string]: { summary: Backtest.SummaryData, strategyOptions: Backtest.StrategyOptions } } = {};
+        let results: Backtest.OptimizeStoplossTargetResults = {};
         // fetch all docs
         for (let i = 0; i < optimized["ids"]!.length; ++i) {
             let optimizedID = optimized["ids"]![i];
@@ -236,7 +252,9 @@ router.get("/optimizedStoplossTarget", async (req: Request<{}, {}, {}, { id: str
 })
 
 // get optimized indicators
-router.get("/optimizedIndicators", async (req: Request<{}, {}, {}, { id: string }>, res) => {
+router.get("/optimizedIndicators", async (
+    req: Request<{}, {}, {}, API.Index.GetOptimizedIndicators>,
+    res: Response<API.Index._GetOptimizedIndicators>) => {
     let id = req.query.id;
 
     let doc = await getDocumentField<MongoResults>("results", id, ["_optimized"]);
@@ -252,8 +270,13 @@ router.get("/optimizedIndicators", async (req: Request<{}, {}, {}, { id: string 
 
     // get doc
     try {
-        doc = await getDocument("indicators", id);
-        res.json(doc);
+        let indicatorDoc = await getDocument<MongoIndicators>("indicators", id);
+        if (indicatorDoc) {
+            res.json(indicatorDoc.data);
+        }
+        else {
+            res.json({ error: "Optimization does not exist!" });
+        }
     }
     catch {
         res.json({ error: "Backtest not optimized yet!" });
@@ -262,11 +285,13 @@ router.get("/optimizedIndicators", async (req: Request<{}, {}, {}, { id: string 
 //#endregion
 
 //#region Update Backtest
-router.get("/updateBacktest", async (req: Request<{}, {}, {}, { id: string }>, res) => {
+router.get("/updateBacktest", async (
+    req: Request<{}, {}, {}, API.Index.GetUpdateBacktest>,
+    res: Response<API.Index._GetUpdateBacktest>) => {
     // get backtest id
     let id = req.query.id;
     if (!await containsID("results", id)) {
-        res.send("Backtest ID is not valid!");
+        res.json({ error: "Backtest ID is not valid!" });
         return;
     }
 
@@ -283,16 +308,17 @@ router.get("/updateBacktest", async (req: Request<{}, {}, {}, { id: string }>, r
 
 //#region Delete Backtest
 // delete backtest results
-router.delete("/deleteResults/:id", async (req, res) => {
-    let id = req.params.id;
+router.delete("/deleteResults", async (
+    req: Request<{}, {}, {}, API.Index.DeleteDeleteResults>,
+    res: Response<API.Index._DeleteDeleteResults>) => {
+    let id = req.query.id;
 
     let dependents = [];
     let results = [];
-    let activeResults;
     // find list of people subscribed to this backtest
-    activeResults = await getDocument("results", "activeResults");
-    if (activeResults) {
-        activeResults = activeResults["activeResults"];
+    let activeResultsDoc = await getDocument<MongoActiveResults>("results", "activeResults");;
+    if (activeResultsDoc) {
+        let activeResults = activeResultsDoc.activeResults;
         for (let i = 0; i < activeResults.length; ++i) {
             let activeResult = activeResults[i];
             if (activeResult["id"] == id) {

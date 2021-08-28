@@ -1,7 +1,7 @@
 import { getTrueRange, getSimpleMovingAverage } from '../utils';
 import Indicator from './indicator';
 
-import { ATRParams } from '@shared/indicator';
+import IndicatorType from '@shared/indicator';
 import { StockData } from '@shared/common';
 
 class ATR extends Indicator {
@@ -9,7 +9,7 @@ class ATR extends Indicator {
     period = 0;
     graph: StockData = {};
 
-    initialize(options: ATRParams) {
+    initialize(options: IndicatorType.ATRParams) {
         this.period = options.period;
         this.graph = this.calculate();
     }
