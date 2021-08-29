@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React, {  } from 'react';
 import './Indicators.css';
 import caret from "../images/arrow.svg";
 import { connect } from 'react-redux';

@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React, {  } from 'react';
 import './WatchlistPage.css';
 import MainLayout from "../layouts/MainLayout";
 import Watchlist from "../components/Watchlist"

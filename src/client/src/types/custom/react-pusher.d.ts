@@ -1,13 +1,13 @@
 declare module "react-pusher" {
     import React from 'react';
     import Pusher from 'pusher-js';
-    import { PusherEvents } from '../common';
+    import API from '../api';
 
     export function setPusherClient(Pusher): void;
 
     export interface ReactPusherProps {
         channel: string;
-        event: PusherEvents;
+        event: API.Pusher.PusherEvents;
         onUpdate: (message: any) => void;
     }
 

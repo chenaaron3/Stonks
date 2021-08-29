@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import CreatePage from './pages/CreatePage';
+import SummaryPage from './pages/SummaryPage';
 // import ReviewPage from './pages/ReviewPage';
-// import SummaryPage from './pages/SummaryPage';
 // import SimulatePage from './pages/SimulatePage';
 // import OptimizePage from './pages/OptimizePage';
 // import WatchlistPage from './pages/WatchlistPage';
@@ -21,7 +21,6 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import { composeWithDevTools } from 'redux-devtools-extension';
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import green from '@material-ui/core/colors/green';
 import red from '@material-ui/core/colors/red';
@@ -42,20 +41,21 @@ ReactDOM.render(
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <Router basename={"/stocks"}>
-          <Switch>
-            <div className='app-root'>
+          <div className='app-root'>
+            <Switch>
+
               <Route exact path="/" component={CreatePage} />
-              {/* 
               <Route path="/summary" component={SummaryPage} />
+              {/* 
               <Route path="/review" component={ReviewPage} />
               <Route path="/simulate" component={SimulatePage} />
               <Route path="/optimize" component={OptimizePage} />
               <Route path="/watchlist" component={WatchlistPage} />
               <Route path="/account" component={AccountPage} /> 
             */}
-              <Route path="/:backtestID" render={(props) => <CreatePage {...props} />} />
-            </div>
-          </Switch>
+              <Route path="/:backtestID" render={(props) => <CreatePage />} />
+            </Switch>
+          </div>
         </Router>
       </ThemeProvider>
     </Provider>

@@ -1,18 +1,16 @@
-import React, { createRef } from 'react';
+import React, {  } from 'react';
 import './CreatePage.css';
 import SavedResults from '../components/SavedResults';
 import CreateBacktest from '../components/CreateBacktest';
 
-import { BacktestPageProps } from '../types/types';
-
-const CreatePage: React.FC<BacktestPageProps> = (props) => {
+const CreatePage: React.FC = (props) => {
     return (
         <div className="create-page">
             <div className="create-page-recents">
-                <SavedResults {...props} />
+                <SavedResults />
             </div>
             <div className="create-page-new">
-                <CreateBacktest {...props} />
+                <CreateBacktest />
             </div>
         </div>
     );

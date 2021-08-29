@@ -50,10 +50,10 @@ export interface ClosedOrdersData {
 }
 
 export interface ClosedOrderData {
-    buyPrice: number;
-    buyDate: string;
-    sellPrice: number;
-    sellDate: string;
+    buyPrice?: number;
+    buyDate?: Date;
+    sellPrice?: number;
+    sellDate?: Date;
 }
 
 export interface BoughtSymbolData {
@@ -98,7 +98,5 @@ export interface PivotData {
 }
 
 export type Timeframe = "1Hour" | "1Day";
-
+export type ExportType = 'StocksTracker' | 'Finviz';
 export type SortBy = 'Percent Profit' | 'Win Rate' | 'Dollar Profit';
-
-export type PusherEvents = 'onResultsFinished' | 'onUpdateFinished' | 'onOptimizeFinished' | 'onOptimizeIndicatorsFinished' | 'onProgressUpdate' | 'onOptimizeProgressUpdate' | 'onOptimizeIndicatorsProgressUpdate'

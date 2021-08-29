@@ -2,28 +2,25 @@ import React, { useState, useEffect } from 'react';
 import './SavedResults.css';
 import SavedResult from './SavedResult';
 import Loading from './Loading';
-import axios from 'axios';
-import { connect } from 'react-redux';
+import { getEndpoint } from '../helpers/api';
 import { getBacktestDisplayName, checkLoggedIn } from '../helpers/utils';
+import { useHistory, useParams } from 'react-router-dom';
 
 import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
 import MediaQuery from 'react-responsive'
 
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { viewSymbol, setBacktestResults } from '../redux/slices/backtestSlice';
+import { viewSymbol, setBacktestResults, setBacktestID } from '../redux/slices/backtestSlice';
 import { setSavedResults } from '../redux/slices/userSlice';
 import { setPageIndex, setDrawer } from '../redux/slices/uiSlice';
 
 import { SavedResultsData } from '../types/common';
-import { BacktestPageProps } from '../types/types';
-import Backtest from '../types/backtest';
-import { ErrorResponse } from '../types/api';
+import API from '../types/api';
+import { RouteMatchParams } from '../types/types';
 
-interface SavedResultsProps extends BacktestPageProps {
-
-}
-
-const SavedResults: React.FC<SavedResultsProps> = (props) => {
+const SavedResults: React.FC = (props) => {
+    let { backtestID } = useParams<RouteMatchParams>();
+    const history = useHistory();
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState(false);
     const savedResults = useAppSelector(state => state.user.savedResults);
@@ -34,8 +31,9 @@ const SavedResults: React.FC<SavedResultsProps> = (props) => {
     // initial load of saved results
     useEffect(() => {
         // if link to specific backtest, go to it immediately
-        if (props.match.params.backtestID) {
-            fetchBacktestResults(props.match.params.backtestID);
+        if (backtestID) {
+            console.log('Loading from backtestID', backtestID)
+            fetchBacktestResults(backtestID);
             setLoading(true);
         }
 
@@ -59,17 +57,19 @@ const SavedResults: React.FC<SavedResultsProps> = (props) => {
             checkLoggedIn().then(async isLoggedIn => {
                 // load saved results from account
                 if (isLoggedIn) {
-                    let userData = await axios.get<{ 'backtestIDs': SavedResultsData }>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/users/data`)
-                        .then(res => res.data);
-                    let userSavedResults = userData['backtestIDs'];
-                    let currentSavedResults = new Set(savedResults.map(sr => sr['id']));
-                    // sync ids from the cloud to local
-                    userSavedResults.forEach(userSavedResult => {
-                        if (!currentSavedResults.has(userSavedResult['id'])) {
-                            localSavedResults.push(userSavedResult);
-                            currentSavedResults.add(userSavedResult['id']);
-                        }
-                    })
+                    let userData = await getEndpoint<API.Users.GetData, API.Users._GetData>('users/data', {});
+                    if ('error' in userData) { }
+                    else {
+                        let userSavedResults = userData.backtestIDs;
+                        let currentSavedResults = new Set(savedResults.map(sr => sr.id));
+                        // sync ids from the cloud to local
+                        userSavedResults.forEach(userSavedResult => {
+                            if (!currentSavedResults.has(userSavedResult.id)) {
+                                localSavedResults.push(userSavedResult);
+                                currentSavedResults.add(userSavedResult.id);
+                            }
+                        })
+                    }
                 }
 
                 // push to global state
@@ -80,30 +80,30 @@ const SavedResults: React.FC<SavedResultsProps> = (props) => {
 
     const fetchBacktestResults = (id: string) => {
         setLoading(true);
-        axios.get<Backtest.ResultsData | ErrorResponse>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/results?id=${id}`)
+        getEndpoint<API.Index.GetResults, API.Index._GetResults>('results', { id })
             .then(res => {
                 // if results are not ready
-                if (res.data.hasOwnProperty('error')) {
-                    let results = res.data as ErrorResponse;
-                    alert(results['error']);
+                if ('error' in res) {
+                    alert(res.error);
                 }
                 else {
-                    let results = res.data as Backtest.ResultsData;
                     // save to local storage if not already in there
                     if (!id.includes('optimized') && !savedResults.some(r => r['id'] == id)) {
                         let updatedSavedResults = [...savedResults];
-                        updatedSavedResults.push({ id, display: getBacktestDisplayName(results['strategyOptions']) });
+                        updatedSavedResults.push({ id, display: getBacktestDisplayName(res.strategyOptions) });
                         dispatch(setSavedResults(updatedSavedResults));
                     }
 
                     // store results in global state
-                    dispatch(setBacktestResults(results));
+                    dispatch(setBacktestResults({ results: res, id: id }));
+                    dispatch(setBacktestID(id));
                     // preview first stock
-                    dispatch(viewSymbol(Object.keys(results['symbolData'])[0]));
+                    dispatch(viewSymbol(Object.keys(res.symbolData)[0]));
                     // set active page to summary
                     dispatch(setPageIndex(1));
+
                     // go to next page
-                    props.history.push('/summary');
+                    history.push('summary');
                 }
                 setLoading(false);
             });

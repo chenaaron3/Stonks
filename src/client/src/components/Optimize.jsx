@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React, {  } from 'react';
 import { connect } from 'react-redux';
 import "./Optimize.css";
 import { camelToDisplay, mapRange, findOptimalMetric } from "../helpers/utils"

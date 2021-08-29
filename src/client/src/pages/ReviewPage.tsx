@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React, {  } from 'react';
 import './ReviewPage.css';
 import MainLayout from "../layouts/MainLayout";
 import Chart from "../components/Chart";
@@ -8,7 +8,7 @@ import SymbolResults from "../components/SymbolResults";
 
 class ReviewPage extends React.Component {
   render() {
-    return <MainLayout {...this.props}>
+    return <MainLayout >
       <div className="review-page">
         <div className="review-page-backtest-results">
           <Results />

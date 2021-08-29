@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './CreateBacktest.css';
-import { connect } from 'react-redux';
 import { getBacktestDisplayName } from '../helpers/utils'
 import Indicator from './Indicator';
 import Pusher from 'react-pusher';
-import axios from 'axios';
+import { postEndpoint, fetchBacktestResults } from '../helpers/api';
 
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
@@ -22,7 +21,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MediaQuery from 'react-responsive'
 
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setBacktestID, setBacktestResults } from '../redux/slices/backtestSlice';
+import { setBacktestResults, setBacktestID } from '../redux/slices/backtestSlice';
 import { setSavedResults } from '../redux/slices/userSlice';
 import { setDrawer } from '../redux/slices/uiSlice';
 import { setIndicatorOption, setIndicatorOn, clearIndicators } from '../redux/slices/indicatorSlice';
@@ -30,12 +29,9 @@ import { setIndicatorOption, setIndicatorOn, clearIndicators } from '../redux/sl
 import IndicatorType from '../types/indicator';
 import Backtest from '../types/backtest';
 import { Timeframe } from '../types/common';
+import API from '../types/api';
 
-interface CreateBacktestProps {
-
-}
-
-const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
+const CreateBacktest: React.FC = (props) => {
     const dispatch = useAppDispatch();
 
     // Component State
@@ -105,7 +101,6 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
         Object.keys(indicators).map((indicatorName, index) => {
             // initialize global state with default values
             indicators[indicatorName]['fields'].map((field, index) => {
-                console.log(indicatorName, field, indicators[indicatorName]['default'][index])
                 dispatch(setIndicatorOption({
                     indicatorName: indicatorName as IndicatorType.IndicatorNames,
                     field,
@@ -198,9 +193,8 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
         } as Backtest.StrategyOptions;
 
         // fetch results here        
-        axios.post<{ status: string, id: string }>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/backtest`, strategyOptions)
-            .then(res => {
-                let results = res.data;
+        postEndpoint<API.Index.PostBacktest, API.Index._PostBacktest>('backtest', strategyOptions)
+            .then(results => {
                 console.log('STATUS:', results['status']);
                 setTimeout(() => { alert(results['status']); }, 1000);
 
@@ -214,7 +208,7 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
                 let displayName = getBacktestDisplayName(strategyOptions);
                 let newSave = [...savedResults, { id, display: displayName }];
                 dispatch(setSavedResults(newSave));
-            });
+            })
     }
 
     const previousStep = () => {
@@ -224,14 +218,14 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
     // error checking
     const nextStep = () => {
         if (step == 0) {
-            if (mainBuyIndicator == '' || !activeIndicators.has(mainBuyIndicator)) {
+            if (mainBuyIndicator == '' || !activeIndicators.includes(mainBuyIndicator)) {
                 alert('Please select a main buy indicator.');
                 return;
             }
             setBuyOptions(deriveIndicatorOptions());
         }
         else if (step == 1) {
-            if (mainSellIndicator == '' || !activeIndicators.has(mainSellIndicator)) {
+            if (mainSellIndicator == '' || !activeIndicators.includes(mainSellIndicator)) {
                 alert('Please select a main sell indicator.');
                 return;
             }
@@ -286,21 +280,11 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
     }
 
     // when server signals that the results are ready
-    const onResultFinished = async (data: { id: string }) => {
+    const onResultsFinished = async (data: API.Pusher.OnResultsFinished) => {
         // get the results from database
-        let results = await fetchBacktestResults(data['id']);
+        let results = await fetchBacktestResults(data.id);
         // store results in global state
-        dispatch(setBacktestResults(results));
-    }
-
-    const fetchBacktestResults = (id: string) => {
-        return new Promise<Backtest.ResultsData>(resolve => {
-            // get the data from the server
-            axios.get<Backtest.ResultsData>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/results?id=${id}`)
-                .then(results => {
-                    resolve(results.data);
-                })
-        })
+        dispatch(setBacktestResults({ results: results, id: data.id }));
     }
 
     let activeIndicatorList = [...activeIndicators];
@@ -316,7 +300,7 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
             <Pusher
                 channel={id}
                 event='onResultsFinished'
-                onUpdate={onResultFinished}
+                onUpdate={onResultsFinished}
             />
             <MediaQuery maxWidth='600px'>
                 <IconButton
@@ -354,7 +338,7 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
                                     <div className='create-backtest-indicator-list'>
                                         {(Object.keys(indicators) as IndicatorType.IndicatorNames[]).map((indicatorName, index) => {
                                             return <Indicator name={indicatorName} fields={indicators[indicatorName]['fields']} default={indicators[indicatorName]['default']} key={index}
-                                                active={activeIndicators.has(indicatorName)} options={indicatorOptions[indicatorName]} />
+                                                active={activeIndicators.includes(indicatorName)} options={indicatorOptions[indicatorName]} />
                                         })}
                                     </div>
                                     <h3 className='create-backtest-subtitle'>Select a main indicator to initiate buy events.</h3>
@@ -377,7 +361,7 @@ const CreateBacktest: React.FC<CreateBacktestProps> = (props) => {
                                     <div className='create-backtest-indicator-list'>
                                         {(Object.keys(indicators) as IndicatorType.IndicatorNames[]).map((indicatorName, index) => {
                                             return <Indicator name={indicatorName} fields={indicators[indicatorName]['fields']} default={indicators[indicatorName]['default']} key={index}
-                                                active={activeIndicators.has(indicatorName)} options={indicatorOptions[indicatorName]} />
+                                                active={activeIndicators.includes(indicatorName)} options={indicatorOptions[indicatorName]} />
                                         })}
                                     </div>
                                     <h3 className='create-backtest-subtitle'>Select a main indicator to initiate a sell events.</h3>

@@ -34,8 +34,9 @@ export const backtestSlice = createSlice({
         setBacktestID: (state, action: PayloadAction<string>) => {
             state.id = action.payload;
         },
-        setBacktestResults: (state, action: PayloadAction<Backtest.ResultsData>) => {
-            state.results = action.payload;
+        setBacktestResults: (state, action: PayloadAction<{ results: Backtest.ResultsData, id: string }>) => {
+            state.results = action.payload.results;
+            state.id = action.payload.id;
         },
         viewSymbol: (state, action: PayloadAction<string>) => {
             state.selectedSymbol = action.payload;

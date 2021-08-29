@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { getEndpoint, postEndpoint, fetchBacktestResults } from '../helpers/api';
 import { setBacktestResults } from '../redux/slices/backtestSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import './Dashboard.css';
@@ -31,7 +31,6 @@ import Switch from '@material-ui/core/Switch';
 import MediaQuery from 'react-responsive';
 
 import Backtest from '../types/backtest';
-
 import API from '../types/api';
 
 let winLossColor = ['#2ecc71', '#FFCCCB'];
@@ -42,7 +41,7 @@ interface PieDataEntry {
 }
 
 interface BucketDataEntry {
-    key?: string;
+    date?: string;
     winTrades: number,
     lossTrades: number,
     profit: number
@@ -94,7 +93,7 @@ const Dashboard: React.FC = (props) => {
 
     useEffect(() => {
         analyze();
-    }, [id, bucketType]);
+    }, [id, bucketType, range]);
 
     // statistical analysis (win/loss)
     const analyze = () => {
@@ -212,7 +211,7 @@ const Dashboard: React.FC = (props) => {
                 return;
             }
             profit += bucketDataMap[bucketKey]['profit'];
-            bucketData.push({ key: bucketKey, ...bucketDataMap[bucketKey], profit });
+            bucketData.push({ date: bucketKey, ...bucketDataMap[bucketKey], profit });
         })
 
         setStatistics({
@@ -226,40 +225,36 @@ const Dashboard: React.FC = (props) => {
     // send request to update a backtest
     const updateBacktest = () => {
         setUpdateProgress(0);
-        axios.get<{ status: string }>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/updateBacktest?id=${id}`)
-            .then(res => alert(res.data['status']))
+        getEndpoint<API.Index.GetUpdateBacktest, API.Index._GetUpdateBacktest>('updateBacktest', { id })
+            .then(res => {
+                if ('error' in res) {
+                    alert(res.error);
+                }
+                else {
+                    alert(res.status)
+                }
+            });
     }
 
     // send request to subscribe to auto updates
     const setAutoUpdate = () => {
-        axios.post<{ error: string, status: string }>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/autoUpdate`,
-            { id: id, subscribe: !active })
-            .then(res => {
-                let json = res.data;
-                if (json['error']) {
-                    alert(json['error']);
+        postEndpoint<API.Index.PostAutoUpdate, API.Index._PostAutoUpdate>('autoUpdate', { id: id, subscribe: !active })
+            .then(json => {
+                if ('error' in json) {
+                    alert(json.error);
                 }
                 else {
-                    alert(json['status']);
+                    alert(json.status);
                     updateActiveStatus();
                 }
             })
     }
 
     const updateActiveStatus = () => {
-        // check if is 
-        axios.get<API.Index._GetIsAutoUpdate>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/isAutoUpdate?id=${id}`)
-            .then(res => {
-                let json = res.data;
-                setActive(json.found)
-            })
-    }
-
-    // reload the page when update is complete
-    const fetchBacktestResults = (id: string) => {
-        axios.get<{ results: Backtest.ResultsData }>(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/results?id=${id}`)
-            .then(res => {
-                dispatch(setBacktestResults(res.data.results));
+        // check if is active
+        getEndpoint<API.Index.GetIsAutoUpdate, API.Index._GetIsAutoUpdate>('isAutoUpdate', { id: id })
+            .then(json => {
+                setActive(json.found);
             })
     }
 
@@ -276,12 +271,12 @@ const Dashboard: React.FC = (props) => {
         return (date.getMonth() + 1) + '/' + date.getFullYear();
     }
 
-    const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleTypeChange = (e: React.ChangeEvent<{ name?: string | undefined; value: unknown; }>, child: React.ReactNode) => {
         console.log('changing type to', e.target.value);
-        setBucketType(bucketTypes[parseInt(e.target.value)]);
+        setBucketType(bucketTypes[parseInt(e.target.value as string)]);
     }
 
-    const onCopyLink = (e: React.MouseEventHandler<HTMLButtonElement>) => {
+    const onCopyLink = () => {
         navigator.clipboard.writeText(`${process.env.REACT_APP_DOMAIN}${process.env.REACT_APP_SUBDIRECTORY}/` + id);
     }
 
@@ -312,13 +307,14 @@ const Dashboard: React.FC = (props) => {
         <Pusher
             channel={id}
             event='onProgressUpdate'
-            onUpdate={(data: { progress: number }) => { setUpdateProgress(data.progress) }}
+            onUpdate={(data: API.Pusher.OnProgressUpdate) => { setUpdateProgress(data.progress) }}
         />
         <Pusher
             channel={id}
             event='onUpdateFinished'
-            onUpdate={(data: { id: string }) => {
-                fetchBacktestResults(data['id']);
+            onUpdate={async (data: API.Pusher.OnUpdateFinished) => {
+                let results = await fetchBacktestResults(data.id);
+                dispatch(setBacktestResults({ results: results, id: data.id }));
                 setUpdateProgress(-1);
             }}
         />
@@ -328,7 +324,7 @@ const Dashboard: React.FC = (props) => {
                 <span className='dashboard-title'>
                     Backtest Summary
                     <IconTooltip title='Share Link'>
-                        <IconButton className='dashboard-link' onClick={this.onCopyLink}>
+                        <IconButton className='dashboard-link' onClick={() => onCopyLink()}>
                             <LinkIcon />
                         </IconButton>
                     </IconTooltip>
@@ -341,8 +337,8 @@ const Dashboard: React.FC = (props) => {
                                 defaultValue={50}
                                 aria-labelledby='discrete-slider'
                                 valueLabelDisplay='auto'
-                                value={this.state.range}
-                                onChange={(e, v) => { this.setState({ range: v }, () => { this.analyze() }) }}
+                                value={range}
+                                onChange={(e, v) => { setRange(v as number) }}
                                 step={5}
                                 marks
                                 min={5}
@@ -354,11 +350,11 @@ const Dashboard: React.FC = (props) => {
                         <FormControl style={{ minWidth: '5vw' }}>
                             <InputLabel id='dashboard-chart-type'>Frequency</InputLabel>
                             <Select
-                                value={this.types.indexOf(bucketType)}
-                                onChange={this.handleTypeChange}
+                                value={bucketTypes.indexOf(bucketType)}
+                                onChange={handleTypeChange}
                             >
                                 {
-                                    this.types.map((value, index) => {
+                                    bucketTypes.map((value, index) => {
                                         return <MenuItem key={`dashboard-types-${index}`} value={index}>{value}</MenuItem>
                                     })
                                 }
@@ -369,33 +365,33 @@ const Dashboard: React.FC = (props) => {
                 {/* </div> */}
                 <div className='dashboard-update'>
                     {
-                        this.state.ctrl && <>
-                            <Box ml='1vw' ><Button variant='contained' color='primary' onClick={this.setAutoUpdate}>
+                        ctrl && <>
+                            <Box ml='1vw' ><Button variant='contained' color='primary' onClick={setAutoUpdate}>
                                 {
-                                    this.state.active ? 'Manual Update' : 'Auto Update'
+                                    active ? 'Manual Update' : 'Auto Update'
                                 }
                             </Button></Box>
                         </>
                     }
                     {
-                        !this.state.ctrl && <>
+                        !ctrl && <>
                             {
-                                this.state.updateProgress < 0 && <span className='dashboard-update-text'>Updated {daysBetweenUpdate > 0 ? `${daysBetweenUpdate} days ago` : `${hoursBetweenUpdate} hours ago`}</span>
+                                updateProgress < 0 && <span className='dashboard-update-text'>Updated {daysBetweenUpdate > 0 ? `${daysBetweenUpdate} days ago` : `${hoursBetweenUpdate} hours ago`}</span>
                             }
                             {
-                                this.state.updateProgress >= 0 && <span className='dashboard-update-text'>Updating</span>
+                                updateProgress >= 0 && <span className='dashboard-update-text'>Updating</span>
                             }
                             {daysBetweenUpdate > 0 && (
                                 <>
                                     {
-                                        this.state.updateProgress < 0 && <Box ml='1vw' ><Button variant='contained' color='primary' onClick={this.updateBacktest}>
+                                        updateProgress < 0 && <Box ml='1vw' ><Button variant='contained' color='primary' onClick={updateBacktest}>
                                             Update
                                         </Button></Box>
                                     }
                                     {
-                                        this.state.updateProgress >= 0 && (
+                                        updateProgress >= 0 && (
                                             <>
-                                                <Box ml='1vw' ><LinearProgress className='dashboard-progress' variant='determinate' value={this.state.updateProgress} /></Box>
+                                                <Box ml='1vw' ><LinearProgress className='dashboard-progress' variant='determinate' value={updateProgress} /></Box>
                                             </>
                                         )
                                     }
@@ -407,12 +403,13 @@ const Dashboard: React.FC = (props) => {
                         <FormControlLabel
                             control={
                                 <Switch
-                                    checked={this.state.ctrl}
-                                    onChange={(e) => { this.setState({ ctrl: !this.state.ctrl }) }}
+                                    checked={ctrl}
+                                    onChange={(e) => { setCtrl(!ctrl) }}
                                     color='primary'
                                 />
                             }
                             style={{ minWidth: '5vw' }}
+                            label='Toggle Ctrl'
                         />
                     </MediaQuery>
                 </div>
@@ -423,15 +420,15 @@ const Dashboard: React.FC = (props) => {
                     <h3 className='dashboard-card-title'>Profit</h3>
                     <ResponsiveContainer width='100%' height='80%'>
                         <PieChart className='dashboard-pie'>
-                            <Pie data={this.state.profitData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
+                            <Pie data={chartData.profitData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
                                 {
-                                    this.state.profitData.map((entry, index) => (
+                                    chartData.profitData.map((entry, index) => (
                                         <Cell key={`cell-profit-${index}`} fill={winLossColor[index]} />
                                     ))
                                 }
                                 <Label className='dashboard-pie-label' position='center' value={`$${numberWithCommas(netProfit.toFixed(0))}`} />
                             </Pie>
-                            <Tooltip formatter={(value) => '$' + numberWithCommas(value.toFixed(0))} />
+                            <Tooltip formatter={(value: number) => '$' + numberWithCommas(value.toFixed(0))} />
                         </PieChart>
                     </ResponsiveContainer>
                     <h4 className='dashboard-card-caption'>Net dollar profit</h4>
@@ -441,15 +438,15 @@ const Dashboard: React.FC = (props) => {
                     <h3 className='dashboard-card-title'>Percent Profit</h3>
                     <ResponsiveContainer width='100%' height='80%'>
                         <PieChart className='dashboard-pie'>
-                            <Pie data={this.state.percentProfitData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
+                            <Pie data={chartData.percentProfitData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
                                 {
-                                    this.state.percentProfitData.map((entry, index) => (
+                                    chartData.percentProfitData.map((entry, index) => (
                                         <Cell key={`cell-profit-${index}`} fill={winLossColor[index]} />
                                     ))
                                 }
                                 <Label className='dashboard-pie-label' position='center' value={`${annualPercentProfit}% Gain`} />
                             </Pie>
-                            <Tooltip formatter={(value) => value.toFixed(2) + '%'} />
+                            <Tooltip formatter={(value: number) => value.toFixed(2) + '%'} />
                         </PieChart>
                     </ResponsiveContainer>
                     <h4 className='dashboard-card-caption'>Account growth per year</h4>
@@ -458,12 +455,12 @@ const Dashboard: React.FC = (props) => {
                 <div className='dashboard-card dashboard-graph' id='dashboard-profit-graph'>
                     <h3 className='dashboard-card-title'>Profit by {bucketType}</h3>
                     <ResponsiveContainer width='100%' height={`90%`}>
-                        <AreaChart data={this.state.yearData} >
+                        <AreaChart data={chartData.bucketData} >
                             <CartesianGrid />
-                            <XAxis dataKey='year' minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
+                            <XAxis dataKey='date' minTickGap={50} height={25} tickFormatter={xAxisTickFormatter} />
                             <YAxis domain={[0, 'dataMax']} orientation='left' tickFormatter={v => numberWithCommas(v.toFixed(0))} />
                             <Area dataKey='profit' stroke={winLossColor[0]} fillOpacity={1} fill={`${winLossColor[0]}`} />
-                            <Tooltip formatter={value => '$' + numberWithCommas(value.toFixed(0))} labelFormatter={this.xAxisTickFormatter} />
+                            <Tooltip formatter={(value: number) => '$' + numberWithCommas(value.toFixed(0))} labelFormatter={xAxisTickFormatter} />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
@@ -471,13 +468,13 @@ const Dashboard: React.FC = (props) => {
                 <div className='dashboard-card dashboard-graph' id='dashboard-trade-graph'>
                     <h3 className='dashboard-card-title'>Trades per {bucketType}</h3>
                     <ResponsiveContainer width='100%' height={`90%`}>
-                        <BarChart data={this.state.yearData}>
+                        <BarChart data={chartData.bucketData}>
                             <CartesianGrid vertical={false} horizontal={false} />
-                            <XAxis dataKey='year' minTickGap={50} height={25} tickFormatter={this.xAxisTickFormatter} />
+                            <XAxis dataKey='date' minTickGap={50} height={25} tickFormatter={xAxisTickFormatter} />
                             <YAxis domain={['auto', 'auto']} orientation='left' />
                             <Bar dataKey='winTrades' stackId='a' fill={winLossColor[0]} />
                             <Bar dataKey='lossTrades' stackId='a' fill={winLossColor[1]} />
-                            <Tooltip labelFormatter={this.xAxisTickFormatter} />
+                            <Tooltip labelFormatter={xAxisTickFormatter} />
                             {/* <Legend verticalAlign='top' align='right' height={36} /> */}
                         </BarChart>
                     </ResponsiveContainer>
@@ -487,15 +484,15 @@ const Dashboard: React.FC = (props) => {
                     <h3 className='dashboard-card-title'>Trades</h3>
                     <ResponsiveContainer width='100%' height='80%'>
                         <PieChart className='dashboard-pie'>
-                            <Pie data={this.state.winLossData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
+                            <Pie data={chartData.winLossData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
                                 {
-                                    this.state.winLossData.map((entry, index) => (
+                                    chartData.winLossData.map((entry, index) => (
                                         <Cell key={`cell-trades-${index}`} fill={winLossColor[index]} />
                                     ))
                                 }
                                 <Label className='dashboard-pie-label' position='center' value={`${winRate.toFixed(0)}% Win`} />
                             </Pie>
-                            <Tooltip formatter={(value) => numberWithCommas(value)} />
+                            <Tooltip formatter={(value: number) => numberWithCommas(value)} />
                         </PieChart>
                     </ResponsiveContainer>
                     <h4 className='dashboard-card-caption'>{numberWithCommas(totalTrades)} total trades</h4>
@@ -505,9 +502,9 @@ const Dashboard: React.FC = (props) => {
                     <h3 className='dashboard-card-title'>Span</h3>
                     <ResponsiveContainer width='100%' height='80%'>
                         <PieChart className='dashboard-pie'>
-                            <Pie data={this.state.spanData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
+                            <Pie data={chartData.spanData} dataKey='value' nameKey='name' cx='50%' cy='50%' innerRadius={innerRadius} outerRadius={outerRadius}>
                                 {
-                                    this.state.spanData.map((entry, index) => (
+                                    chartData.spanData.map((entry, index) => (
                                         <Cell key={`cell-span-${index}`} fill={winLossColor[index]} />
                                     ))
                                 }
@@ -520,7 +517,7 @@ const Dashboard: React.FC = (props) => {
                 </div>
                 <div className='dashboard-card' id='dashboard-indicators'>
                     <h3 className='dashboard-card-title'>Indicators</h3>
-                    <div className='dasbhaord-sub-section'>
+                    <div className='dashboard-sub-section'>
                         <div>
                             <h4 className='dashboard-card-subtitle'>Buy Criterias</h4>
                             <pre id='json' className='dashboard-indicator'>
@@ -536,15 +533,15 @@ const Dashboard: React.FC = (props) => {
                     </div>
                     <br />
                     <h3 className='dashboard-card-title'>Additional Options</h3>
-                    <div className='dasbhaord-sub-section'>
+                    <div className='dashboard-sub-section'>
                         {
-                            Object.keys(results['strategyOptions']).map(key => {
+                            (Object.keys(results['strategyOptions']) as (keyof Backtest.StrategyOptions)[]).map((key, i) => {
                                 if (key.includes('Indicator')) {
                                     return;
                                 }
-                                return <>
-                                    <h4 className='dashboard-card-subtitle'>{camelToDisplay(key) + ': ' + results['strategyOptions'][key]}</h4>
-                                </>
+                                return <h4 key={`dashboard-additional-options${i}`} className='dashboard-card-subtitle'>
+                                    {camelToDisplay(key) + ': ' + results['strategyOptions'][key]}
+                                </h4>
                             })
                         }
                     </div>

@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React, {  } from 'react';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import './Loading.css';
 

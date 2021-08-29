@@ -13,7 +13,8 @@ export const store = configureStore({
         backtest: backtestReducer,
         indicator: indicatorReducer,
         user: userReducer
-    }
+    },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ immutableCheck: false })
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

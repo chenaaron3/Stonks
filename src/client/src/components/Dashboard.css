@@ -117,7 +117,7 @@
     font-size: 1em;
 }
 
-.dasbhaord-sub-section {
+.dashboard-sub-section {
     margin-left: 1vw;
 }
 
@@ -163,7 +163,7 @@
     .dashboard-card-caption {
         font-size: .75em;
     }
-    .dasbhaord-sub-section{
+    .dashboard-sub-section{
         margin-left: 10vw;
     }
 }

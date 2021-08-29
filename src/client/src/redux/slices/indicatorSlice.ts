@@ -6,13 +6,13 @@ import Indicator from '../../types/indicator';
 // Define a type for the slice state
 interface IndicatorState {
     options: Indicator.Indicators;
-    actives: Set<Indicator.IndicatorNames>;
+    actives: Indicator.IndicatorNames[];
 }
 
 // Define the initial state using that type
 const initialState: IndicatorState = {
     options: {},
-    actives: new Set()
+    actives: []
 }
 
 export const indicatorSlice = createSlice({
@@ -30,14 +30,19 @@ export const indicatorSlice = createSlice({
         },
         setIndicatorOn: (state, action: PayloadAction<{ indicatorName: Indicator.IndicatorNames, on: boolean }>) => {
             if (action.payload.on) {
-                state.actives.add(action.payload.indicatorName);
+                if (!state.actives.includes(action.payload.indicatorName)) {
+                    state.actives.push(action.payload.indicatorName);
+                }
             }
             else {
-                state.actives.delete(action.payload.indicatorName);
+                const index = state.actives.indexOf(action.payload.indicatorName);
+                if (index >= 0) {
+                    state.actives.splice(index, 1);
+                }
             }
         },
         clearIndicators: (state, action) => {
-            state.actives = new Set();
+            state.actives = [];
         },
     },
 })

@@ -62,7 +62,8 @@
     "src/"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/client"
   ],
   "files": [
     "src/types/environment.d.ts",

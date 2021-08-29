@@ -1063,7 +1063,7 @@ function getSymbols(applyBlacklist: boolean) {
                 let data = fs.readFileSync(csvPath, { encoding: "utf-8" });
 
                 // parse data
-                csv.parse(data, {
+                csv.parse.default(data, {
                     comment: '#'
                 }, function (err, output) {
                     // "Symbol","Name","LastSale","MarketCap","IPOyear","Sector","industry","Summary Quote"

@@ -60,16 +60,7 @@ declare module '@alpacahq/alpaca-trade-api' {
         ioc = "ioc",
         fok = "fok",
     }
-    export const enum OrderStatus {
-        new = "new",
-        partial_fill = "partially_filled",
-        filled = "filled",
-        canceled = "canceled",
-        expired = "expired",
-        pending_cancel = "pending_cancel",
-        pending_replace = "pending_replace",
-        done_for_day = "done_for_day",
-    }
+    export type OrderStatus = 'new' | 'partially_filled' | 'filled' | 'canceled' | 'expired' | 'pending_cancel' | 'pending_replace' | 'done_for_day';
 
     export interface AlpacaStreamingOrderUpdate {
         event: OrderUpdateEvent;

@@ -13,7 +13,7 @@ interface SetSavedResultsPayload {
 export const setSavedResults = createAsyncThunk(
     'user/setSavedResults',
     async (payload: SavedResultsData) => {
-        axios.post(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`, {
+        axios.post(`${process.env.NODE_ENV === "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/data`, {
             field: "backtestIDs",
             value: payload
         });

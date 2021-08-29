@@ -254,5 +254,42 @@ namespace API {
         export interface GetData { }
         export type _GetData = UserData | ErrorResponse;
     }
+
+    export namespace Pusher {
+        export type PusherEvents = 'onResultsFinished' | 'onUpdateFinished' | 'onOptimizeFinished' | 'onOptimizeIndicatorsFinished' | 'onProgressUpdate'
+            | 'onOptimizeProgressUpdate' | 'onOptimizeIndicatorsProgressUpdate';
+
+        export interface OnResultsFinished {
+            id: string;
+        }
+
+        export interface OnUpdateFinished {
+            id: string;
+        }
+
+        export interface OnOptimizeFinished {
+            id: string;
+        }
+
+        export interface OnOptimizeIndicatorsFinished {
+            id: string;
+        }
+
+        export interface OnProgressUpdate {
+            progress: number;
+        }
+
+        export interface OnOptimizeProgressUpdate {
+            progress: number;
+        }
+
+        export interface OnOptimizeIndicatorsProgressUpdate {
+            progress: number;
+        }
+
+        export type PusherMessages = OnResultsFinished | OnUpdateFinished | OnOptimizeFinished |
+            OnOptimizeIndicatorsFinished | OnProgressUpdate | OnOptimizeProgressUpdate | OnOptimizeIndicatorsProgressUpdate;
+    }
 }
+
 export default API;

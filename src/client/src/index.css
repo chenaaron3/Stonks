@@ -18,4 +18,10 @@ code {
 * {
   padding: 0;
   margin: 0;
+  box-sizing: border-box;
+}
+
+.divider{
+  width: 100%;
+  opacity: .2;
 }

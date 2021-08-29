@@ -33,7 +33,7 @@ function hoursBetween(dt1: Date, dt2: Date) {
     return Math.round(diff);
 }
 
-function numberWithCommas(x: number) {
+function numberWithCommas(x: number | string) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
