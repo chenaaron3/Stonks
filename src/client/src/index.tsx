@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import CreatePage from './pages/CreatePage';
 import SummaryPage from './pages/SummaryPage';
-// import ReviewPage from './pages/ReviewPage';
+import ReviewPage from './pages/ReviewPage';
 // import SimulatePage from './pages/SimulatePage';
 // import OptimizePage from './pages/OptimizePage';
 // import WatchlistPage from './pages/WatchlistPage';
@@ -46,8 +46,8 @@ ReactDOM.render(
 
               <Route exact path="/" component={CreatePage} />
               <Route path="/summary" component={SummaryPage} />
-              {/* 
               <Route path="/review" component={ReviewPage} />
+              {/* 
               <Route path="/simulate" component={SimulatePage} />
               <Route path="/optimize" component={OptimizePage} />
               <Route path="/watchlist" component={WatchlistPage} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { viewSymbol, viewEvent } from '../redux/slices/backtestSlice';
+import { viewEvent } from '../redux/slices/backtestSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import './SymbolResults.css';
 import 'react-tabs/style/react-tabs.css';
@@ -76,7 +76,7 @@ const SymbolResults = () => {
                 <div className="symbol-results-events">
                     {
                         reversedEvents.map((event, index) => {
-                            return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { viewEvent(results["events"].length - 1 - index) }}
+                            return (<div className="symbol-results-event" key={`symbol-results-${index}`} onClick={() => { dispatch(viewEvent(results["events"].length - 1 - index)) }}
                                 style={{ color: `${event["percentProfit"] > 0 ? "green" : "red"}` }}>
                                 <span>{formatDate(event["buyDate"])}</span>
                                 <ArrowForwardSharpIcon />

@@ -459,8 +459,6 @@ const Results: React.FC = () => {
         </>
     );
 
-    console.log(drawer)
-
     let mobileVersion = <>
         <div className='results-mobile'>
             <IconButton
@@ -546,22 +544,22 @@ const Result: React.FC<ResultProps> = (props) => {
                     `${props.index + 1}. ${displayName}`}
             </span>
             {
-                buy && !props.boughtSymbols!.hasOwnProperty(props.symbol) && (
+                props.buy && !props.boughtSymbols!.hasOwnProperty(props.symbol) && (
                     <img className={`result-trailer ${hovered ? 'result-hover' : ''}`} width='35px' height='35px' src={buy} alt='Buy'
                         onClick={buySymbol} />)
             }
             {
-                buy && props.boughtSymbols!.hasOwnProperty(props.symbol) && (
+                props.buy && props.boughtSymbols!.hasOwnProperty(props.symbol) && (
                     <img className={`result-trailer result-hover`} width='35px' height='35px' src={bought} alt='Bought'
                         onClick={sellSymbol} />)
             }
             {
-                sell && !props.boughtSymbols!.hasOwnProperty(props.symbol) && (
+                props.sell && !props.boughtSymbols!.hasOwnProperty(props.symbol) && (
                     <img className={`result-trailer ${hovered ? 'result-hover' : ''}`} width='35px' height='35px' src={buy} alt='Buy'
                         onClick={buySymbol} />)
             }
             {
-                sell && props.boughtSymbols!.hasOwnProperty(props.symbol) && (
+                props.sell && props.boughtSymbols!.hasOwnProperty(props.symbol) && (
                     <img className={`result-trailer result-hover`} width='35px' height='35px' src={sell} alt='Sell'
                         onClick={sellSymbol} />)
             }

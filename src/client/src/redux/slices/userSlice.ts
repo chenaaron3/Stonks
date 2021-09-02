@@ -5,11 +5,6 @@ import axios from 'axios';
 import { ClosedOrdersData, SavedResultsData, TradeSettingsData } from '../../types/common';
 import { ChartSettingsData } from '../../types/types';
 
-// sync saved 
-interface SetSavedResultsPayload {
-    savedResults: SavedResultsData;
-    syncCloud: boolean;
-}
 export const setSavedResults = createAsyncThunk(
     'user/setSavedResults',
     async (payload: SavedResultsData) => {
