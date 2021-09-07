@@ -60,9 +60,8 @@ const Results: React.FC = () => {
     const [maxRisk, setMaxRisk] = useState(50);
     const [boughtSymbols, setBoughtSymbols] = useState<BoughtSymbolData>({});
     const [search, setSearch] = useState('');
-    const [updateProgress, setUpdateProgress] = useState(-1);
     const [tabIndex, setTabIndex] = useState(0);
-    const [scoreBy, setScoreBy] = useState<SortBy>('Win Rate');
+    const [scoreBy, setScoreBy] = useState<SortBy>('Percent Profit');
     const [ready, setReady] = useState(false);
 
     const scoreTypes: SortBy[] = ['Percent Profit', 'Dollar Profit', 'Win Rate'];
@@ -625,7 +624,7 @@ const TabPanel: React.FC<TabPanelProps> = (props) => {
         >
             {value === index && (
                 <Box>
-                    <Typography>{children}</Typography>
+                    <Typography component={'span'}>{children}</Typography>
                 </Box>
             )}
         </div>

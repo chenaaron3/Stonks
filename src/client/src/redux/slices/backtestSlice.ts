@@ -40,6 +40,7 @@ export const backtestSlice = createSlice({
         },
         viewSymbol: (state, action: PayloadAction<string>) => {
             state.selectedSymbol = action.payload;
+            state.selectedEvent = -1;
         },
         viewEvent: (state, action: PayloadAction<number>) => {
             state.selectedEvent = action.payload;

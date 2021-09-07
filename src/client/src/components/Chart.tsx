@@ -71,6 +71,10 @@ interface PriceGraphEntry {
     }
 }
 
+// Global variables
+let graphs: API.Symbol._PostPriceGraph = null!;
+let dates: string[] = [];
+
 const Chart = () => {
     // constants
     const indicatorCharts = { 'RSI': RSI, 'MACD': MACD, 'ADX': ADX, 'Stochastic': Stochastic };
@@ -96,8 +100,6 @@ const Chart = () => {
     const chartSettings = useAppSelector(state => state.user.chartSettings);
     const closedOrders = useAppSelector(state => state.user.closedOrders[state.backtest.selectedSymbol]);
 
-    const [graphs, setGraphs] = useState<API.Symbol._PostPriceGraph>(null!);
-    const [dates, setDates] = useState<string[]>([]);
     const [priceGraph, setPriceGraph] = useState<PriceGraphData>([]);
     const [indicatorGraphs, setIndicatorGraphs] = useState<IndicatorGraphsData>({});
     const [volumeGraph, setVolumeGraph] = useState<VolumeGraphData>([]);
@@ -140,7 +142,7 @@ const Chart = () => {
             console.log('NEW EVENT!');
             goToEvent();
         }
-    }, [eventIndex, dates, graphs])
+    }, [eventIndex])
 
     useEffect(() => {
         if (symbol != '' && dates.length > 0 && startIndex > -1) {
@@ -185,9 +187,10 @@ const Chart = () => {
         let graphData = { symbol: symbol, indicators: finalOptions, timeframe: strategyOptions['timeframe'] };
 
         postEndpoint<API.Symbol.PostPriceGraph, API.Symbol._PostPriceGraph>('symbol/priceGraph', graphData)
-            .then(async graphs => {
+            .then(async res => {
                 // save graphs to load chunks later
-                setGraphs(graphs);
+                graphs = res;
+                setPivots(res['pivots']);
                 console.log('Received data from server');
 
                 let myOverlayCharts: string[] = [];
@@ -206,11 +209,10 @@ const Chart = () => {
                 // if loading new symbol
                 if (newSymbol) {
                     // cache sorted date array for finding events
-                    let dates: string[] = [];
+                    dates = [];
                     graphs['price'].forEach(day => {
                         dates.push(new Date(day['date']).toISOString());
                     });
-                    setDates(dates);
 
                     // set brush range
                     // if large enough to be chunked
@@ -236,9 +238,9 @@ const Chart = () => {
     }
 
     const goToEvent = async () => {
-        console.log('Going to event...');
+        console.log('Going to event...', newSymbol);
         // new stock, dont move brush
-        if (eventIndex == -1) {
+        if (eventIndex == -1 || newSymbol) {
             loadChunk();
             return;
         }
@@ -372,11 +374,47 @@ const Chart = () => {
         setLoading(false);
     }
 
+    const onBrushChange = (newRange: { startIndex: number; endIndex: number; }) => {
+        let newStart = newRange['startIndex'];
+        let newEnd = newRange['endIndex'];
+        // entered previous area
+        if (newStart < minThreshold && startIndex > 0) {
+            // move left by 25% of the chunk
+            let oldStart = startIndex;
+            let newStartIndex = Math.floor(Math.max(0, startIndex - chunkSize * .25));
+
+            // adjust the brush
+            let shiftAmount = oldStart - newStartIndex;
+            let startBrushIndex = Math.max(minThreshold, newStart + shiftAmount);
+            let endBrushIndex = Math.min(maxThreshold, newEnd + shiftAmount);
+            setStartBrushIndex(startBrushIndex);
+            setEndBrushIndex(endBrushIndex);
+            setStartIndex(newStartIndex);
+        }
+        // entered next area and not already at the end
+        else if (newEnd > maxThreshold && startIndex < graphs['price'].length - chunkSize) {
+            // move right by 25% of the chunk
+            let oldStart = startIndex;
+            let newStartIndex = Math.floor(Math.min(graphs['price'].length - chunkSize, startIndex + chunkSize * .25));
+
+            // adjust the brush
+            let shiftAmount = newStartIndex - oldStart;
+            let startBrushIndex = Math.max(minThreshold, newStart - shiftAmount);
+            let endBrushIndex = Math.min(maxThreshold, newEnd - shiftAmount);
+            setStartBrushIndex(startBrushIndex);
+            setEndBrushIndex(endBrushIndex);
+            setStartIndex(newStartIndex);
+        }
+    }
+
     const xAxisTickFormatter = (value: string) => {
         return formatDate(new Date(value));
     }
 
     const labelFormatter = (label: string) => {
+        if (!label) {
+            return <></>
+        }
         let stoploss = undefined;
         let target = undefined;
         let profit = undefined;
@@ -424,37 +462,6 @@ const Chart = () => {
 
     const brushFormatter = (value: string) => {
         return formatDate(value);
-    }
-
-    const onBrushChange = (newRange: { startIndex: number; endIndex: number; }) => {
-        let newStart = newRange['startIndex'];
-        let newEnd = newRange['endIndex'];
-        // entered previous area
-        if (newStart < minThreshold && startIndex > 0) {
-            // move left by 25% of the chunk
-            let oldStart = startIndex;
-            setStartIndex(Math.floor(Math.max(0, startIndex - chunkSize * .25)));
-
-            // adjust the brush
-            let shiftAmount = oldStart - startIndex;
-            let startBrushIndex = Math.max(minThreshold, newStart + shiftAmount);
-            let endBrushIndex = Math.min(maxThreshold, newEnd + shiftAmount);
-            setStartBrushIndex(startBrushIndex);
-            setEndBrushIndex(endBrushIndex);
-        }
-        // entered next area and not already at the end
-        else if (newEnd > maxThreshold && startIndex < graphs['price'].length - chunkSize) {
-            // move right by 25% of the chunk
-            let oldStart = startIndex;
-            setStartIndex(Math.floor(Math.min(graphs['price'].length - chunkSize, startIndex + chunkSize * .25)));
-
-            // adjust the brush
-            let shiftAmount = startIndex - oldStart;
-            let startBrushIndex = Math.max(minThreshold, newStart - shiftAmount);
-            let endBrushIndex = Math.min(maxThreshold, newEnd - shiftAmount);
-            setStartBrushIndex(startBrushIndex);
-            setEndBrushIndex(endBrushIndex);
-        }
     }
 
     const getStoploss = (date: string, atr: StockData, close: number, low: number) => {
