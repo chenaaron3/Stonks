@@ -80,7 +80,7 @@ const Results: React.FC = () => {
 
     // when clicking on an item
     const handleGetResult = (symbol: string) => {
-        dispatch(viewSymbol(symbol))
+        dispatch(viewSymbol({ symbol }))
     }
 
     // sort symbols
@@ -446,7 +446,7 @@ const Results: React.FC = () => {
                             {Object.keys(simulationTransactions).length != 0 && (
                                 // sort years from recent to old
                                 Object.keys(simulationTransactions).sort((a, b) => Number(b) - Number(a)).map((year) => {
-                                    return <Transactions closedOrders={closedOrders} year={year}
+                                    return <Transactions key={`transactions-${year}`} closedOrders={closedOrders} year={year}
                                         transactions={simulationTransactions[year]} results={results} />
                                 })
                             )
@@ -585,11 +585,10 @@ const Transactions: React.FC<TransactionsProps> = ({ closedOrders, year, transac
             <div className='results-list'>
                 {
                     transactions.map((transaction, index) => {
-                        return <Result transaction key={index} symbol={transaction['symbol']} index={index} result={results['symbolData'][transaction['symbol']]}
+                        return <Result transaction key={`${transaction}-${year}-${index}`} symbol={transaction['symbol']} index={index} result={results['symbolData'][transaction['symbol']]}
                             eventIndex={transaction['index']}
                             handleGetResult={(symbol) => {
-                                dispatch(viewSymbol(symbol));
-                                dispatch(viewEvent(transaction['index']));
+                                dispatch(viewSymbol({ symbol, event: transaction['index'] }));
                             }}
                             closedOrders={closedOrders[transaction['symbol']]} />
                     })

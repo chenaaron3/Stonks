@@ -1,9 +1,9 @@
 import Backtest from '../types/backtest';
-import { SortBy } from '../types/common';
+import { SortBy, SimulateReturnsData, SimulateSettingsData } from '../types/common';
 
 // format date to api needs
 function formatDate(date: string | Date) {
-    if (typeof date == "string") {
+    if (typeof date == 'string') {
         date = new Date(date);
     }
 
@@ -34,7 +34,7 @@ function hoursBetween(dt1: Date, dt2: Date) {
 }
 
 function numberWithCommas(x: number | string) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function camelToDisplay(s: string) {
@@ -43,16 +43,16 @@ function camelToDisplay(s: string) {
 }
 
 function displayDelta(p: number) {
-    return (p >= 0 ? "+" : "") + p.toFixed(2);
+    return (p >= 0 ? '+' : '') + p.toFixed(2);
 }
 
 function getBacktestDisplayName(options: Backtest.StrategyOptions) {
     let indicatorsUsed = new Set<string>();
-    Object.keys(options["buyIndicators"]).forEach(i => indicatorsUsed.add(i));
-    Object.keys(options["sellIndicators"]).forEach(i => indicatorsUsed.add(i));
+    Object.keys(options['buyIndicators']).forEach(i => indicatorsUsed.add(i));
+    Object.keys(options['sellIndicators']).forEach(i => indicatorsUsed.add(i));
     let indicators = Array.from(indicatorsUsed);
     indicators.sort();
-    return indicators.join("/");
+    return indicators.join('/');
 }
 
 const mapRange = (value: number, x1: number, y1: number, x2: number, y2: number) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
@@ -69,17 +69,6 @@ function getMean(array: number[]) {
     return mean;
 }
 
-interface StateData {
-    range: number;
-    startSize: number;
-    maxPositions: number;
-    positionSize: number;
-    maxRisk: number;
-    scoreBy: SortBy;
-    risk: number;
-    sizeOnRisk: boolean;
-}
-
 interface SimulationResultData {
     metrics: SimulationMetricsData;
     settings: {
@@ -94,26 +83,26 @@ interface SimulationMetricsData {
     weightedReturns: number;
 }
 
-function findOptimalRisk(state: StateData, results: Backtest.ResultsData) {
+function findOptimalRisk(state: SimulateSettingsData, results: Backtest.ResultsData) {
     let simulationResults: SimulationResultData[] = [];
-    let scoreTypes = ["Win Rate", "Percent Profit"];
+    let scoreTypes = ['Win Rate', 'Percent Profit'];
     // try combinations of settings
-    scoreTypes.forEach(scoreBy => {
+    scoreTypes.forEach((scoreBy) => {
         for (let maxRisk = 5; maxRisk < 50; maxRisk += 5) {
             let newState = JSON.parse(JSON.stringify(state));
-            newState["scoreBy"] = scoreBy;
-            newState["maxRisk"] = maxRisk;
+            newState['scoreBy'] = scoreBy;
+            newState['maxRisk'] = maxRisk;
             let { equity, sharpe, weightedReturns } = simulateBacktest(newState, results);
             simulationResults.push({
                 metrics: { equity, sharpe, weightedReturns },
                 settings: { scoreBy, maxRisk }
             });
-            console.log("Trying risk", maxRisk);
+            console.log('Trying risk', maxRisk);
         }
     });
 
     // find optimal combination
-    let { optimalIndex } = findOptimalMetric(simulationResults.map(sr => sr["metrics"]));
+    let { optimalIndex } = findOptimalMetric(simulationResults.map(sr => sr['metrics']));
     return simulationResults[optimalIndex];
 }
 
@@ -121,27 +110,23 @@ interface CustomEvent extends Backtest.EventData {
     buyAmount?: number;
 }
 
-interface ReturnsData {
-    year: number;
-    startingEquity: number;
-    returns?: number;
-}
-
-function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
+function simulateBacktest(state: SimulateSettingsData, results: Backtest.ResultsData) {
     let eventsByDate: { [key: string]: CustomEvent[] } = {};
     let dateSet = new Set<number>();
-    let symbols = Object.keys(results["symbolData"]);
+    let symbols = Object.keys(results['symbolData']);
     symbols.forEach(symbol => {
-        let events = results["symbolData"][symbol]["events"];
+        let events = results['symbolData'][symbol]['events'];
         let scoreData = { realizedIndex: -1, count: 0, wins: 0, percentProfit: 0, dollarProfit: 0 };
         for (let i = 0; i < events.length; ++i) {
             let event = events[i];
-            // store symbol and index for future reference
-            event["symbol"] = symbol;
-            event["index"] = i;
-            event["score"] = scoreEvent(events, i, scoreData as CustomScoreData);
-            let buyDate = new Date(event["buyDate"]).getTime();
-            let sellDate = new Date(event["sellDate"]).getTime();
+            // store symbol and index for future 
+            if (!event.hasOwnProperty('symbol')) {
+                event['symbol'] = symbol;
+                event['index'] = i;
+                event['score'] = scoreEvent(events, i, scoreData as CustomScoreData);
+            }
+            let buyDate = new Date(event['buyDate']).getTime();
+            let sellDate = new Date(event['sellDate']).getTime();
             if (!dateSet.has(buyDate)) {
                 dateSet.add(buyDate);
             }
@@ -167,7 +152,7 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
     let positionData = []; // how many positions at a given time
     let buyingPowerData = []; // buying power after each trade
     let equityData = []; // equity after reach trade
-    let returnsData: ReturnsData[] = []; // percent annual returns
+    let returnsData: SimulateReturnsData[] = []; // percent annual returns
     let transactions: { [key: string]: Backtest.EventData[] } = {}; // maps year to list of events
     let holdings: CustomEvent[] = [];
     let startDate = new Date();
@@ -192,13 +177,13 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
         if (holdings.length < state.maxPositions) {
             let events = eventsByDate[date];
             if (events) {
-                events.sort((a, b) => b["score"][state.scoreBy] - a["score"][state.scoreBy]);
+                events.sort((a, b) => b['score'][state.scoreBy] - a['score'][state.scoreBy]);
                 // keep buying until holdings maxed
                 for (let i = 0; i < events.length; ++i) {
-                    let event = events[i];
+                    let event = {...events[i]};
 
                     // check for risk
-                    if (event["risk"] && (event["risk"] > state.maxRisk || event["risk"] < 1)) {
+                    if (event['risk'] && (event['risk'] > state.maxRisk || event['risk'] < 1)) {
                         continue;
                     }
 
@@ -213,18 +198,18 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
 
                     // Calculate buy amount
                     // Metho1: calculate buy amount by account size
-                    if (!state.sizeOnRisk || !event["risk"]) {
-                        event["buyAmount"] = equity * (state.positionSize / 100);
+                    if (!state.sizeOnRisk || !event['risk']) {
+                        event['buyAmount'] = equity * (state.positionSize / 100);
                     }
                     // Method2: calculate buy amount by risk
                     else {
-                        event["buyAmount"] = equity * (state.risk / 100) / (event["risk"] / 100);
+                        event['buyAmount'] = equity * (state.risk / 100) / (event['risk'] / 100);
                     }
 
                     // check if have enough money to buy
-                    event["buyAmount"] = Math.min(event["buyAmount"], buyingPower);
+                    event['buyAmount'] = Math.min(event['buyAmount'], buyingPower);
                     // deduct from buying power
-                    buyingPower -= event["buyAmount"];
+                    buyingPower -= event['buyAmount'];
 
                     // add to holdings
                     holdings.push(event);
@@ -240,12 +225,12 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
         // check sells
         let sold: CustomEvent[] = [];
         holdings.forEach(holding => {
-            let sellDate = new Date(holding["sellDate"]);
+            let sellDate = new Date(holding['sellDate']);
             // time to sell
             if (date == sellDate.getTime()) {
                 sold.push(holding);
-                equity += holding["buyAmount"]! * (holding["percentProfit"]);
-                buyingPower += holding["buyAmount"]! * (1 + holding["percentProfit"]);
+                equity += holding['buyAmount']! * (holding['percentProfit']);
+                buyingPower += holding['buyAmount']! * (1 + holding['percentProfit']);
 
                 // start over in case we bust account
                 if (equity <= 0) {
@@ -255,23 +240,23 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
         })
         holdings = holdings.filter(h => !sold.includes(h));
 
-        equityData.push({ date: date, equity });
-        buyingPowerData.push({ date: date, buyingPower: buyingPower });
-        positionData.push({ date: date, positions: holdings.length });
+        equityData.push({ date: date, value: equity });
+        buyingPowerData.push({ date: date, value: buyingPower });
+        positionData.push({ date: date, value: holdings.length });
     }
 
     // sell off all holdings
     let lastEquity = equityData[equityData.length - 1];
     holdings.forEach(holding => {
-        equity += holding["buyAmount"]! * (holding["percentProfit"]);
+        equity += holding['buyAmount']! * (holding['percentProfit']);
     })
-    lastEquity["equity"] = equity;
+    lastEquity['value'] = equity;
 
     // calculate the returns for each year
     let currentYear = 0;
     equityData.forEach(ed => {
         let d = new Date();
-        d.setTime(ed["date"]);
+        d.setTime(ed['date']);
         let y = d.getFullYear();
 
         // first record of year
@@ -279,9 +264,9 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
             // update last year's returns
             if (returnsData.length > 0) {
                 let rd = returnsData[returnsData.length - 1];
-                rd["returns"] = (ed["equity"] - rd["startingEquity"]) / rd["startingEquity"] * 100;
+                rd['returns'] = (ed['value'] - rd['startingEquity']) / rd['startingEquity'] * 100;
             }
-            returnsData.push({ year: y, startingEquity: ed["equity"] });
+            returnsData.push({ year: y, startingEquity: ed['value'] });
         }
 
         // update current year
@@ -290,8 +275,8 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
 
     // calculate returns for last year
     let lastReturns = returnsData[returnsData.length - 1];
-    if (!lastReturns.hasOwnProperty("returns")) {
-        lastReturns["returns"] = (equityData[equityData.length - 1]["equity"] - lastReturns["startingEquity"]) / lastReturns["startingEquity"] * 100;
+    if (!lastReturns.hasOwnProperty('returns')) {
+        lastReturns['returns'] = (equityData[equityData.length - 1]['value'] - lastReturns['startingEquity']) / lastReturns['startingEquity'] * 100;
     }
 
     // get the weighted score for returns
@@ -300,13 +285,13 @@ function simulateBacktest(state: StateData, results: Backtest.ResultsData) {
     let weight = 1;
     let deltaWeight = .1;
     for (let i = 0; i < returnsData.length; ++i) {
-        weightedReturns += weight * returnsData[i]["returns"]!;
+        weightedReturns += weight * returnsData[i]['returns']!;
         totalWeight += weight;
         weight += deltaWeight;
     }
     weightedReturns /= totalWeight;
 
-    let returnsNumeric = returnsData.map(v => v["returns"]!);
+    let returnsNumeric = returnsData.map(v => v['returns']!);
     let sharpe = getMean(returnsNumeric) / Math.sqrt(getStandardDeviation(returnsNumeric));
 
     return { transactions, equityData, returnsData, buyingPowerData, positionData, equity, weightedReturns, sharpe };
@@ -322,40 +307,40 @@ interface CustomScoreData extends Backtest.EventScoreData {
 
 function scoreEvent(events: Backtest.EventData[], index: number, scoreData: CustomScoreData) {
     let mainEvent = events[index];
-    let wins = scoreData["wins"];
-    let count = scoreData["count"];
-    let score = { "Percent Profit": scoreData["percentProfit"] * count, "Dollar Profit": scoreData["dollarProfit"] * count, "Win Rate": 0 };
+    let wins = scoreData['wins'];
+    let count = scoreData['count'];
+    let score = { 'Percent Profit': scoreData['percentProfit'] * count, 'Dollar Profit': scoreData['dollarProfit'] * count, 'Win Rate': 0 };
 
     // new stock
     if (index == 0) return score;
 
-    let newRealizedIndex = scoreData["realizedIndex"];
-    for (let i = scoreData["realizedIndex"] + 1; i < index; ++i) {
+    let newRealizedIndex = scoreData['realizedIndex'];
+    for (let i = scoreData['realizedIndex'] + 1; i < index; ++i) {
         let event = events[i];
-        if (new Date(event["sellDate"]) > new Date(mainEvent["buyDate"])) {
+        if (new Date(event['sellDate']) > new Date(mainEvent['buyDate'])) {
             break;
         }
 
         newRealizedIndex = i;
-        score["Percent Profit"] += event["percentProfit"];
-        score["Dollar Profit"] += event["profit"];
+        score['Percent Profit'] += event['percentProfit'];
+        score['Dollar Profit'] += event['profit'];
 
-        if (event["percentProfit"] > 0) {
+        if (event['percentProfit'] > 0) {
             wins += 1;
         }
         count += 1;
     }
     if (count > 0) {
-        score["Percent Profit"] /= count;
-        score["Dollar Profit"] /= count;
-        score["Win Rate"] = wins / count;
+        score['Percent Profit'] /= count;
+        score['Dollar Profit'] /= count;
+        score['Win Rate'] = wins / count;
     }
 
-    scoreData["realizedIndex"] = newRealizedIndex;
-    scoreData["count"] = count;
-    scoreData["wins"] = wins;
-    scoreData["percentProfit"] = score["Percent Profit"];
-    scoreData["dollarProfit"] = score["Dollar Profit"];
+    scoreData['realizedIndex'] = newRealizedIndex;
+    scoreData['count'] = count;
+    scoreData['wins'] = wins;
+    scoreData['percentProfit'] = score['Percent Profit'];
+    scoreData['dollarProfit'] = score['Dollar Profit'];
 
     return score;
 }
@@ -377,7 +362,7 @@ function findOptimalMetric(metrics: SimulationMetricsData[]) {
 
     // find the score of each metric
     let scores = metrics.map(metric => (Object.keys(metric) as MetricName[])
-        .map(metricName => mapRange(metric[metricName], ranges[metricName]["min"], ranges[metricName]["max"], 0, 1))
+        .map(metricName => mapRange(metric[metricName], ranges[metricName]['min'], ranges[metricName]['max'], 0, 1))
         .reduce((a, b) => a + b, 0));
 
     // console.log(metrics, ranges, scores);
@@ -390,21 +375,21 @@ function findOptimalMetric(metrics: SimulationMetricsData[]) {
 }
 
 function sortResultsByScore(results: Backtest.ResultsData, scoreBy: SortBy) {
-    let symbols = Object.keys(results["symbolData"]);
+    let symbols = Object.keys(results['symbolData']);
     let scores: { [key: string]: number } = {};
     symbols.forEach(symbol => {
         let score = 0;
-        if (scoreBy == "Percent Profit") {
-            score = results["symbolData"][symbol]["percentProfit"];
+        if (scoreBy == 'Percent Profit') {
+            score = results['symbolData'][symbol]['percentProfit'];
         }
-        else if (scoreBy == "Dollar Profit") {
-            score = results["symbolData"][symbol]["profit"];
+        else if (scoreBy == 'Dollar Profit') {
+            score = results['symbolData'][symbol]['profit'];
         }
-        else if (scoreBy == "Win Rate") {
+        else if (scoreBy == 'Win Rate') {
             let wins = 0;
-            let events = results["symbolData"][symbol]["events"];
+            let events = results['symbolData'][symbol]['events'];
             events.forEach(e => {
-                if (e["profit"] > 0) {
+                if (e['profit'] > 0) {
                     wins += 1;
                 }
             });
@@ -418,10 +403,10 @@ function sortResultsByScore(results: Backtest.ResultsData, scoreBy: SortBy) {
 
 function checkLoggedIn() {
     return new Promise(resolve => {
-        fetch(`${process.env.NODE_ENV == "production" ? process.env.REACT_APP_SUBDIRECTORY : ""}/users/isLoggedIn`)
+        fetch(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/users/isLoggedIn`)
             .then(res => res.json())
             .then(json => {
-                resolve(json["isLoggedIn"])
+                resolve(json['isLoggedIn'])
             })
     })
 }

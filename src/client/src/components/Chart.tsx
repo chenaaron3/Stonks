@@ -21,13 +21,6 @@ import API from '../types/api';
 import { PivotsData, StockData } from '../types/common';
 import { IndicatorGraphNames, IndicatorGraphsData, IndicatorGraphData, IndicatorGraphEntry } from '../types/types';
 
-
-//create your forceUpdate hook
-function useForceUpdate(){
-    const [value, setValue] = useState(0); // integer state
-    return () => setValue(value => value + 1); // update the state to force render
-}
-
 interface HoldingsData {
     [key: string]: Backtest.HoldingData;
 }
@@ -87,10 +80,6 @@ const Chart = () => {
     const minThreshold = Math.floor(chunkSize * scrollThreshold);
     const maxThreshold = Math.floor(chunkSize * (1 - scrollThreshold));
 
-    // true if new symbol coming in
-    let newSymbol = false;
-
-    const forceUpdate = useForceUpdate();
     const symbol = useAppSelector(state => state.backtest.selectedSymbol);
     const results = useAppSelector(state => state.backtest.results.symbolData[state.backtest.selectedSymbol]);
     const activeIndicators = useAppSelector(state => state.indicator.actives);
@@ -118,6 +107,8 @@ const Chart = () => {
     const [myOverlayCharts, setMyOverlayCharts] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
+    let newSymbol = false;
+    let newIndicators = false;
     useEffect(() => {
         // if symbol, indicator, or event index changed
         if (symbol != '') {
@@ -131,14 +122,15 @@ const Chart = () => {
     }, [symbol])
 
     useEffect(() => {
-        if (symbol != '') {
+        if (symbol != '' && !newSymbol) {
             console.log('NEW INDICATORS!');
+            newIndicators = true;
             fetchData();
         }
     }, [activeIndicators])
 
     useEffect(() => {
-        if (symbol != '' && dates.length > 0 && startIndex > -1) {
+        if (symbol != '' && !newSymbol && dates.length > 0 && startIndex > -1) {
             console.log('NEW EVENT!');
             goToEvent();
         }
@@ -206,13 +198,22 @@ const Chart = () => {
                 });
                 setMyOverlayCharts(myOverlayCharts);
 
-                // if loading new symbol
+                // refresh dates if new symbol
                 if (newSymbol) {
                     // cache sorted date array for finding events
                     dates = [];
                     graphs['price'].forEach(day => {
                         dates.push(new Date(day['date']).toISOString());
                     });
+                }
+                // no brush movement, but want to reload chunk
+                if (newIndicators) {
+                    loadChunk();
+                }
+
+                // if want to view start
+                if (eventIndex == -1) {
+                    console.log('Viewing latest data');
 
                     // set brush range
                     // if large enough to be chunked
@@ -232,15 +233,15 @@ const Chart = () => {
                     }
                 }
                 else {
-                    forceUpdate();
+                    goToEvent();
                 }
             })
     }
 
     const goToEvent = async () => {
-        console.log('Going to event...', newSymbol);
+        console.log(`Going to event ${eventIndex}...`);
         // new stock, dont move brush
-        if (eventIndex == -1 || newSymbol) {
+        if (eventIndex == -1) {
             loadChunk();
             return;
         }
@@ -290,18 +291,17 @@ const Chart = () => {
             // place brush around buy/sell events
             startBrushIndex = Math.max(min, buyDateIndex - startIndex - brushMarginSize);
             endBrushIndex = Math.min(max, sellDateIndex - startIndex + brushMarginSize);
-            // for recent events where not a full chunk is loaded
-            if (priceGraph.length < chunkSize) {
-                endBrushIndex = Math.min(endBrushIndex, priceGraph.length - 2);
-            }
         }
-        setStartIndex(startIndex);
+        if (dates.length - startIndex < chunkSize) {
+            endBrushIndex = Math.min(endBrushIndex, dates.length - startIndex - 2);
+        }
         setStartBrushIndex(startBrushIndex);
         setEndBrushIndex(endBrushIndex);
+        setStartIndex(startIndex);
     }
 
     const loadChunk = () => {
-        console.log('Loading chunk...', startIndex)
+        console.log(`Loading chunk ${startIndex}/${dates.length}...`)
         let priceGraph: PriceGraphData = [];
         let volumeGraph: VolumeGraphData = [];
         let myIndicatorGraphs: { [key: string]: IndicatorGraphData } = {};
@@ -642,7 +642,7 @@ const Chart = () => {
 
     // Brushes
     let mainBrush = <Brush gap={1} height={65} dataKey='date' startIndex={startBrushIndex} endIndex={endBrushIndex}
-        onChange={onBrushChange as any} tickFormatter={brushFormatter}>
+        onChange={onBrushChange as any} tickFormatter={brushFormatter} >
         <AreaChart>
             <CartesianGrid horizontal={false} />
             <YAxis hide domain={['auto', 'auto']} />
@@ -733,7 +733,6 @@ const Chart = () => {
                         return;
                     }
                     let ChartClass = indicatorCharts[indicatorName as IndicatorGraphNames];
-                    // TODO: indicators need to index values object
                     let chart = <ChartClass graph={indicatorGraphs[indicatorName as IndicatorGraphNames]!} xAxisTickFormatter={xAxisTickFormatter}
                         options={indicatorOptions[indicatorName]} brush={hiddenBrush} tooltip={simpleTooltip} />
 

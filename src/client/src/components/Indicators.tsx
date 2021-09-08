@@ -39,17 +39,8 @@ const Indicators: React.FC = () => {
     useEffect(() => {
         // Set default values for all indicators
         (Object.keys(indicators) as IndicatorType.IndicatorNames[]).map((indicatorName, index) => {
-            // if used in backtest, use backtest options
-            if (backtestIndicatorOptions.hasOwnProperty(indicatorName)) {
-                Object.keys(backtestIndicatorOptions[indicatorName] as Object).forEach(field => {
-                    dispatch(setIndicatorOption({ indicatorName, field, value: backtestIndicatorOptions[indicatorName]![field] }));
-                });
-                (Object.keys(indicators) as IndicatorType.IndicatorNames[]).forEach(indicatorName => {
-                    dispatch(setIndicatorOn({ indicatorName, on: backtestIndicatorOptions.hasOwnProperty(indicatorName) }));
-                })
-            }
             // if not used in backtest, use default values
-            else {
+            if (!backtestIndicatorOptions.hasOwnProperty(indicatorName)) {
                 // initialize global state with default values
                 indicators[indicatorName]["fields"].map((field, index) => {
                     setIndicatorOption({ indicatorName, field, value: indicators[indicatorName]["default"][index] });

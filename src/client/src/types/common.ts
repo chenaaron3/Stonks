@@ -76,6 +76,17 @@ export interface ExportLogin {
     password: string;
 }
 
+export interface SimulateSettingsData {
+    range: number;
+    startSize: number;
+    maxPositions: number;
+    positionSize: number;
+    maxRisk: number;
+    scoreBy: SortBy;
+    risk: number;
+    sizeOnRisk: boolean;
+}
+
 /**
  * Backtest Data
  */
@@ -97,6 +108,23 @@ export interface PivotData {
     realized: string;
 }
 
+/**
+ * Chart Data
+ */
+export interface SimulateChartData {
+    date: number;
+    value: number;
+}
+
+export interface SimulateReturnsData {
+    year: number;
+    startingEquity: number;
+    returns?: number;
+}
+
+/**
+ * Unions
+ */
 export type Timeframe = "1Hour" | "1Day";
 export type ExportType = 'StocksTracker' | 'Finviz';
 export type SortBy = 'Percent Profit' | 'Win Rate' | 'Dollar Profit';

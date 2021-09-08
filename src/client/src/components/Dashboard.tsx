@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getEndpoint, postEndpoint, fetchBacktestResults } from '../helpers/api';
 import { setBacktestResults } from '../redux/slices/backtestSlice';
+import { setIndicatorOn, setIndicatorOption } from '../redux/slices/indicatorSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import './Dashboard.css';
 import {
@@ -32,6 +33,7 @@ import MediaQuery from 'react-responsive';
 
 import Backtest from '../types/backtest';
 import API from '../types/api';
+import IndicatorType from '../types/indicator';
 
 let winLossColor = ['#2ecc71', '#FFCCCB'];
 
@@ -51,6 +53,7 @@ type BucketTypes = 'year' | '6 months' | '3 months' | '1 month';
 
 const Dashboard: React.FC = (props) => {
     const dispatch = useAppDispatch();
+    const indicatorOptions = useAppSelector(state => state.backtest.results.strategyOptions.buyIndicators);
     const [statistics, setStatistics] = useState({
         numWins: 0, numLosses: 0, winSpan: 0, lossSpan: 0, winAmount: 0, lossAmount: 0, winPercent: 0, lossPercent: 0
     })
@@ -80,9 +83,14 @@ const Dashboard: React.FC = (props) => {
             setBucketType(bucketTypes[3]);
         }
 
+        // analyze data
         analyze();
+        // set active status
         updateActiveStatus();
+        // init indicators
+        initializeIndicators();
 
+        // listener for ctrl
         document.addEventListener('keydown', keydownHandler);
 
         // cleanup on unmount
@@ -94,6 +102,17 @@ const Dashboard: React.FC = (props) => {
     useEffect(() => {
         analyze();
     }, [id, bucketType, range]);
+
+    const initializeIndicators = () => {
+        // Set default values for all indicators
+        (Object.keys(indicatorOptions) as IndicatorType.IndicatorNames[]).map((indicatorName, index) => {
+            // if used in backtest, use backtest options
+            Object.keys(indicatorOptions[indicatorName] as Object).forEach(field => {
+                dispatch(setIndicatorOption({ indicatorName, field, value: indicatorOptions[indicatorName]![field] }));
+            });
+            dispatch(setIndicatorOn({ indicatorName, on: true }));
+        })
+    }
 
     // statistical analysis (win/loss)
     const analyze = () => {
@@ -281,8 +300,8 @@ const Dashboard: React.FC = (props) => {
     }
 
     const keydownHandler = (e: KeyboardEvent) => {
-        if (e.keyCode == 16 || e.keyCode == 17) {
-            setCtrl(ctrl);
+        if (e.key == 'Control') {
+            setCtrl(oldCtrl => !oldCtrl);
         }
     }
 

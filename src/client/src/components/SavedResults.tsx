@@ -98,7 +98,7 @@ const SavedResults: React.FC = (props) => {
                     dispatch(setBacktestResults({ results: res, id: id }));
                     dispatch(setBacktestID(id));
                     // preview first stock
-                    dispatch(viewSymbol(Object.keys(res.symbolData)[0]));
+                    dispatch(viewSymbol({ symbol: Object.keys(res.symbolData)[0] }));
                     // set active page to summary
                     dispatch(setPageIndex(1));
 
