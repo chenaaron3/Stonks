@@ -5,7 +5,7 @@ import CreatePage from './pages/CreatePage';
 import SummaryPage from './pages/SummaryPage';
 import ReviewPage from './pages/ReviewPage';
 import SimulatePage from './pages/SimulatePage';
-// import OptimizePage from './pages/OptimizePage';
+import OptimizePage from './pages/OptimizePage';
 // import WatchlistPage from './pages/WatchlistPage';
 // import AccountPage from './pages/AccountPage';
 
@@ -48,8 +48,8 @@ ReactDOM.render(
               <Route path="/summary" component={SummaryPage} />
               <Route path="/review" component={ReviewPage} />
               <Route path="/simulate" component={SimulatePage} />
-              {/* 
               <Route path="/optimize" component={OptimizePage} />
+              {/* 
               <Route path="/watchlist" component={WatchlistPage} />
               <Route path="/account" component={AccountPage} /> 
             */}

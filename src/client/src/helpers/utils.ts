@@ -347,7 +347,7 @@ function scoreEvent(events: Backtest.EventData[], index: number, scoreData: Cust
 
 // returns index of optimal metric
 function findOptimalMetric(metrics: SimulationMetricsData[]) {
-    if (metrics.length == 0) return { optimalIndex: -1, score: [] };
+    if (metrics.length == 0) return { optimalIndex: -1, scores: [] };
 
     type MetricName = keyof SimulationMetricsData;
 

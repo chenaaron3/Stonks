@@ -39,6 +39,7 @@ namespace Backtest {
         index: number;
         score: EventScoreData;
         risk?: number;
+        keep?: boolean;
     }
 
     export interface EventScoreData {
@@ -100,6 +101,7 @@ namespace Backtest {
         indicators: number[];
         percentProfit: number;
         buyDate: string;
+        symbol?: string;
     }
 
     export interface OptimizeOptions {
