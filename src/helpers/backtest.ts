@@ -39,19 +39,30 @@ async function getActionsToday(id: string, email: string) {
         return new Promise(async resolveJob => {
             // get backtest document
             let doc = await getDocument<MongoResults>("results", id);
-            if (!doc) return;
+            if (!doc) {
+                resolveJob();
+                return;
+            }
             let symbols = Object.keys(doc["results"]["symbolData"]);
             // get user document
             let userDoc = await getDocument<MongoUser>("users", email);
-            if (!userDoc) return;
+            if (!userDoc) {
+                resolveJob();
+                return;
+            }
             let watchlist = Object.keys(userDoc["buys"]);
             let today = new Date();
             let actions: { buy: string[], sell: string[] } = { buy: [], sell: [] };
             let buyData: { [key: string]: { holding: Backtest.HoldingData } } = {};
             let sellData: { [key: string]: { event: Backtest.EventData } } = {};
-            let alpacaCredentials = userDoc['backtestSettings'][id]['alpaca'];
-            let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
-            let tradeSettings = userDoc['backtestSettings'][id]["tradeSettings"];
+            let alpacaCredentials = undefined;
+            let useAlpaca = false;
+            let tradeSettings = undefined;
+            if (id in userDoc['backtestSettings']) {
+                alpacaCredentials = userDoc['backtestSettings'][id]['alpaca']
+                tradeSettings = userDoc['backtestSettings'][id]["tradeSettings"]
+                useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+            }
 
             console.log(`Getting actions for id: ${id}, alpaca: ${useAlpaca}`)
 
@@ -82,7 +93,7 @@ async function getActionsToday(id: string, email: string) {
 
             if (useAlpaca) {
                 // change accounts using credentials
-                changeAccount(alpacaCredentials);
+                changeAccount(alpacaCredentials!);
                 // clear all alpaca buy orders carried over from previous day
                 await cancelPreviousOrders();
 

@@ -22,17 +22,19 @@ router.get('/closedOrders', async (
     // user is logged in
     if (req.user) {
         let userDoc = await getDocument<MongoUser>('users', req.user['username']);
-        let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
+        if (req.query.id in userDoc!['backtestSettings']) {
+            let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
 
-        // user uses alpaca
-        let useAlpaca = alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
+            // user uses alpaca
+            let useAlpaca = alpacaCredentials && alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
 
-        if (useAlpaca) {
-            changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
-            getClosedOrders().then(orders => {
-                res.json(orders)
-            })
-            return;
+            if (useAlpaca) {
+                changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
+                getClosedOrders().then(orders => {
+                    res.json(orders)
+                })
+                return;
+            }
         }
     }
 
@@ -45,17 +47,19 @@ router.get('/openOrders', async (
     // user is logged in
     if (req.user) {
         let userDoc = await getDocument<MongoUser>('users', req.user['username']);
-        let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
+        if (req.query.id in userDoc!['backtestSettings']) {
+            let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
 
-        // user uses alpaca
-        let useAlpaca = alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
+            // user uses alpaca
+            let useAlpaca = alpacaCredentials && alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
 
-        if (useAlpaca) {
-            changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
-            getOpenOrders().then(orders => {
-                res.json(orders)
-            })
-            return;
+            if (useAlpaca) {
+                changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
+                getOpenOrders().then(orders => {
+                    res.json(orders)
+                })
+                return;
+            }
         }
     }
 
@@ -68,17 +72,19 @@ router.get('/positions', async (
     // user is logged in
     if (req.user) {
         let userDoc = await getDocument<MongoUser>('users', req.user['username']);
-        let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
+        if (req.query.id in userDoc!['backtestSettings']) {
+            let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
 
-        // user uses alpaca
-        let useAlpaca = alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
+            // user uses alpaca
+            let useAlpaca = alpacaCredentials && alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
 
-        if (useAlpaca) {
-            changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
-            getPositions().then(positions => {
-                res.json(positions)
-            })
-            return;
+            if (useAlpaca) {
+                changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
+                getPositions().then(positions => {
+                    res.json(positions)
+                })
+                return;
+            }
         }
     }
 

@@ -40,7 +40,7 @@ ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <ThemeProvider theme={theme}>
-        <Router basename={"/stocks"}>
+        <Router basename={process.env.REACT_APP_SUBDIRECTORY}>
           <div className='app-root'>
             <Switch>
 

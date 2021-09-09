@@ -1,4 +1,6 @@
 .env
+dist
 node_modules
-/client/node_modules
-/client/build
+src/client/node_modules
+src/client/build
+src/client/.env

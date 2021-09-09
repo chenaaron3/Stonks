@@ -3,19 +3,22 @@ FROM node:14
 # Install server dependencies
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install
+RUN npm install --production=false
 
 # Install client dependencies
-WORKDIR /usr/src/app/client
-COPY client/package*.json ./
-RUN npm install
+WORKDIR /usr/src/app/src/client
+COPY src/client/package*.json ./
+RUN npm install --production=false
 
 # Copy source code
 WORKDIR /usr/src/app
 COPY . ./
 
+# Build server
+RUN npm run build
+
 # Build client
-WORKDIR /usr/src/app/client
+WORKDIR /usr/src/app/src/client
 ENV REACT_APP_SUBDIRECTORY=/stocks
 ENV REACT_APP_DEMO_ID=YPHbBGbF0l
 ENV REACT_APP_DOMAIN=chenaaron.com
