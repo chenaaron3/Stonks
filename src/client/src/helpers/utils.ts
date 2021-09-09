@@ -402,7 +402,7 @@ function sortResultsByScore(results: Backtest.ResultsData, scoreBy: SortBy) {
 }
 
 function checkLoggedIn() {
-    return new Promise(resolve => {
+    return new Promise<boolean>(resolve => {
         fetch(`${process.env.NODE_ENV == 'production' ? process.env.REACT_APP_SUBDIRECTORY : ''}/users/isLoggedIn`)
             .then(res => res.json())
             .then(json => {

@@ -95,7 +95,7 @@ const Results: React.FC = () => {
     const getClosedOrders = () => {
         // if have not gotten orders yet
         if (Object.keys(closedOrders).length == 0) {
-            getEndpoint<API.Alpaca.GetClosedOrders, API.Alpaca._GetClosedOrders>('alpaca/closedOrders', {})
+            getEndpoint<API.Alpaca.GetClosedOrders, API.Alpaca._GetClosedOrders>('alpaca/closedOrders', { id })
                 .then(closedOrders => {
                     let ordersBySymbol: ClosedOrdersData = {};
                     // categorize each order by their symbol

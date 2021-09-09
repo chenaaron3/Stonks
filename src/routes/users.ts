@@ -13,18 +13,14 @@ import API from '@shared/api';
 let router = express.Router();
 
 let watchlistFunctions = {
-    "StocksTracker": addToStocksTrackerWatchlist,
-    "Finviz": addToFinvizWatchlist
+    'StocksTracker': addToStocksTrackerWatchlist,
+    'Finviz': addToFinvizWatchlist
 }
 
 let userSchema = {
     buys: {},
     backtestIDs: [],
-    alpaca: {
-        id: "",
-        key: ""
-    },
-    tradeSettings: {
+    backtestSettings: {
     }
 }
 
@@ -43,7 +39,7 @@ router.post('/watchlist', async function (
         })
     }, true)
     if (position == 0) {
-        res.json({ status: "Adding to your watchlist!" });
+        res.json({ status: 'Adding to your watchlist!' });
     }
     else {
         res.json({ status: `Will add to your watchlist within ${30 * position} minutes!` });
@@ -58,7 +54,7 @@ router.get('/', (
         res.json(req.user);
     }
     else {
-        res.json({ error: "You are not logged in!" });
+        res.json({ error: 'You are not logged in!' });
     }
 })
 
@@ -82,12 +78,12 @@ router.post('/login', (
     passport.authenticate('local',
         (err, user, info) => {
             if (err) {
-                return res.json({ error: err })
+                return res.json({ error: err['message'] })
             }
 
             // username does not exist
             if (!user) {
-                return res.json({ error: info });
+                return res.json({ error: info['message'] });
             }
 
             req.logIn(user, function (err) {
@@ -96,7 +92,7 @@ router.post('/login', (
                     return res.json({ error: err['message'] })
                 }
 
-                return res.json({ status: "Successfully Logged In" });
+                return res.json({ status: 'Successfully Logged In' });
             });
 
         })(req, res, next);
@@ -109,11 +105,11 @@ router.post('/register', async (
     try {
         await Account.register({ username: req.body.username } as any, req.body.password);
         // add base doc to user db
-        await addDocument<MongoUser>("users", { ...userSchema, _id: req.body.username })
-        res.json({ status: "Successfully Registered" });
+        await addDocument<MongoUser>('users', { ...userSchema, _id: req.body.username })
+        res.json({ status: 'Successfully Registered' });
     }
     catch (err) {
-        res.json({ error: err })
+        res.json({ error: err['message'] as string })
     }
 })
 
@@ -122,16 +118,16 @@ router.get('/logout', async (
     req: Request<{}, {}, API.Users.GetLogout>,
     res: Response<API.Users._GetLogout>) => {
     req.logout();
-    res.json({ status: "Successfully Logged Out" })
+    res.json({ status: 'Successfully Logged Out' })
 })
 
 // add user data
-router.post("/data", (
+router.post('/data', (
     req: Request<{}, {}, API.Users.PostData>,
     res: Response<API.Users._PostData>) => {
     if (req.user) {
-        setDocumentField("users", req.user.username, req.body.field, req.body.value, undefined);
-        res.json({ status: "ok" })
+        setDocumentField('users', req.user.username, req.body.field, req.body.value, undefined);
+        res.json({ status: 'ok' })
     }
     else {
         res.json({ error: 'User does not exist' });
@@ -139,15 +135,15 @@ router.post("/data", (
 })
 
 // get user data
-router.get("/data", async (
+router.get('/data', async (
     req: Request<{}, {}, API.Users.GetData>,
     res: Response<API.Users._GetData>) => {
     if (req.user) {
-        res.json(await getDocument<MongoUser>("users", req.user.username));
+        res.json(await getDocument<MongoUser>('users', req.user.username));
     }
     else {
         res.json({ error: 'User does not exist' });
     }
 })
 
-export =router;
+export = router;

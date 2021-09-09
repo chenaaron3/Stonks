@@ -37,11 +37,17 @@ export interface AlpacaCredentialsData {
     paper?: boolean;
 }
 
-export interface UserData {
-    backtestIDs: SavedResultsData,
-    alpaca: AlpacaCredentialsData;
-    tradeSettings: {
-        [key: string]: TradeSettingsData;
+export interface UserData {    
+    _id: string;
+    buys: BoughtSymbolData;
+    backtestIDs: SavedResultsData;
+    backtestSettings: BacktestSettingsData;
+}
+
+export interface BacktestSettingsData {
+    [key: string]: {
+        tradeSettings: TradeSettingsData;
+        alpaca: AlpacaCredentialsData;
     }
 }
 
@@ -67,8 +73,8 @@ export interface BuyEntryData {
 
 export interface TradeSettingsData {
     scoreBy?: SortBy;
-    maxRisk?: string;
-    maxPositions?: string;
+    maxRisk?: number | string;
+    maxPositions?: number | string;
 }
 
 export interface ExportLogin {

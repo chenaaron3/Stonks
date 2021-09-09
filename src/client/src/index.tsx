@@ -6,8 +6,8 @@ import SummaryPage from './pages/SummaryPage';
 import ReviewPage from './pages/ReviewPage';
 import SimulatePage from './pages/SimulatePage';
 import OptimizePage from './pages/OptimizePage';
-// import WatchlistPage from './pages/WatchlistPage';
-// import AccountPage from './pages/AccountPage';
+import WatchlistPage from './pages/WatchlistPage';
+import AccountPage from './pages/AccountPage';
 
 // import * as serviceWorker from './serviceWorker';
 
@@ -49,10 +49,8 @@ ReactDOM.render(
               <Route path="/review" component={ReviewPage} />
               <Route path="/simulate" component={SimulatePage} />
               <Route path="/optimize" component={OptimizePage} />
-              {/* 
               <Route path="/watchlist" component={WatchlistPage} />
               <Route path="/account" component={AccountPage} /> 
-            */}
               <Route path="/:backtestID" render={(props) => <CreatePage />} />
             </Switch>
           </div>

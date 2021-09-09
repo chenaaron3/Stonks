@@ -49,9 +49,9 @@ async function getActionsToday(id: string, email: string) {
             let actions: { buy: string[], sell: string[] } = { buy: [], sell: [] };
             let buyData: { [key: string]: { holding: Backtest.HoldingData } } = {};
             let sellData: { [key: string]: { event: Backtest.EventData } } = {};
-            let alpacaCredentials = userDoc["alpaca"];
+            let alpacaCredentials = userDoc['backtestSettings'][id]['alpaca'];
             let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
-            let tradeSettings = userDoc["tradeSettings"][id];
+            let tradeSettings = userDoc['backtestSettings'][id]["tradeSettings"];
 
             console.log(`Getting actions for id: ${id}, alpaca: ${useAlpaca}`)
 
@@ -111,11 +111,11 @@ async function getActionsToday(id: string, email: string) {
                         // adjust parameters
                         if (tradeSettings) {
                             // trade if below risk parameter
-                            if (tradeSettings["maxRisk"]) shouldTrade = risk! <= parseInt(tradeSettings["maxRisk"]);
+                            if (tradeSettings["maxRisk"]) shouldTrade = risk! <= parseInt(tradeSettings["maxRisk"].toString());
                             // check if portfolio is maxed out already
                             if (tradeSettings["maxPositions"]) shouldTrade = shouldTrade && (positions.length + buyOrders.length <= Number(tradeSettings["maxPositions"]));
                             // adjust position size by how many positions desired in portfolio
-                            if (tradeSettings["maxPositions"]) positionSize = 1 / (parseInt(tradeSettings["maxPositions"]));
+                            if (tradeSettings["maxPositions"]) positionSize = 1 / (parseInt(tradeSettings["maxPositions"].toString()));
                         }
 
                         if (shouldTrade) {
@@ -125,7 +125,7 @@ async function getActionsToday(id: string, email: string) {
                                 console.log("Successfully Ordered:", buySymbol);
                             }
                             catch (e) {
-                                console.log("Order Failed:", e["message"])
+                                console.log("Order Failed:", e)
                                 // insufficient buying power                            
                             }
                         }

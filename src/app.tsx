@@ -50,10 +50,11 @@ mongoose.connect(process.env.MONGO_DATABASE_URL);
 // passport session
 app.use(passport.initialize());
 app.use(passport.session());
+
 // configure model
 import Account from './models/account';
 passport.use(Account.createStrategy());
-passport.serializeUser(Account.serializeUser);
+passport.serializeUser(Account.serializeUser() as any);
 passport.deserializeUser(Account.deserializeUser());
 
 // routes

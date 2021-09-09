@@ -7,7 +7,7 @@ import API from '@shared/api';
 
 var router = express.Router();
 
-router.get("/", (
+router.get('/', (
     req: Request<{}, {}, {}, API.Alpaca.Get>,
     res: Response<API.Alpaca._Get>) => {
     changeAccount({ id: process.env.APCA_API_KEY_ID, key: process.env.APCA_API_SECRET_KEY });
@@ -16,19 +16,19 @@ router.get("/", (
     })
 })
 
-router.get("/closedOrders", async (
+router.get('/closedOrders', async (
     req: Request<{}, {}, {}, API.Alpaca.GetClosedOrders>,
     res: Response<API.Alpaca._GetClosedOrders>) => {
     // user is logged in
     if (req.user) {
-        let userDoc = await getDocument<MongoUser>("users", req.user["username"]);
-        let alpacaCredentials = userDoc!["alpaca"];
+        let userDoc = await getDocument<MongoUser>('users', req.user['username']);
+        let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
 
         // user uses alpaca
-        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+        let useAlpaca = alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
 
         if (useAlpaca) {
-            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
             getClosedOrders().then(orders => {
                 res.json(orders)
             })
@@ -39,19 +39,19 @@ router.get("/closedOrders", async (
     res.json([]);
 })
 
-router.get("/openOrders", async (
+router.get('/openOrders', async (
     req: Request<{}, {}, {}, API.Alpaca.GetOpenOrders>,
     res: Response<API.Alpaca._GetOpenOrders>) => {
     // user is logged in
     if (req.user) {
-        let userDoc = await getDocument<MongoUser>("users", req.user["username"]);
-        let alpacaCredentials = userDoc!["alpaca"];
+        let userDoc = await getDocument<MongoUser>('users', req.user['username']);
+        let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
 
         // user uses alpaca
-        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+        let useAlpaca = alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
 
         if (useAlpaca) {
-            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
             getOpenOrders().then(orders => {
                 res.json(orders)
             })
@@ -62,19 +62,19 @@ router.get("/openOrders", async (
     res.json([]);
 })
 
-router.get("/positions", async (
+router.get('/positions', async (
     req: Request<{}, {}, {}, API.Alpaca.GetPositions>,
     res: Response<API.Alpaca._GetPositions>) => {
     // user is logged in
     if (req.user) {
-        let userDoc = await getDocument<MongoUser>("users", req.user["username"]);
-        let alpacaCredentials = userDoc!["alpaca"];
+        let userDoc = await getDocument<MongoUser>('users', req.user['username']);
+        let alpacaCredentials = userDoc!['backtestSettings'][req.query.id]['alpaca'];
 
         // user uses alpaca
-        let useAlpaca = alpacaCredentials["id"].length > 0 && alpacaCredentials["key"].length > 0;
+        let useAlpaca = alpacaCredentials['id'].length > 0 && alpacaCredentials['key'].length > 0;
 
         if (useAlpaca) {
-            changeAccount({ id: alpacaCredentials["id"], key: alpacaCredentials["key"] });
+            changeAccount({ id: alpacaCredentials['id'], key: alpacaCredentials['key'] });
             getPositions().then(positions => {
                 res.json(positions)
             })
@@ -85,7 +85,7 @@ router.get("/positions", async (
     res.json([]);
 })
 
-router.post("/order", function (
+router.post('/order', function (
     req: Request<{}, {}, API.Alpaca.PostOrder>,
     res: Response<API.Alpaca._PostOrder>) {
     let symbol = req.body.symbol;

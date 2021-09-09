@@ -61,7 +61,8 @@ const SavedResults: React.FC = (props) => {
                     if ('error' in userData) { }
                     else {
                         let userSavedResults = userData.backtestIDs;
-                        let currentSavedResults = new Set(savedResults.map(sr => sr.id));
+                        let currentSavedResults = new Set(localSavedResults.map(sr => sr.id));
+                        console.log(userSavedResults, currentSavedResults)
                         // sync ids from the cloud to local
                         userSavedResults.forEach(userSavedResult => {
                             if (!currentSavedResults.has(userSavedResult.id)) {
@@ -69,6 +70,7 @@ const SavedResults: React.FC = (props) => {
                                 currentSavedResults.add(userSavedResult.id);
                             }
                         })
+                        console.log(userSavedResults, currentSavedResults)
                     }
                 }
 

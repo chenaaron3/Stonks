@@ -15,7 +15,7 @@ const router = express.Router();
 
 //#region Watchlist
 // gets the most updated price for a stock
-router.get("/latestPrice", async (
+router.get('/latestPrice', async (
     req: Request<{}, {}, {}, API.Symbol.GetLatestPrice>,
     res: Response<API.Symbol._GetLatestPrice>) => {
     let symbol = req.query.symbol;
@@ -24,43 +24,43 @@ router.get("/latestPrice", async (
 })
 
 // gets a user's bought symbol list
-router.get("/boughtSymbols", async (
+router.get('/boughtSymbols', async (
     req: Request<{}, {}, {}, API.Symbol.GetBoughtSymbols>,
     res: Response<API.Symbol._GetBoughtSymbols>) => {
     // if not logged in
     if (!req.user) {
-        if (!req.session.hasOwnProperty("buys")) {
-            req.session["buys"] = {};
+        if (!req.session.hasOwnProperty('buys')) {
+            req.session['buys'] = {};
         }
-        res.json(req.session["buys"]);
+        res.json(req.session['buys']);
     }
     // if logged in
     else {
-        let user = await getDocument<MongoUser>("users", req.user.username);
-        res.json(user!["buys"]);
+        let user = await getDocument<MongoUser>('users', req.user.username);
+        res.json(user!['buys']);
     }
 })
 
 // buy
-router.get("/buySymbol", async (
+router.get('/buySymbol', async (
     req: Request<{}, {}, {}, API.Symbol.GetBuySymbol>,
     res: Response<API.Symbol._GetBuySymbol>) => {
     let symbol = req.query.symbol;
     let entry = await getLatestPrice(symbol);
-    let date = entry["date"];
-    let price = entry["close"]
+    let date = entry['date'];
+    let price = entry['close']
 
     let buyDict: BoughtSymbolData = {};
     if (!req.user) {
         // if first buy
-        if (!req.session.hasOwnProperty("buys")) {
-            req.session["buys"] = {};
+        if (!req.session.hasOwnProperty('buys')) {
+            req.session['buys'] = {};
         }
-        buyDict = req.session["buys"]!;
+        buyDict = req.session['buys']!;
     }
     else {
-        let user = await getDocumentField<MongoUser>("users", req.user.username, ["buys"]);
-        buyDict = user!["buys"];
+        let user = await getDocumentField<MongoUser>('users', req.user.username, ['buys']);
+        buyDict = user!['buys'];
     }
 
     // if first buy for symbol
@@ -75,21 +75,21 @@ router.get("/buySymbol", async (
 
     // store back into db
     if (req.user) {
-        await setDocumentField("users", req.user.username, "buys", buyDict, undefined);
+        await setDocumentField('users', req.user.username, 'buys', buyDict, undefined);
     }
 
     res.json(buyDict);
 });
 
 // sell
-router.get("/sellSymbol", async (
+router.get('/sellSymbol', async (
     req: Request<{}, {}, {}, API.Symbol.GetSellSymbol>,
     res: Response<API.Symbol._GetSellSymbol>) => {
     let symbol = req.query.symbol;
 
     if (!req.user) {
         // check buys
-        if (!req.session.hasOwnProperty("buys")) {
+        if (!req.session.hasOwnProperty('buys')) {
             res.json({});
             return;
         }
@@ -97,11 +97,11 @@ router.get("/sellSymbol", async (
 
     let buyDict: BoughtSymbolData = {};
     if (!req.user) {
-        buyDict = req.session["buys"]!;
+        buyDict = req.session['buys']!;
     }
     else {
-        let user = await getDocumentField<MongoUser>("users", req.user.username, ["buys"]);
-        buyDict = user!["buys"];
+        let user = await getDocumentField<MongoUser>('users', req.user.username, ['buys']);
+        buyDict = user!['buys'];
     }
 
     // check symbol buy
@@ -111,7 +111,7 @@ router.get("/sellSymbol", async (
     else {
         delete buyDict[symbol];
         if (req.user) {
-            await setDocumentField("users", req.user.username, "buys", buyDict, undefined);
+            await setDocumentField('users', req.user.username, 'buys', buyDict, undefined);
         }
         res.json(buyDict);
     }
@@ -120,17 +120,17 @@ router.get("/sellSymbol", async (
 
 //#region Graphs
 // get graph for an indicator
-router.post("/indicatorGraph", async (
+router.post('/indicatorGraph', async (
     req: Request<{}, {}, API.Symbol.PostIndicatorGraph>,
     res: Response<API.Symbol._PostIndicatorGraph>) => {
-    let symbol = req.body["symbol"];
-    let indicatorName = req.body["indicatorName"];
-    let indicatorOptions = req.body["indicatorOptions"];
-    let timeframe = req.body["timeframe"] ? req.body["timeframe"] : "1Day";
+    let symbol = req.body['symbol'];
+    let indicatorName = req.body['indicatorName'];
+    let indicatorOptions = req.body['indicatorOptions'];
+    let timeframe = req.body['timeframe'] ? req.body['timeframe'] : '1Day';
 
-    let stockInfo = await getDocument<MongoPrices>(("prices" + timeframe) as COLLECTION_NAMES, symbol);
+    let stockInfo = await getDocument<MongoPrices>(('prices' + timeframe) as COLLECTION_NAMES, symbol);
     if (stockInfo && stockInfo.length != 0) {
-        let pricesJSON = stockInfo["prices"];
+        let pricesJSON = stockInfo['prices'];
         let { prices, volumes, opens, highs, lows, closes, dates } = getAdjustedData(pricesJSON, undefined, undefined);
 
         let indicator = getIndicator(indicatorName, indicatorOptions, symbol, dates, prices, opens, highs, lows, closes);
@@ -140,19 +140,19 @@ router.post("/indicatorGraph", async (
 })
 
 // get price data for a symbol
-router.post("/priceGraph", async (
+router.post('/priceGraph', async (
     req: Request<{}, {}, API.Symbol.PostPriceGraph>,
     res: Response<API.Symbol._PostPriceGraph>) => {
-    let symbol = req.body["symbol"];
-    let indicators = req.body["indicators"];
-    let timeframe = req.body["timeframe"] ? req.body["timeframe"] : "1Day";
+    let symbol = req.body['symbol'];
+    let indicators = req.body['indicators'];
+    let timeframe = req.body['timeframe'] ? req.body['timeframe'] : '1Day';
 
     // get prices from database
-    let stockInfo = await getDocument<MongoPrices>(("prices" + timeframe) as COLLECTION_NAMES, symbol);
+    let stockInfo = await getDocument<MongoPrices>(('prices' + timeframe) as COLLECTION_NAMES, symbol);
     if (stockInfo && stockInfo.length != 0) {
-        let pricesJSON = stockInfo["prices"];
+        let pricesJSON = stockInfo['prices'];
         let { prices, volumes, opens, highs, lows, closes, dates } = getAdjustedData(pricesJSON, undefined, undefined);
-        let atr = getIndicator("ATR", { period: 12 }, symbol, dates, prices, opens, highs, lows, closes).getGraph();
+        let atr = getIndicator('ATR', { period: 12 }, symbol, dates, prices, opens, highs, lows, closes).getGraph();
         let pivots = getSwingPivots(dates, prices, 12);
 
         let indicatorGraphs: { [key: string]: Indicator.GraphData } = {};

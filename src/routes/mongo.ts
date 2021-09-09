@@ -42,7 +42,7 @@ async function ensureUpdated() {
 			}
 
 			// update the active backtests
-			let activeResultsDoc = await getDocument<MongoActiveResults>("results", "activeResults");
+			let activeResultsDoc = await getDocument<MongoActiveResults>("metadata", "activeResults");
 			if (activeResultsDoc) {
 				let activeResults = activeResultsDoc["activeResults"];
 				for (let i = 0; i < activeResults.length; ++i) {
@@ -79,7 +79,7 @@ router.get('/actions', async function (
 	res: Response<API.Mongo._GetActions>) {
 	// respond so doesnt hang
 	res.json({ status: "Getting actions!" });
-	let activeResultsDoc = await getDocument<MongoActiveResults>("results", "activeResults");
+	let activeResultsDoc = await getDocument<MongoActiveResults>("metadata", "activeResults");
 	if (activeResultsDoc) {
 		let activeResults = activeResultsDoc["activeResults"];
 		for (let i = 0; i < activeResults.length; ++i) {
@@ -93,7 +93,7 @@ router.get('/actions', async function (
 router.get("/clearActiveResults", async function (
 	req: Request<{}, {}, {}, API.Mongo.GetClearActiveResults>,
 	res: Response<API.Mongo._GetClearActiveResults>) {
-	await deleteDocument("results", "activeResults");
+	await deleteDocument("metadata", "activeResults");
 	res.send({ status: "Cleared" });
 })
 

@@ -98,7 +98,7 @@ const Optimize = () => {
     const [combinedIndicatorData, setCombinedIndicatorData] = useState<CombinedIndicatorEntry[]>([]);
     const [indicatorFields, setIndicatorFields] = useState<string[]>([]);
     const [indicator1, setIndicator1] = useState('');
-    const [indicator2, setIndicator2] = useState('');
+    const [indicator2, setIndicator2] = useState('None');
 
     // sectors
     const [numSectors, setNumSectors] = useState(10);
@@ -139,16 +139,7 @@ const Optimize = () => {
 
     useEffect(() => {
         assignSectors();
-    }, [allIndicatorData, indicator1])
-
-    // componentDidUpdate(prevProps) {
-    //     let events = 0;
-    //     let symbols = Object.keys(props['results']['symbolData']);
-    //     symbols.forEach(symbol => {
-    //         events += props['results']['symbolData'][symbol]['events'].length;
-    //     })
-    //     console.log('NUM EVENTS', events);        
-    // }
+    }, [allIndicatorData, indicator1, indicator2, numSectors])
 
     const fetchResults = () => {
         // fetch results again in case we modified it before
@@ -278,6 +269,8 @@ const Optimize = () => {
                     setIndicatorFields(fields);
                     setIndicator1(fields[0]);
                     setLoadingIndicators(false);
+
+                    console.log(indicatorData, allIndicatorData, combinedIndicatorData)
                 }
             });
     }
@@ -452,7 +445,7 @@ const Optimize = () => {
 
     const applySectors = () => {
         let top = Math.floor(numSectors * sectorThreshold);
-        let newResults = results;
+        let newResults = JSON.parse(JSON.stringify(results)) as Backtest.ResultsData;
         for (let i = 0; i < top; ++i) {
             let sector = sectors[i];
             // tag events to be removed
@@ -493,9 +486,17 @@ const Optimize = () => {
     }
 
     const getDomain = (field: string) => {
+        let mean = 0;
+        let standardDeviation = 0;
+        if (field == 'percentProfit') {
+            mean = allIndicatorData['percentProfit']['mean'];
+            standardDeviation = allIndicatorData['percentProfit']['standardDeviation'];
+        }
+        else {
+            mean = allIndicatorData['stats'][field]['mean'];
+            standardDeviation = allIndicatorData['stats'][field]['standardDeviation'];
+        }
         let deviations = 2;
-        let mean = allIndicatorData['stats'][field]['mean'];
-        let standardDeviation = allIndicatorData['stats'][field]['standardDeviation'];
         let domain = [mean - deviations * standardDeviation, mean + deviations * standardDeviation];
         let onlyPositive = ['Head_Ratio', 'Leg_Ratio'];
         if (onlyPositive.includes(field)) {
@@ -696,7 +697,7 @@ const Optimize = () => {
                         </div>
                     }
                     {
-                        indicatorData && <><div className='optimize-card'>
+                        (indicatorData && indicator1) && <><div className='optimize-card'>
                             <Box ml='1vw'>
                                 <FormControl style={{ minWidth: '5vw' }}>
                                     <InputLabel>Indicator 1</InputLabel>

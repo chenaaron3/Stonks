@@ -2,7 +2,7 @@ import { AlpacaAccount, AlpacaOrder, AlpacaPosition } from '@alpacahq/alpaca-tra
 import Backtest from './backtest';
 import {
     BarData, Timeframe, BoughtSymbolData, StockData, ValueOf,
-    PivotsData, ExportLogin, PassportUserData, UserData
+    PivotsData, ExportLogin, PassportUserData, UserData, BacktestSettingsData
 } from './common';
 import Indicator from './indicator';
 
@@ -15,13 +15,19 @@ namespace API {
         export interface Get { }
         export type _Get = AlpacaAccount;
 
-        export interface GetClosedOrders { }
+        export interface GetClosedOrders { 
+            id: string;
+        }
         export type _GetClosedOrders = AlpacaOrder[];
 
-        export interface GetOpenOrders { }
+        export interface GetOpenOrders {
+            id: string;
+        }
         export type _GetOpenOrders = AlpacaOrder[];
 
-        export interface GetPositions { }
+        export interface GetPositions { 
+            id: string;
+        }
         export type _GetPositions = AlpacaPosition[];
 
         export interface PostOrder {
@@ -243,9 +249,12 @@ namespace API {
             status: string;
         }
 
-        export interface PostData {
+        export type PostData = {
             field: keyof UserData;
             value: ValueOf<UserData>;
+        } | {
+            field: string;
+            value: ValueOf<ValueOf<BacktestSettingsData>>;
         }
         export type _PostData = {
             status: string;
