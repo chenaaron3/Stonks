@@ -105,7 +105,7 @@ function getAlpacaBars(s: string, startDate: Date, endDate: Date, timeframe: Tim
 
                     success = true;
                 }
-                catch (e) {
+                catch (e: any) {
                     // end is too late for subscription
                     console.log(e.response.status)
                     if (e.response.status == 422) {

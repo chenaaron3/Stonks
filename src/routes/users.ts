@@ -108,7 +108,7 @@ router.post('/register', async (
         await addDocument<MongoUser>('users', { ...userSchema, _id: req.body.username })
         res.json({ status: 'Successfully Registered' });
     }
-    catch (err) {
+    catch (err: any) {
         res.json({ error: err['message'] as string })
     }
 })
