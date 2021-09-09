@@ -4,8 +4,7 @@ import './Watchlist.css';
 import { formatDate } from '../helpers/utils';
 import { getEndpoint } from '../helpers/api';
 
-import PropTypes from 'prop-types';
-import { lighten, makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -122,11 +121,11 @@ const useStyles = makeStyles((theme) => ({
         width: '100%',
         height: '100%',
         // margin: 'auto',
-        marginTop: theme.spacing(2),
+        marginTop: '2px'
     },
     paper: {
         width: '100%',
-        marginBottom: theme.spacing(2),
+        marginBottom: '2px'
     },
     table: {
         minWidth: 750,
@@ -253,8 +252,8 @@ const EnhancedTable: React.FC<EnhancedTableProps> = (props) => {
                     count={props.rows.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
-                    onChangePage={handleChangePage}
-                    onChangeRowsPerPage={handleChangeRowsPerPage}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </Paper>
         </div>
