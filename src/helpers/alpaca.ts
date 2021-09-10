@@ -57,6 +57,8 @@ function formatDate(date: string | Date) {
 }
 
 function getBarsV2(symbol: string, params: GetHistoricalOptions): Promise<BarsV2Response> {
+    // use server Alpaca account
+    alpaca = new Alpaca(config)
     const url = `https://data.alpaca.markets/v2/stocks/${symbol}/bars`
     const options = {
         headers: {

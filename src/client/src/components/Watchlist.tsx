@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setLoading } from '../redux/slices/uiSlice';
 import './Watchlist.css';
 import { formatDate } from '../helpers/utils';
 import { getEndpoint } from '../helpers/api';
@@ -261,11 +262,13 @@ const EnhancedTable: React.FC<EnhancedTableProps> = (props) => {
 }
 
 const Watchlist = () => {
+    const dispatch = useAppDispatch();
     const results = useAppSelector(state => state.backtest.results);
     const id = useAppSelector(state => state.backtest.id);
     const [rows, setRows] = useState<RowData[]>([]);
 
     useEffect(() => {
+        dispatch(setLoading(false));
         getWatchlist();
     }, [id]);
 

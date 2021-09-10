@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setSimulationTransactions } from '../redux/slices/backtestSlice';
 import { setSimulateSettings } from '../redux/slices/userSlice';
-import Loading from './Loading';
+import { setLoading } from '../redux/slices/uiSlice';
 import './Simulate.css';
 
 import {
@@ -38,7 +38,9 @@ const Simulate: React.FC = () => {
         positionData: [] as SimulateChartData[]
     })
 
-    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        simulate();
+    }, []);
 
     useEffect(() => {
         simulate();
@@ -53,7 +55,7 @@ const Simulate: React.FC = () => {
         setChartData({
             equityData, returnsData, buyingPowerData, positionData
         });
-        setLoading(false);
+        dispatch(setLoading(false));
         dispatch(setSimulationTransactions(transactions));
         return { equity, weightedReturns, sharpe };
     }
@@ -82,7 +84,6 @@ const Simulate: React.FC = () => {
     let winLossColor = ['#2ecc71', '#FFCCCB'];
     return <div className='simulate'>
         <div className='simulate-header'>
-            <Loading loading={loading} />
             <h3 className='simulate-title'>Equity Chart</h3>
             <div className='simulate-settings'>
                 <Box mx='1vw' mt='1vh'>

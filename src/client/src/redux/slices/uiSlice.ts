@@ -12,6 +12,7 @@ interface UIState {
         left: boolean;
         right: boolean;
     };
+    loading: boolean;
 }
 
 // Define the initial state using that type
@@ -22,7 +23,8 @@ const initialState: UIState = {
         bottom: false,
         left: false,
         right: false
-    }
+    },
+    loading: false
 }
 
 export const uiSlice = createSlice({
@@ -36,11 +38,14 @@ export const uiSlice = createSlice({
         },
         setDrawer: (state, action: PayloadAction<DrawerState>) => {
             state.drawer[action.payload.anchor] = action.payload.open;
+        },
+        setLoading: (state, action: PayloadAction<boolean>) => {
+            state.loading = action.payload;
         }
     },
 })
 
-export const { setPageIndex, setDrawer } = uiSlice.actions
+export const { setPageIndex, setDrawer, setLoading } = uiSlice.actions
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectPageIndex = (state: RootState) => state.ui.pageIndex;

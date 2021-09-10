@@ -1,8 +1,8 @@
-import React, {  } from 'react';
+import React, { } from 'react';
 import './Sidebar.css';
 import { useHistory } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
-import { setPageIndex } from '../redux/slices/uiSlice';
+import { setPageIndex, setLoading } from '../redux/slices/uiSlice';
 
 import HomeIcon from '@material-ui/icons/Home';
 import EqualizerIcon from '@material-ui/icons/Equalizer';
@@ -29,7 +29,10 @@ const Sidebar: React.FC = (props) => {
                     let IconClass = icon;
                     let iconComponent = <IconClass fontSize='large' style={{ color: color }} />;
                     return <div className='sidebar-icon-wrapper' key={`sidebar-${index}`} onClick={() => {
+                        // set page index and go to page
                         dispatch(setPageIndex(index));
+                        // open loading page
+                        dispatch(setLoading(true));
                         history.push(pageName[index]);
                     }} >
                         {iconComponent}

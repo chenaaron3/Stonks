@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setBacktestResults } from '../redux/slices/backtestSlice';
+import { setLoading } from '../redux/slices/uiSlice';
 import { getEndpoint, postEndpoint } from '../helpers/api';
 import './Optimize.css';
 import { camelToDisplay, mapRange, findOptimalMetric } from '../helpers/utils'
@@ -130,6 +131,7 @@ const Optimize = () => {
     const lossColormap = interpolate(['#FFCCCB', 'red']);
 
     useEffect(() => {
+        dispatch(setLoading(false));
         fetchResults()
             .then(() => {
                 fetchOptimizedStoplossTarget();

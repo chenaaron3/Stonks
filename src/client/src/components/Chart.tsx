@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setLoading } from '../redux/slices/uiSlice';
 import {
     ResponsiveContainer, LineChart, Line, XAxis, YAxis, ReferenceLine,
     Tooltip, CartesianGrid, Brush, ErrorBar, AreaChart, Area, DotProps
@@ -80,6 +81,7 @@ const Chart = () => {
     const minThreshold = Math.floor(chunkSize * scrollThreshold);
     const maxThreshold = Math.floor(chunkSize * (1 - scrollThreshold));
 
+    const dispatch = useAppDispatch();
     const symbol = useAppSelector(state => state.backtest.selectedSymbol);
     const results = useAppSelector(state => state.backtest.results.symbolData[state.backtest.selectedSymbol]);
     const activeIndicators = useAppSelector(state => state.indicator.actives);
@@ -88,6 +90,7 @@ const Chart = () => {
     const eventIndex = useAppSelector(state => state.backtest.selectedEvent);
     const chartSettings = useAppSelector(state => state.user.chartSettings);
     const closedOrders = useAppSelector(state => state.user.closedOrders[state.backtest.selectedSymbol]);
+    const loading = useAppSelector(state => state.ui.loading);
 
     const [priceGraph, setPriceGraph] = useState<PriceGraphData>([]);
     const [indicatorGraphs, setIndicatorGraphs] = useState<IndicatorGraphsData>({});
@@ -105,7 +108,6 @@ const Chart = () => {
     const [eventsLookup, setEventsLookup] = useState<EventsLookupData>({}); // map a buy/sell date to its event 
     const [stoplossTarget, setStoplossTarget] = useState<StoplossTargetsData>({}); // map a buy date to its stoploss/target 
     const [myOverlayCharts, setMyOverlayCharts] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
 
     let newSymbol = false;
     let newIndicators = false;
@@ -183,7 +185,7 @@ const Chart = () => {
                 // save graphs to load chunks later
                 graphs = res;
                 setPivots(res['pivots']);
-                console.log('Received data from server');
+                console.log('Received data from server', res);
 
                 let myOverlayCharts: string[] = [];
                 let indicatorGraphs = graphs['indicators'];
@@ -371,7 +373,7 @@ const Chart = () => {
         setIndicatorGraphs(myIndicatorGraphs);
         setPriceGraph(priceGraph);
         setVolumeGraph(volumeGraph);
-        setLoading(false);
+        dispatch(setLoading(false));
     }
 
     const onBrushChange = (newRange: { startIndex: number; endIndex: number; }) => {
@@ -629,7 +631,6 @@ const Chart = () => {
 
     if (loading) {
         return <>
-            <Loading loading={loading} />
         </>
     }
     // if no symbol, return

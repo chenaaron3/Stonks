@@ -42,7 +42,7 @@ const CreateBacktest: React.FC = (props) => {
     const [sellOptions, setSellOptions] = useState<IndicatorType.Indicators>({});
     const [stopLossAtr, setStopLossAtr] = useState('0');
     const [riskRewardRatio, setRiskRewardRatio] = useState('0');
-    const [highPeriod, setHighPeriod] = useState('0');
+    const [highPeriod, setHighPeriod] = useState('100');
     const [minVolume, setMinVolume] = useState('1000000');
     const [maxDays, setMaxDays] = useState('30');
     const [limitOrder, setLimitOrder] = useState(false);

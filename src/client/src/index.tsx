@@ -21,9 +21,6 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-import green from '@material-ui/core/colors/green';
-import red from '@material-ui/core/colors/red';
 
 // Pusher
 const pusherClient = new Pusher("27c0991e4a760dce09df", {
@@ -31,31 +28,23 @@ const pusherClient = new Pusher("27c0991e4a760dce09df", {
 });
 setPusherClient(pusherClient);
 
-// Material UI
-const theme = createMuiTheme({
-
-});
-
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <Router basename={process.env.REACT_APP_SUBDIRECTORY}>
-          <div className='app-root'>
-            <Switch>
-
-              <Route exact path="/" component={CreatePage} />
-              <Route path="/summary" component={SummaryPage} />
-              <Route path="/review" component={ReviewPage} />
-              <Route path="/simulate" component={SimulatePage} />
-              <Route path="/optimize" component={OptimizePage} />
-              <Route path="/watchlist" component={WatchlistPage} />
-              <Route path="/account" component={AccountPage} /> 
-              <Route path="/:backtestID" render={(props) => <CreatePage />} />
-            </Switch>
-          </div>
-        </Router>
-      </ThemeProvider>
+      <Router basename={process.env.REACT_APP_SUBDIRECTORY}>
+        <div className='app-root'>
+          <Switch>
+            <Route exact path="/" component={CreatePage} />
+            <Route path="/summary" component={SummaryPage} />
+            <Route path="/review" component={ReviewPage} />
+            <Route path="/simulate" component={SimulatePage} />
+            <Route path="/optimize" component={OptimizePage} />
+            <Route path="/watchlist" component={WatchlistPage} />
+            <Route path="/account" component={AccountPage} />
+            <Route path="/:backtestID" render={(props) => <CreatePage />} />
+          </Switch>
+        </div>
+      </Router>
     </Provider>
   </React.StrictMode>,
   document.getElementById('root')

@@ -32,7 +32,7 @@ const Indicators: React.FC = () => {
         "ATR": { "fields": ["period"], "default": [12] },
         "Divergence": { "fields": ["period"], "default": [10] },
         "Stochastic": { "fields": ["period", "underbought", "overbought"], "default": [14, 20, 80] },
-        "Trend": { "fields": ["period"], "default": [10] },
+        // "Trend": { "fields": ["period"], "default": [10] },
         "High": { "fields": ["period"], "default": [100] },
     } as IndicatorFieldDefinition
 

@@ -7,13 +7,17 @@ import API from '@shared/api';
 
 var router = express.Router();
 
-router.get('/', (
-    req: Request<{}, {}, {}, API.Alpaca.Get>,
-    res: Response<API.Alpaca._Get>) => {
-    changeAccount({ id: process.env.APCA_API_KEY_ID, key: process.env.APCA_API_SECRET_KEY });
-    getAccount().then(account => {
-        res.json(account);
-    })
+router.post('/verify', (
+    req: Request<{}, {}, API.Alpaca.PostVerify>,
+    res: Response<API.Alpaca._PostVerify>) => {
+    changeAccount(req.body);
+    getAccount()
+        .then(account => {
+            res.json(account);
+        })
+        .catch(error => {
+            res.json({ error: 'Invalid Alpaca Credentials' });
+        })
 })
 
 router.get('/closedOrders', async (

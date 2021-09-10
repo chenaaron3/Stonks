@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Account.css';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { setTradeSettings } from '../redux/slices/userSlice';
+import { setLoading } from '../redux/slices/uiSlice';
 import { checkLoggedIn } from '../helpers/utils'
 import { getEndpoint, postEndpoint } from '../helpers/api';
 
@@ -42,18 +43,18 @@ interface FormField {
 const Account = () => {
     const dispatch = useAppDispatch();
     const id = useAppSelector(state => state.backtest.id);
+    const loading = useAppSelector(state => state.ui.loading);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [mode, setMode] = useState<ModeTypes>('login');
     const [loggedIn, setLoggedIn] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [forms, setForms] = useState({
         alpaca: {
             id: '',
             key: ''
-        } as AlpacaCredentialsData, 
+        } as AlpacaCredentialsData,
         tradeSettings: {
             scoreBy: 'Percent Profit',
             maxRisk: 0,
@@ -113,7 +114,7 @@ const Account = () => {
         checkLoggedIn()
             .then(isLoggedIn => {
                 setLoggedIn(isLoggedIn);
-                setLoading(false);
+                dispatch(setLoading(false));
 
                 // fetch the settings
                 if (isLoggedIn) {
@@ -189,10 +190,28 @@ const Account = () => {
             [formName]: newValue
         })
 
-        // if done editting, update the database
+        // if done editting
         if (newValue == false) {
-            let body = { field: `backtestSettings.${id}.${formName}`, value: forms[formName] };
-            postEndpoint<API.Users.PostData, API.Users._PostData>('users/data', body);
+            // validate alpaca credentials
+            if (formName == 'alpaca') {
+                postEndpoint<API.Alpaca.PostVerify, API.Alpaca._PostVerify>('alpaca/verify', forms[formName])
+                    .then(res => {
+                        if ('error' in res) {
+                            alert(res['error']);
+                            // set edit to true
+                            setEdit({
+                                ...edit,
+                                [formName]: true
+                            })
+                        }
+                        else {
+                            alert('Account Verified');
+                            // update the database
+                            let body = { field: `backtestSettings.${id}.${formName}`, value: forms[formName] };
+                            postEndpoint<API.Users.PostData, API.Users._PostData>('users/data', body);
+                        }
+                    })
+            }
         }
     }
 

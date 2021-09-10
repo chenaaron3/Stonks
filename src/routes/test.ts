@@ -1,7 +1,7 @@
 import express from 'express';
 import yahooFinance from 'yahoo-finance';
 import { getYahooBars } from '../helpers/yahoo';
-import { getOpenOrders, getAlpacaBars } from '../helpers/alpaca';
+import { changeAccount, getAccount, getAlpacaBars } from '../helpers/alpaca';
 import { getBacktestSummary, getAdjustedData } from '../helpers/utils';
 import { containsID, getDocument, setDocumentField, addDocument, getDocumentField } from '../helpers/mongo';
 import { getSymbols, getIndicator } from '../helpers/backtest';
@@ -11,8 +11,10 @@ import { MongoResults, COLLECTION_NAMES } from '../types/types';
 let router = express.Router();
 
 router.get('/', async (req, res) => {
-    // res.send(await getYahooBars("AAPL", new Date("1/1/1500"), new Date("2/19/2021"), "15Min"));
-    res.send(await getAlpacaBars("DHX", new Date("1/1/1500"), new Date("2/19/2021"), "1Hour"));
+    changeAccount({id: '', key: ''});
+    getAccount()
+        .then(account => res.json(account))
+        .catch(err => res.json(err));
 })
 
 router.get('/bars', async function (req, res, next) {

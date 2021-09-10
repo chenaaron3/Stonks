@@ -2,7 +2,7 @@ import { AlpacaAccount, AlpacaOrder, AlpacaPosition } from '@alpacahq/alpaca-tra
 import Backtest from './backtest';
 import {
     BarData, Timeframe, BoughtSymbolData, StockData, ValueOf,
-    PivotsData, ExportLogin, PassportUserData, UserData, BacktestSettingsData
+    PivotsData, ExportLogin, PassportUserData, UserData, BacktestSettingsData, AlpacaCredentialsData
 } from './common';
 import Indicator from './indicator';
 
@@ -12,10 +12,10 @@ export interface ErrorResponse {
 
 namespace API {
     export namespace Alpaca {
-        export interface Get { }
-        export type _Get = AlpacaAccount;
+        export type PostVerify = AlpacaCredentialsData;
+        export type _PostVerify = AlpacaAccount | ErrorResponse;
 
-        export interface GetClosedOrders { 
+        export interface GetClosedOrders {
             id: string;
         }
         export type _GetClosedOrders = AlpacaOrder[];
@@ -25,7 +25,7 @@ namespace API {
         }
         export type _GetOpenOrders = AlpacaOrder[];
 
-        export interface GetPositions { 
+        export interface GetPositions {
             id: string;
         }
         export type _GetPositions = AlpacaPosition[];

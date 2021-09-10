@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getEndpoint, postEndpoint, fetchBacktestResults } from '../helpers/api';
 import { setBacktestResults } from '../redux/slices/backtestSlice';
 import { setIndicatorOn, setIndicatorOption } from '../redux/slices/indicatorSlice';
+import { setLoading } from '../redux/slices/uiSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import './Dashboard.css';
 import {
@@ -239,6 +240,7 @@ const Dashboard: React.FC = (props) => {
         setChartData({
             winLossData, spanData, percentProfitData, profitData, bucketData
         })
+        dispatch(setLoading(false));
     }
 
     // send request to update a backtest

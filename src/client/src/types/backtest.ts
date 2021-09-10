@@ -29,7 +29,7 @@ namespace Backtest {
     }
 
     export interface EventData {
-        reason: string;
+        reason: EventReason;
         profit: number;
         percentProfit: number;
         buyDate: string;
@@ -41,6 +41,8 @@ namespace Backtest {
         risk?: number;
         keep?: boolean;
     }
+
+    export type EventReason = 'indicator' | 'target' | 'stoploss' | 'overdue';
 
     export interface EventScoreData {
         "Percent Profit": number;
