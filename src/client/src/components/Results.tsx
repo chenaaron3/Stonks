@@ -100,8 +100,8 @@ const Results: React.FC = () => {
                     let ordersBySymbol: ClosedOrdersData = {};
                     // categorize each order by their symbol
                     closedOrders.forEach(closedOrder => {
-                        // dont care about cancelled orders
-                        if (closedOrder.status === 'canceled') {
+                        // only care about filled orders
+                        if (closedOrder.status !== 'filled') {
                             return;
                         }
 

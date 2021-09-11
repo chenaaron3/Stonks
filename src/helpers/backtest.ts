@@ -194,12 +194,12 @@ async function getActionsToday(id: string, email: string) {
                     subject: 'Stock Updates!',
                     text: text
                 };
-                // sgMail.send(msg)
-                //     .then(() => console.log('Email sent to', email))
-                //     .catch(function (err) {
-                //         console.log(err);
-                //         console.log(err['response']['body']['errors'])
-                //     })
+                sgMail.send(msg)
+                    .then(() => console.log('Email sent to', email))
+                    .catch(function (err) {
+                        console.log(err);
+                        console.log(err['response']['body']['errors'])
+                    })
             }
             else {
                 console.log('No email sent')

@@ -29,6 +29,10 @@ const Sidebar: React.FC = (props) => {
                     let IconClass = icon;
                     let iconComponent = <IconClass fontSize='large' style={{ color: color }} />;
                     return <div className='sidebar-icon-wrapper' key={`sidebar-${index}`} onClick={() => {
+                        // ignore if already on the same page
+                        if (index === pageIndex) {
+                            return;
+                        }
                         // set page index and go to page
                         dispatch(setPageIndex(index));
                         // open loading page
