@@ -13,7 +13,9 @@ export interface ErrorResponse {
 namespace API {
     export namespace Alpaca {
         export type PostVerify = AlpacaCredentialsData;
-        export type _PostVerify = AlpacaAccount | ErrorResponse;
+        export type _PostVerify = {
+            status: string;
+        } | ErrorResponse;
 
         export interface GetClosedOrders {
             id: string;

@@ -205,12 +205,17 @@ const Account = () => {
                             })
                         }
                         else {
-                            alert('Account Verified');
+                            alert(res['status']);
                             // update the database
                             let body = { field: `backtestSettings.${id}.${formName}`, value: forms[formName] };
                             postEndpoint<API.Users.PostData, API.Users._PostData>('users/data', body);
                         }
                     })
+            }
+            else {
+                // update the database
+                let body = { field: `backtestSettings.${id}.${formName}`, value: forms[formName] };
+                postEndpoint<API.Users.PostData, API.Users._PostData>('users/data', body);
             }
         }
     }

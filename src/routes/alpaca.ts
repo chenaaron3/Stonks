@@ -10,10 +10,16 @@ var router = express.Router();
 router.post('/verify', (
     req: Request<{}, {}, API.Alpaca.PostVerify>,
     res: Response<API.Alpaca._PostVerify>) => {
+    // clearing credentials
+    if (req.body.id.length === 0 && req.body.key.length === 0) {
+        res.json({ status: 'Credentials Cleared' });
+        return;
+    }
+    // try to get account using credentials
     changeAccount(req.body);
     getAccount()
         .then(account => {
-            res.json(account);
+            res.json({ status: 'Credentials Verified' });
         })
         .catch(error => {
             res.json({ error: 'Invalid Alpaca Credentials' });

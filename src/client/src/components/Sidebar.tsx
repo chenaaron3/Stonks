@@ -1,6 +1,6 @@
-import React, { } from 'react';
+import React, { useEffect } from 'react';
 import './Sidebar.css';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import { setPageIndex, setLoading } from '../redux/slices/uiSlice';
 
@@ -19,7 +19,16 @@ let label = ['Home', 'Summary', 'Review', 'Simulate', 'Optimize', 'Watchlist', '
 const Sidebar: React.FC = (props) => {
     const dispatch = useAppDispatch();
     const history = useHistory();
+    const location = useLocation();
     const pageIndex = useAppSelector(state => state.ui.pageIndex);
+
+    useEffect(() => {
+        // set page index and go to page
+        let newIndex = pageName.indexOf(location.pathname);
+        if (newIndex > -1) {
+            dispatch(setPageIndex(newIndex));
+        }
+    }, [location])
 
     return <div className='sidebar'>
         <div className='sidebar-icon-list'>
@@ -33,8 +42,6 @@ const Sidebar: React.FC = (props) => {
                         if (index === pageIndex) {
                             return;
                         }
-                        // set page index and go to page
-                        dispatch(setPageIndex(index));
                         // open loading page
                         dispatch(setLoading(true));
                         history.push(pageName[index]);

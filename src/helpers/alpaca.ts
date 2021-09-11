@@ -30,7 +30,7 @@ function getOpenOrders() {
 function getClosedOrders() {
     return alpaca.getOrders({
         status: 'closed',
-        limit: 500
+        limit: 500,
     })
 }
 

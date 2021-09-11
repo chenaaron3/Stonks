@@ -20,7 +20,7 @@ RUN npm run build
 # Build client
 WORKDIR /usr/src/app/src/client
 ENV REACT_APP_SUBDIRECTORY=/stocks
-ENV REACT_APP_DEMO_ID=YPHbBGbF0l
+ENV REACT_APP_DEMO_ID=1xdqDkII7q
 ENV REACT_APP_DOMAIN=chenaaron.com
 RUN echo "$REACT_APP_SUBDIRECTORY, $REACT_APP_DEMO_ID, $REACT_APP_DOMAIN"
 RUN npm run build
