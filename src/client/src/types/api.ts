@@ -27,7 +27,7 @@ namespace API {
         }
         export type _GetOpenOrders = AlpacaOrder[];
 
-        export interface GetPositions {
+        export interface GetPositions { 
             id: string;
         }
         export type _GetPositions = AlpacaPosition[];

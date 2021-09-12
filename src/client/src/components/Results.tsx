@@ -13,11 +13,9 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import SearchOutlinedIcon from '@material-ui/icons/SearchOutlined';
 import Slider from '@material-ui/core/Slider';
 import Box from '@material-ui/core/Box';
-import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -55,6 +53,7 @@ const Results: React.FC = () => {
     const closedOrders = useAppSelector(state => state.user.closedOrders);
     const chartSettings = useAppSelector(state => state.user.chartSettings);
 
+    const [positions, setPositions] = useState<Set<string>>(new Set());
     const [sortedSymbols, setSortedSymbols] = useState<string[]>([]);
     const [recentThreshold, setRecentThreshold] = useState(0);
     const [maxRisk, setMaxRisk] = useState(50);
@@ -63,15 +62,18 @@ const Results: React.FC = () => {
     const [tabIndex, setTabIndex] = useState(0);
     const [scoreBy, setScoreBy] = useState<SortBy>('Percent Profit');
     const [ready, setReady] = useState(false);
+    const [seeClosedPositions, setSeeClosedPositions] = useState(false);
 
     const scoreTypes: SortBy[] = ['Percent Profit', 'Dollar Profit', 'Win Rate'];
     const supportedExports: ExportType[] = ['StocksTracker', 'Finviz'];
 
+    console.log(positions, closedOrders);
 
     useEffect(() => {
         analyze();
         getBoughtSymbols();
         getClosedOrders();
+        getPositions();
     }, [id])
 
     useEffect(() => {
@@ -89,6 +91,15 @@ const Results: React.FC = () => {
         let sortedSymbols = sortResultsByScore(results, scoreBy);
         setSortedSymbols(sortedSymbols);
         setReady(true);
+    }
+
+    const getPositions = () => {
+        if (positions.size == 0) {
+            getEndpoint<API.Alpaca.GetPositions, API.Alpaca._GetPositions>('alpaca/positions', { id })
+                .then(positions => {
+                    setPositions(new Set(positions.map(p => p['symbol'])));
+                })
+        }
     }
 
     // if has alpaca account, get orders to compare
@@ -117,12 +128,11 @@ const Results: React.FC = () => {
                         let hasBuy = ordersBySymbol[symbol][0].hasOwnProperty('buyPrice');
                         let hasSell = ordersBySymbol[symbol][0].hasOwnProperty('sellPrice');
                         if (hasBuy) {
+                            // event is complete
                             if (hasSell) {
+                                // add new event
                                 ordersBySymbol[symbol].unshift({});
                             }
-                        }
-                        else {
-
                         }
 
                         let event = ordersBySymbol[symbol][0];
@@ -137,7 +147,7 @@ const Results: React.FC = () => {
                             event['buyDate'] = date;
                         }
                     })
-                    setClosedOrders(ordersBySymbol);
+                    dispatch(setClosedOrders(ordersBySymbol));
                 })
         }
     }
@@ -306,6 +316,17 @@ const Results: React.FC = () => {
         </FormControl>
     </Box>;
 
+    let closedPositionsToggle = <FormControlLabel
+        control={
+            <Switch
+                checked={seeClosedPositions}
+                onChange={(e) => { setSeeClosedPositions(e.target.checked) }}
+                color='primary'
+            />
+        }
+        label={`See Closed Positions`}
+    />;
+
     let buySymbols = [];
     for (let i = 0; i < sortedSymbols.length; ++i) {
         let symbol = sortedSymbols[i];
@@ -414,6 +435,7 @@ const Results: React.FC = () => {
                 {/* Watchlist Symbols */}
                 <TabPanel value={tabIndex} index={3} style={tabPanelStyle}>
                     <div className='results-list'>
+                        {closedPositionsToggle}
                         {sortedSymbols.length == 0 && (<span>
                             There are no results...
                         </span>)
@@ -423,7 +445,8 @@ const Results: React.FC = () => {
                                 sortedSymbols.map((symbol, index) => {
                                     // if in watchlist or on alpaca with open position
                                     if (boughtSymbols.hasOwnProperty(symbol) ||
-                                        (closedOrders.hasOwnProperty(symbol)) && results['symbolData'][symbol]['holdings'].length > 0) {
+                                        (closedOrders.hasOwnProperty(symbol) && seeClosedPositions) ||
+                                        (positions.has(symbol) && !seeClosedPositions)) {
                                         return <Result sell key={index} symbol={symbol} index={index} result={results['symbolData'][symbol]}
                                             handleGetResult={handleGetResult} buySymbol={buySymbol} sellSymbol={sellSymbol}
                                             boughtSymbols={boughtSymbols} />
