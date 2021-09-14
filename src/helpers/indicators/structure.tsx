@@ -124,14 +124,14 @@ class Structure extends Indicator {
             potentialSupports.forEach(level => {
                 // score by relevance and strength
                 // if (support == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[support]["score"] * merged[support]["freshness"]) {
-                if (support == undefined || merged[level].count > merged[support].count) {
+                if (support == undefined || level > support) {
                     support = level;
                 }
             });
             potentialResistances.forEach(level => {
                 // score by relevance and strength
                 // if (resistance == undefined || merged[level]["score"] * merged[level]["freshness"] > merged[resistance]["score"] * merged[resistance]["freshness"]) {
-                if (resistance == undefined || merged[level].count > merged[resistance].count) {
+                if (resistance == undefined || level < resistance) {
                     resistance = level;
                 }
             })

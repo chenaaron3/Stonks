@@ -1,4 +1,4 @@
-import { isCrossed, getSwingPivots, getRSI, getTrueRange, getSimpleMovingAverage, isHighLow } from '../utils';
+import { getRealizedPivots, getSwingPivots, getRSI, getTrueRange, getSimpleMovingAverage, isHighLow } from '../utils';
 import Indicator from './indicator';
 
 import IndicatorType from '@shared/indicator';
@@ -28,29 +28,11 @@ class Divergence extends Indicator {
         let pivotDates = Object.keys(pivots).sort();
 
         // maps daily dates to realized pivot points
-        let realizedPivots: StockData = {};
-        // the date to realize next
-        let realizeIndex = 0;
-        for (let i = 0; i < this.dates.length; ++i) {
-            // if realized all the dates already
-            if (realizeIndex >= pivotDates.length) {
-                realizedPivots[this.dates[i]] = pivotDates.length - 1;
-                continue;
-            }
-
-            // if we just realized a date
-            if (this.dates[i] >= pivots[pivotDates[realizeIndex]]["realized"]) {
-                realizeIndex += 1;
-            }
-
-            // record the latest realized pivot
-            realizedPivots[this.dates[i]] = realizeIndex - 1;
-        }
+        let realizedPivots: StockData = getRealizedPivots(pivots, pivotDates, this.dates);
 
         this.pivots = pivots;
         this.pivotDates = pivotDates;
         this.rsi = getRSI(this.dates, this.prices, 14);
-
         let tr = getTrueRange(this.dates, this.highs, this.lows, this.closes);
         this.atr = getSimpleMovingAverage(this.dates, tr["data"], this.period);
 

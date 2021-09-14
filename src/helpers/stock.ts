@@ -3,8 +3,8 @@ import fs from 'fs';
 import { fork } from 'child_process';
 
 import { updateStockInfo, getDocument, getCollection, setStockInfo, addDocument } from "./mongo";
-import { clampRange, shallowEqual, makeid, getAdjustedData } from './utils';
-import { getIndicator } from './indicators';
+import { clampRange, shallowEqual, makeid, getAdjustedData, getSwingPivots, getRealizedPivots, getMean } from './utils';
+import {  } from './indicators';
 import { addJob } from './queue';
 import { getYahooBars } from './yahoo';
 import { getAlpacaBars } from './alpaca';
@@ -13,7 +13,6 @@ import { getSymbols } from './backtest';
 import { Timeframe, BarData } from '@shared/common';
 import { MongoPrices, COLLECTION_NAMES, MongoResults } from '../types/types';
 import { UpdateMessage, CheckSplitMessage, CreateDatasetMessage, } from '../types/job';
-import Trend from './indicators/trend';
 
 let PATH_TO_FAULTY = path.join(__dirname, "../res/faulty.json");
 let PATH_TO_BLACKLIST = path.join(__dirname, "../res/blacklist.json");
@@ -371,7 +370,7 @@ async function createDataset(id: string, result: MongoResults, window: number) {
                             if (!fs.existsSync(path.join(__dirname, "../data"))) {
                                 fs.mkdirSync(path.join(__dirname, "../data"));
                             }
-                            fs.writeFileSync(path.join(__dirname, "../data", `${id}.json`), JSON.stringify({ features: trimmedFeatures, labels: trimmedLabels }));
+                            fs.writeFileSync(path.join(__dirname, "../data", `${id}_${window}.json`), JSON.stringify({ features: trimmedFeatures, labels: trimmedLabels }));
                             console.log("Finished creating dataset!");
                             resolveJob();
                         }
@@ -402,39 +401,62 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
         else {
             // get price and indicator setup
             let { prices, volumes, opens, highs, lows, closes, dates } = getAdjustedData(json as BarData[], undefined, undefined);
+            const pivotsPeriod = 12;
+            let pivots = getSwingPivots(dates, prices, pivotsPeriod);
+            let pivotDates = Object.keys(pivots).sort();
+            let realizedPivots = getRealizedPivots(pivots, pivotDates, dates);
 
             // populate data with events
             let events = backtestData[symbol]["events"];
             for (let eventIndex = 0; eventIndex < events.length; ++eventIndex) {
                 let event = events[eventIndex];
                 let buyDate = event["buyDate"];
-                let buyIndex = dates.indexOf(buyDate);
+                let pivotIndex = realizedPivots[buyDate];
 
                 let feature: number[] = [];
-                let priceFeatures = [];
+                let priceFeatures: number[] = [];
+                let volumeFeatures: number[] = [];
+                let spanFeatures: number[] = [];
+                let segmentDates: string[] = [];
 
-                let startIndex = buyIndex - window + 1;
+                // get price features
+                let startIndex = pivotIndex - window + 1;
+                // not enough features
                 if (startIndex < 0) {
                     continue;
                 }
-                for (let i = startIndex; i <= buyIndex; ++i) {
-                    // add price data
-                    priceFeatures.push(prices[dates[i]]);                    
+                for (let i = startIndex; i <= pivotIndex; ++i) {
+                    let pivotDate = pivotDates[i];
+                    priceFeatures.push(prices[pivotDate]);
+                    segmentDates.push(pivotDate);
+                }
+                // add the price and date itself
+                priceFeatures.push(prices[buyDate]);
+                segmentDates.push(buyDate);
+
+                // go through each segment
+                for(let i = 0; i < segmentDates.length - 1; ++i) {
+                    let sectionVolumes: number[] = [];
+                    let start = dates.indexOf(segmentDates[i]);
+                    let end = dates.indexOf(segmentDates[i + 1]);
+                    // get volume features
+                    for(let cursor = start; cursor < end; ++cursor) {
+                        sectionVolumes.push(volumes[dates[cursor]]);
+                    }
+                    volumeFeatures.push(getMean(sectionVolumes));
+                    spanFeatures.push(end - start);
                 }
 
-                // not enough features
-                if (priceFeatures.length != window) {
-                    continue;
-                }
+                // console.log(symbol, buyDate, priceFeatures, volumeFeatures, spanFeatures)
 
+                // clamp price and volumes
                 priceFeatures = clampRange(priceFeatures);
-                feature = feature.concat(priceFeatures);
+                volumeFeatures = clampRange(volumeFeatures); 
+                spanFeatures = clampRange(spanFeatures);               
+                feature = feature.concat(priceFeatures).concat(volumeFeatures).concat(spanFeatures);
 
                 // dont include falsy data
                 if (feature.includes(null!) || feature.includes(undefined!) || feature.includes(NaN)) {
-                    continue;
-                }
-                else if (Math.abs(event["percentProfit"]) > .15) {
                     continue;
                 }
                 else {

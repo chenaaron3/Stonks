@@ -67,8 +67,6 @@ const Results: React.FC = () => {
     const scoreTypes: SortBy[] = ['Percent Profit', 'Dollar Profit', 'Win Rate'];
     const supportedExports: ExportType[] = ['StocksTracker', 'Finviz'];
 
-    console.log(positions, closedOrders);
-
     useEffect(() => {
         analyze();
         getBoughtSymbols();

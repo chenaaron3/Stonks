@@ -11,8 +11,6 @@ const MainLayout: React.FC = (props) => {
     const loading = useAppSelector(state => state.ui.loading);
     const history = useHistory();
 
-    console.log('Loading', loading);
-
     if (id == '') {
         console.log('ID IS BLANK!')
         history.push('/');

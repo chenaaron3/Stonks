@@ -311,6 +311,29 @@ function getSwingPivots(dates: string[], prices: StockData, period: number) {
     return pivots;
 }
 
+function getRealizedPivots(pivots: PivotsData, pivotDates: string[], dates: string[]){
+    // maps daily dates to realized pivot points
+    let realizedPivots: StockData = {};
+    // the date to realize next
+    let realizeIndex = 0;
+    for (let i = 0; i < dates.length; ++i) {
+        // if realized all the dates already
+        if (realizeIndex >= pivotDates.length) {
+            realizedPivots[dates[i]] = pivotDates.length - 1;
+            continue;
+        }
+
+        // if we just realized a date
+        if (dates[i] >= pivots[pivotDates[realizeIndex]]["realized"]) {
+            realizeIndex += 1;
+        }
+
+        // record the latest realized pivot
+        realizedPivots[dates[i]] = realizeIndex - 1;
+    }
+    return realizedPivots;
+}
+
 function isHighLow(dates: string[], prices: StockData, period: number, dateIndex: number) {
     let currentPrice = prices[dates[dateIndex]];
     let res = { high: true, low: true };
@@ -492,6 +515,7 @@ function getStandardDeviation(array: number[]) {
 
 function getMean(array: number[]) {
     const n = array.length;
+    if (n == 0) return 0;
     const mean = array.reduce((a, b) => a + b) / n;
     return mean;
 }
@@ -519,6 +543,9 @@ function inRange(value: number, reference: number, range: number) {
 }
 
 export {
-    getAdjustedData, isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, isHighLow, howHighLow,
-    getStochasticOscillator, formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, clampRange, shallowEqual, getBacktestSummary, inRange
+    getAdjustedData, isCrossed, getSimpleMovingAverage, getRSI, getWilderSmoothing, getMACD, 
+    getExponentialMovingAverage, getTrueRange, getDirectionalMovement, getSwingPivots, getRealizedPivots, 
+    isHighLow, howHighLow,
+    getStochasticOscillator, formatDate, hoursBetween, daysBetween, sameDay, toPST, makeid, normalizeRange, 
+    clampRange, shallowEqual, getBacktestSummary, inRange, getMean
 }

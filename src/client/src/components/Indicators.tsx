@@ -3,7 +3,6 @@ import './Indicators.css';
 import caret from "../images/arrow.svg";
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
 import { setIndicatorOn, setIndicatorOption } from '../redux/slices/indicatorSlice';
-import { setBacktestID } from '../redux/slices/backtestSlice';
 import Indicator from "./Indicator";
 import IndicatorType from '../types/indicator';
 
@@ -43,17 +42,17 @@ const Indicators: React.FC = () => {
             if (!backtestIndicatorOptions.hasOwnProperty(indicatorName)) {
                 // initialize global state with default values
                 indicators[indicatorName]["fields"].map((field, index) => {
-                    setIndicatorOption({ indicatorName, field, value: indicators[indicatorName]["default"][index] });
+                    dispatch(setIndicatorOption({ indicatorName, field, value: indicators[indicatorName]["default"][index] }));
                 })
             }
         })
 
         // Special Cases
         if (backtestIndicatorOptions.hasOwnProperty("Divergence")) {
-            setIndicatorOption({ indicatorName: "RSI", field: indicators["RSI"]["fields"][0], value: indicators["RSI"]["default"][0] });
-            setIndicatorOption({ indicatorName: "RSI", field: indicators["RSI"]["fields"][1], value: 0 });
-            setIndicatorOption({ indicatorName: "RSI", field: indicators["RSI"]["fields"][2], value: 100 });
-            setIndicatorOn({ indicatorName: "RSI", on: true });
+            dispatch(setIndicatorOption({ indicatorName: "RSI", field: indicators["RSI"]["fields"][0], value: indicators["RSI"]["default"][0] }));
+            dispatch(setIndicatorOption({ indicatorName: "RSI", field: indicators["RSI"]["fields"][1], value: 0 }));
+            dispatch(setIndicatorOption({ indicatorName: "RSI", field: indicators["RSI"]["fields"][2], value: 100 }));
+            dispatch(setIndicatorOn({ indicatorName: "RSI", on: true }));
         }
     }, [])
 
