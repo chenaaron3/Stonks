@@ -15,7 +15,7 @@
     "axios": "^0.21.1",
     "color-interpolate": "^1.0.5",
     "distinct-colors": "^3.0.0",
-    "immer": "^9.0.5",
+    "immer": "^9.0.6",
     "neumorphism-react": "^1.1.1",
     "pusher-js": "^6.0.3",
     "react": "^16.13.1",
