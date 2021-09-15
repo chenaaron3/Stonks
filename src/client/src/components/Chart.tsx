@@ -71,7 +71,7 @@ let dates: string[] = [];
 
 const Chart = () => {
     // constants
-    const indicatorCharts = { 'RSI': RSI, 'MACD': MACD, 'ADX': ADX, 'Stochastic': Stochastic };
+    const indicatorCharts = { 'RSI': RSI, 'MACD': MACD, 'ADX': ADX, 'Stochastic': Stochastic, 'MACD2': MACD };
     const overlayCharts = ['SMA', 'GC', 'EMA', 'Structure', 'Pullback', 'Breakout', 'ATR', 'Swing', 'Divergence', 'Trend', 'Candle', 'High'];
     const chunkSize = 500;
     const scrollThreshold = .025;
