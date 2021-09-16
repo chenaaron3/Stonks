@@ -589,13 +589,6 @@ const Chart = () => {
         let dotRadius = props.size;
 
         if (payload) {
-            // debug pivots
-            if (pivots && pivots.hasOwnProperty(payload['date'])) {
-                return (
-                    <circle cx={cx} cy={cy} r={dotRadius} stroke='black' strokeWidth={0} fill='blue' />
-                );
-            }
-
             // if is a buy date
             if (buyDates.has(payload['date'])) {
                 let color = 'green';
@@ -621,6 +614,12 @@ const Chart = () => {
             // if holding
             else if (holdings.hasOwnProperty(payload['date'])) {
                 return <circle cx={cx} cy={cy} r={dotRadius} stroke='black' strokeWidth={0} fill='yellow' />
+            }
+            // debug pivots
+            if (pivots && pivots.hasOwnProperty(payload['date'])) {
+                return (
+                    <circle cx={cx} cy={cy} r={dotRadius} stroke='black' strokeWidth={0} fill='blue' />
+                );
             }
         }
 
@@ -673,7 +672,8 @@ const Chart = () => {
     />;
 
     // Main Line
-    let mainLine = <Line dataKey='price' stroke='#ff7300' dot={<CustomizedDot size={10} />}>
+    const lineColor = '#ff7300';
+    let mainLine = <Line dataKey='price' stroke={lineColor} dot={<CustomizedDot size={10} />} activeDot={false}>
         <ErrorBar dataKey='greenCandleBody' width={0} strokeWidth={5} stroke='green' direction='y' />
         <ErrorBar dataKey='redCandleBody' width={0} strokeWidth={5} stroke='red' direction='y' />
         <ErrorBar dataKey='candleWick' width={1} strokeWidth={1} stroke='black' direction='y' />
@@ -682,7 +682,7 @@ const Chart = () => {
         <ErrorBar dataKey='actual' width={15} strokeWidth={1} stroke='black' direction='y' />
     </Line>;
     if (!chartSettings['Candles']) {
-        mainLine = <Line dataKey='price' stroke='#ff7300' dot={<CustomizedDot size={10} />}>
+        mainLine = <Line dataKey='price' stroke={lineColor} dot={<CustomizedDot size={10} />}>
             <ErrorBar dataKey='stoploss' width={15} strokeWidth={1} stroke='red' direction='y' />
             <ErrorBar dataKey='target' width={15} strokeWidth={1} stroke='green' direction='y' />
             <ErrorBar dataKey='actual' width={15} strokeWidth={1} stroke='black' direction='y' />

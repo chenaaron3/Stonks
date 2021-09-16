@@ -7,7 +7,7 @@ import sgMail from '@sendgrid/mail';
 import csv from 'csv';
 import { getIndicator } from './indicators';
 import { fixFaulty, getPrices } from './stock';
-import { getDocument, setDocumentField, addDocument } from './mongo';
+import { getDocument, setDocumentField, addDocument, getDocumentField } from './mongo';
 import { daysBetween, getBacktestSummary, getAdjustedData } from './utils';
 import { sortResultsByScore } from '../client/src/helpers/utils';
 import { triggerChannel } from './pusher';
@@ -213,6 +213,12 @@ async function getActionsToday(id: string, email: string) {
 //#region Queue Jobs
 // queues a backtest
 function backtest(id: string, strategyOptions: Backtest.StrategyOptions) {
+    // add id to the database
+    addDocument('results', {
+        '_id': id,
+        'results': 'Results are not ready yet!'
+    });
+
     return addJob(() => {
         return new Promise(async resolveJob => {
             // spawn child to do work
@@ -271,7 +277,18 @@ function updateBacktest(id: string) {
 }
 
 // queues an optimization
-function optimizeStoplossTarget(id: string, optimizeOptions: Backtest.OptimizeOptions) {
+async function optimizeStoplossTarget(id: string, optimizeOptions: Backtest.OptimizeOptions) {
+    // make job for backtest with no highs option
+    let reference = await getDocument<MongoResults>('results', id + '_reference')
+    if (!reference) {
+        console.log('Creating reference to optimize', id);
+        let doc = await getDocumentField<MongoResults>('results', id, ['results.strategyOptions']);
+        if (doc) {
+            let strategyOptions = doc['results']['strategyOptions'];
+            strategyOptions['highPeriod'] = 0;
+            backtest(id + '_reference', strategyOptions);
+        }
+    }
     let maxResults = 15;
     let totalRatios = (optimizeOptions['endRatio'] - optimizeOptions['startRatio']) / optimizeOptions['strideRatio'];
     if (totalRatios > maxResults) {
@@ -399,10 +416,18 @@ function conductBacktest(strategyOptions: Backtest.StrategyOptions, id: string) 
 function conductStoplossTargetOptimization(id: string, optimizeOptions: Backtest.OptimizeOptions) {
     return new Promise<void>(async (resolve, reject) => {
         // try to get previous results
-        let previousResults = await getDocument('results', id);
+        let reference = await getDocument<MongoResults>('results', id + '_reference');
+        let previousResults = await getDocument<MongoResults>('results', id);
         if (!previousResults || typeof (previousResults['results']) == 'string') {
             reject('Optimize Error: Backtest results does not exist!');
             return;
+        }
+        if (!reference || typeof (reference['results']) == 'string') {
+            reject('Optimize Error: Reference results does not exist!');
+            return;
+        }
+        else {
+            console.log('Reference found');
         }
 
         // list of results
@@ -427,7 +452,7 @@ function conductStoplossTargetOptimization(id: string, optimizeOptions: Backtest
 
         // create threads that split up the work
         let finishedWorkers = 0;
-        let symbols = Object.keys(previousResults['results']['symbolData']);
+        let symbols = Object.keys(reference['results']['symbolData']);
         let partitionSize = Math.ceil(symbols.length / Number(process.env.NUM_THREADS));
         let progress = 0;
         for (let i = 0; i < Number(process.env.NUM_THREADS); ++i) {
@@ -483,7 +508,7 @@ function conductStoplossTargetOptimization(id: string, optimizeOptions: Backtest
                     triggerChannel(id, 'onOptimizeProgressUpdate', { progress: 100 * progress / symbols.length });
                 }
             })
-            child.send({ type: 'optimizeStoplossTargetJob', partition, id, previousResults, optimizeOptions });
+            child.send({ type: 'optimizeStoplossTargetJob', partition, id, previousResults: reference, strategyOptions: previousResults['results']['strategyOptions'], optimizeOptions });
         }
     })
 }
@@ -903,32 +928,29 @@ function findIntersections(strategyOptions: Backtest.StrategyOptions, symbol: st
                             // if all supports agree, buy the stock
                             if (allIndicatorsBuy && (buyPrices.length == 0 || strategyOptions['multipleBuys'])) {
                                 setStoplossTarget(stoplossTarget, strategyOptions, prices[day], day, atr, lows, highs, dates, i);
+                                // if too high, cancel buy
                                 if (high && stoplossTarget.hasOwnProperty(day) && stoplossTarget[day]['target']
                                     && stoplossTarget[day]['target']! > (high.getGraph() as { 'High': StockData })['High'][day]) {
                                     delete stoplossTarget[day];
-                                    continue;
                                 }
+                                // buy the stock                                
                                 else {
                                     buyPrices.push(prices[day]);
                                     buyDates.push(day);
                                 }
+                                buyExpiration = 0;
+                            }
+                            else {
+                                buyExpiration -= 1;
+                            }
 
+                            // look for another buy signal
+                            if (buyExpiration == 0) {
                                 buySignal = false;
                                 buyExpiration = expiration;
                                 Object.keys(buyMap).forEach(indicator => {
                                     buyMap[indicator] = false;
                                 });
-                            }
-                            else {
-                                buyExpiration -= 1;
-                                // look for another buy signal
-                                if (buyExpiration == 0) {
-                                    buySignal = false;
-                                    buyExpiration = expiration;
-                                    Object.keys(buyMap).forEach(indicator => {
-                                        buyMap[indicator] = false;
-                                    });
-                                }
                             }
                         }
 

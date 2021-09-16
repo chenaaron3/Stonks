@@ -33,6 +33,7 @@ export interface OptimizeStoplossTargetJobRequest {
     partition: string[];
     id: string;
     previousResults: MongoResults;
+    strategyOptions: Backtest.StrategyOptions;
     optimizeOptions: Backtest.OptimizeOptions;
 }
 

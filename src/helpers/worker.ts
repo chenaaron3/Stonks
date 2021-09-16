@@ -132,7 +132,7 @@ process.on('message', async (msg: RequestMessages) => {
 
             // find results for the symbol
             try {
-                let optimizedSymbol = await optimizeStoplossTargetForSymbol(msg.previousResults["results"]["strategyOptions"], msg.optimizeOptions, symbol, previousResults);
+                let optimizedSymbol = await optimizeStoplossTargetForSymbol(msg.strategyOptions, msg.optimizeOptions, symbol, previousResults);
                 optimizedData[symbol] = optimizedSymbol["results"];
                 console.log(`${symbol} => ${(optimizedSymbol["effective"] / optimizedSymbol["count"] * 100).toFixed(0)}% (${optimizedSymbol["effective"] + "/" + optimizedSymbol["count"]})`);
 

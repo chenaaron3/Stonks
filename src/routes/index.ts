@@ -75,12 +75,6 @@ router.post('/backtest', async (
         id = makeid(10);
     }
 
-    // add id to the database
-    addDocument('results', {
-        '_id': id,
-        'results': 'Results are not ready yet!'
-    });
-
     let position = backtest(id, strategyOptions);
 
     // send response so doesn't hang and gets the unique id
@@ -110,7 +104,7 @@ router.post('/optimizeStoplossTarget', async (
         id = optimized['_optimized']!['base'];
     }
 
-    let position = optimizeStoplossTarget(id, optimizeOptions);
+    let position = await optimizeStoplossTarget(id, optimizeOptions);
 
     // send response so doesn't hang and gets the unique id
     if (position == 0) {
