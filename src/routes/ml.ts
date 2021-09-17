@@ -141,7 +141,7 @@ interface TrainResults {
 router.get("/train", async (req: Request<{}, {}, {}, { id: string }>, res) => {
     const id = req.query.id || 'generated';
     res.send("ok");
-    let unitsArray = [30, 60, 90];
+    let unitsArray = [15, 30, 60, 90];
     let results: { [key: string]: TrainResults } = {};
 
     for (let layers = 0; layers < 5; ++layers) {
@@ -156,23 +156,10 @@ router.get("/train", async (req: Request<{}, {}, {}, { id: string }>, res) => {
 });
 
 const train = async (id: string, layers: number, units: number) => {
-    let csvPath = path.join(DATA_PATH, `${id}.json`);
-    let data = JSON.parse(fs.readFileSync(csvPath, { encoding: "utf-8" })) as { features: number[][]; labels: number[] };
-    let pairs: { feature: number[]; label: number }[] = [];
+    // get data
+    let { features, labels } = getData(id);
 
-    data["features"].forEach((feature, i) => {
-        let label = data["labels"][i];
-        pairs.push({ feature: feature, label: label });
-    })
-
-    shuffle(pairs);
-    let features: number[][] = [];
-    let labels: number[] = [];
-    pairs.forEach(pair => {
-        features.push(pair["feature"]);
-        labels.push(pair["label"]);
-    })
-
+    // split data
     let predictionFeatures = features.splice(0, 20);
     let predictionLabels = labels.splice(0, 20);
     let inputShape = features[0].length;
@@ -197,7 +184,7 @@ const train = async (id: string, layers: number, units: number) => {
     // Start model training process.
     async function train() {
         await model.fit(tensorFeatures, tensorLabels, {
-            epochs: 50,
+            epochs: 100,
             validationSplit: .2,
             shuffle: true,
             callbacks: tf.node.tensorBoard(`D:/Desktop/tmp/${id}_${layers}_${units}`)
@@ -229,6 +216,54 @@ const train = async (id: string, layers: number, units: number) => {
     await model.save(`file://${modelPath}`)
 
     return results;
+}
+
+// train based on prices
+router.get("/eval", async (req: Request<{}, {}, {}, { id: string, layers: number, units: number }>, res) => {
+    const id = req.query.id || 'generated';
+    const layers = req.query.layers;
+    const units = req.query.units;
+
+    let { features, labels } = getData(id);
+    let inputShape = features[0].length;
+
+    let modelPath = path.join(MODEL_PATH, `${id}_${layers}_${units}`)
+    let model: tf.Sequential;
+    if (fs.existsSync(modelPath)) {
+        model = (await tf.loadLayersModel(`file://${path.join(modelPath, 'model.json')}`)) as tf.Sequential;
+    }
+    else {
+        model = createModel(inputShape, layers, units);
+    }
+
+    model.compile({
+        loss: 'binaryCrossentropy',
+        optimizer: "adam",
+        metrics: ['accuracy']
+    });
+
+    let eval_val = model.evaluate(tf.tensor(features), tf.tensor(labels)) as tf.Scalar[];
+    res.json({ results: [eval_val[0].arraySync(), eval_val[1].arraySync()] });
+});
+
+const getData = (id: string) => {
+    let csvPath = path.join(DATA_PATH, `${id}.json`);
+    let data = JSON.parse(fs.readFileSync(csvPath, { encoding: "utf-8" })) as { features: number[][]; labels: number[] };
+    let pairs: { feature: number[]; label: number }[] = [];
+
+    data["features"].forEach((feature, i) => {
+        let label = data["labels"][i];
+        pairs.push({ feature: feature, label: label });
+    })
+
+    shuffle(pairs);
+    let features: number[][] = [];
+    let labels: number[] = [];
+    pairs.forEach(pair => {
+        features.push(pair["feature"]);
+        labels.push(pair["label"]);
+    })
+    return { features, labels }
 }
 
 const createModel = (inputShape: number, layers: number, units: number) => {

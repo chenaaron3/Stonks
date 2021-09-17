@@ -932,13 +932,14 @@ function findIntersections(strategyOptions: Backtest.StrategyOptions, symbol: st
                                 if (high && stoplossTarget.hasOwnProperty(day) && stoplossTarget[day]['target']
                                     && stoplossTarget[day]['target']! > (high.getGraph() as { 'High': StockData })['High'][day]) {
                                     delete stoplossTarget[day];
+                                    buyExpiration -= 1;
                                 }
                                 // buy the stock                                
                                 else {
                                     buyPrices.push(prices[day]);
                                     buyDates.push(day);
+                                    buyExpiration = 0;
                                 }
-                                buyExpiration = 0;
                             }
                             else {
                                 buyExpiration -= 1;

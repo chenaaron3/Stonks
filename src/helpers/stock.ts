@@ -4,7 +4,7 @@ import { fork } from 'child_process';
 
 import { updateStockInfo, getDocument, getCollection, setStockInfo, addDocument } from "./mongo";
 import { clampRange, shallowEqual, makeid, getAdjustedData, getSwingPivots, getRealizedPivots, getMean } from './utils';
-import {  } from './indicators';
+import { } from './indicators';
 import { addJob } from './queue';
 import { getYahooBars } from './yahoo';
 import { getAlpacaBars } from './alpaca';
@@ -387,6 +387,8 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
     let backtestData = result["results"]["symbolData"];
     let features = [];
     let labels = [];
+    let yearCutoff = new Date();
+    yearCutoff.setDate(yearCutoff.getDate() - 365);
     for (let symbolIndex = 0; symbolIndex < symbols.length; ++symbolIndex) {
         let symbol = symbols[symbolIndex];
         console.log(symbol, result["results"]["strategyOptions"]["timeframe"]);
@@ -413,6 +415,11 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
                 let buyDate = event["buyDate"];
                 let pivotIndex = realizedPivots[buyDate];
 
+                // event too old
+                if (new Date(event['buyDate']) < yearCutoff) {
+                    continue;
+                }
+
                 let feature: number[] = [];
                 let priceFeatures: number[] = [];
                 let volumeFeatures: number[] = [];
@@ -435,12 +442,12 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
                 segmentDates.push(buyDate);
 
                 // go through each segment
-                for(let i = 0; i < segmentDates.length - 1; ++i) {
+                for (let i = 0; i < segmentDates.length - 1; ++i) {
                     let sectionVolumes: number[] = [];
                     let start = dates.indexOf(segmentDates[i]);
                     let end = dates.indexOf(segmentDates[i + 1]);
                     // get volume features
-                    for(let cursor = start; cursor < end; ++cursor) {
+                    for (let cursor = start; cursor < end; ++cursor) {
                         sectionVolumes.push(volumes[dates[cursor]]);
                     }
                     volumeFeatures.push(getMean(sectionVolumes));
@@ -451,8 +458,10 @@ async function gatherData(symbols: string[], result: MongoResults, window: numbe
 
                 // clamp price and volumes
                 priceFeatures = clampRange(priceFeatures);
-                volumeFeatures = clampRange(volumeFeatures); 
-                spanFeatures = clampRange(spanFeatures);               
+                volumeFeatures = clampRange(volumeFeatures);
+                spanFeatures = clampRange(spanFeatures);
+                // volumeFeatures = [];
+                // spanFeatures = [];
                 feature = feature.concat(priceFeatures).concat(volumeFeatures).concat(spanFeatures);
 
                 // dont include falsy data
