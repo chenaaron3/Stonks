@@ -81,6 +81,12 @@ declare module '@alpacahq/alpaca-trade-api' {
         pending_cancel = "pending_cancel",
     }
 
+    export interface AlpacaPatchOrder {
+        qty?: number;
+        time_in_force?: TimeInForce;
+        limit_price?: number;
+        stop_price?: number;
+    }
     export interface AlpacaOrder {
         id: string;
         client_order_id?: string;
@@ -364,6 +370,7 @@ declare module '@alpacahq/alpaca-trade-api' {
         createOrder(params: AlpacaTradeConfig): Promise<AlpacaOrder>;
         cancelOrder(oid: string): Promise<{}>;
         cancelAllOrders(): Promise<{}>;
+        replaceOrder(id: string, newOrder: AlpacaPatchOrder): Promise<AlpacaOrder>;
 
 
         getAssets(params: GetAssetsParams): Promise<Asset[]>;

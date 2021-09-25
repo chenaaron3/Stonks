@@ -1,7 +1,7 @@
 import express from 'express';
 import yahooFinance from 'yahoo-finance';
 import { getYahooBars } from '../helpers/yahoo';
-import { changeAccount, getAccount, getAlpacaBars } from '../helpers/alpaca';
+import { changeAccount, getAccount, getAlpacaBars, convertToMarketSell } from '../helpers/alpaca';
 import { getBacktestSummary, getAdjustedData } from '../helpers/utils';
 import { containsID, getDocument, setDocumentField, addDocument, getDocumentField } from '../helpers/mongo';
 import { getSymbols, getIndicator } from '../helpers/backtest';
@@ -11,7 +11,7 @@ import { MongoResults, COLLECTION_NAMES } from '../types/types';
 let router = express.Router();
 
 router.get('/', async (req, res) => {
-    changeAccount({id: '', key: ''});
+    changeAccount({ id: '', key: '' });
     getAccount()
         .then(account => res.json(account))
         .catch(err => res.json(err));
@@ -85,4 +85,4 @@ router.post('/indicator', async (req, res) => {
     }
 })
 
-export =router;
+export = router;

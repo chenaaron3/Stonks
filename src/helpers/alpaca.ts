@@ -1,4 +1,5 @@
 import Alpaca, { BarsV2Response, GetHistoricalOptions, Timeframe, TradeDirection, TradeType, TimeInForce, AlpacaOrder } from '@alpacahq/alpaca-trade-api';
+import { getLatestPrice } from './stock';
 import axios from 'axios';
 
 import { BarData, AlpacaCredentialsData } from '@shared/common';
@@ -172,6 +173,39 @@ function cancelPreviousOrders() {
     })
 }
 
+function convertToMarketSell(symbol: string) {
+    return new Promise<void>(resolve => {
+        alpaca.getOrders({
+            status: 'all'            
+        }).then(async orders => {
+            let currentPrice = await getLatestPrice(symbol);
+            // Get only the closed orders for a particular stock
+            const filteredOrders = orders.filter(order => order.symbol == symbol && order.side == 'sell')
+            let count = 0;
+            for (let i = 0; i < filteredOrders.length; ++i) {
+                let order = filteredOrders[i];
+                try {
+                    let response = await alpaca.replaceOrder(order['id'], {
+                        limit_price: currentPrice['close']
+                    });
+                    console.log(response);
+                    count += 1;
+                }
+                catch (e) {
+                    console.log('Failed to update order for', symbol, e);
+                }
+            }
+            if (count > 0) {
+                console.log('Updated', count, 'orders from', symbol, ' to sell at ', currentPrice['close']);
+            }
+            else {
+                console.log('Updated nothing from', symbol);
+            }
+            resolve();
+        })
+    })
+}
+
 function cancelAllOrders() {
     return alpaca.cancelAllOrders();
 }
@@ -218,4 +252,4 @@ function requestMarketOrderSell(symbol: string) {
     })
 }
 
-export { changeAccount, getAccount, getOpenOrders, getClosedOrders, getPositions, getAlpacaBars, cancelAllOrders, cancelPreviousOrders, requestBracketOrder, requestMarketOrderSell, };
+export { changeAccount, getAccount, getOpenOrders, getClosedOrders, getPositions, getAlpacaBars, cancelAllOrders, convertToMarketSell, cancelPreviousOrders, requestBracketOrder, requestMarketOrderSell, };

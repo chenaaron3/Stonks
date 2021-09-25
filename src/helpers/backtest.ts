@@ -12,7 +12,7 @@ import { daysBetween, getBacktestSummary, getAdjustedData } from './utils';
 import { sortResultsByScore } from '../client/src/helpers/utils';
 import { triggerChannel } from './pusher';
 import { addJob } from './queue';
-import { cancelPreviousOrders, requestBracketOrder, getPositions, changeAccount, requestMarketOrderSell } from './alpaca';
+import { cancelPreviousOrders, requestBracketOrder, getPositions, changeAccount, requestMarketOrderSell, convertToMarketSell } from './alpaca';
 import Indicator from './indicators/indicator';
 
 import { MongoResults, MongoUser } from '../types/types';
@@ -126,27 +126,22 @@ async function getActionsToday(id: string, email: string) {
 
                         // adjust parameters
                         if (tradeSettings) {
-                            console.log(tradeSettings);
                             // trade if below risk parameter
                             if (tradeSettings['maxRisk']) shouldTrade = risk! <= parseInt(tradeSettings['maxRisk'].toString());
-                            console.log(shouldTrade);
                             // check if portfolio is maxed out already
-                            if (tradeSettings['maxPositions']) shouldTrade = shouldTrade && (positions.length + buyOrders.length <= Number(tradeSettings['maxPositions']));
-                            console.log(shouldTrade, positions.length, buyOrders.length);
-                            if (!shouldTrade) console.log(positions)
+                            if (tradeSettings['maxPositions']) shouldTrade = shouldTrade && (positions.length + buyOrders.length < Number(tradeSettings['maxPositions']));
                             // adjust position size by how many positions desired in portfolio
                             if (tradeSettings['maxPositions']) positionSize = 1 / (parseInt(tradeSettings['maxPositions'].toString()));
-                            console.log(shouldTrade);
                         }
 
                         if (shouldTrade) {
                             try {
                                 await requestBracketOrder(buySymbol, buyPrice, positionSize, stoploss!, target!);
                                 buyOrders.push(buySymbol);
-                                console.log('Successfully Ordered:', buySymbol);
+                                console.log('Successfully Bought:', buySymbol);
                             }
                             catch (e) {
-                                console.log('Order Failed:', e)
+                                console.log('Buy Order Failed:', e)
                                 // insufficient buying power                            
                             }
                         }
@@ -155,12 +150,19 @@ async function getActionsToday(id: string, email: string) {
                 actions['buy'] = buyOrders;
 
                 // execute alpaca orders for sells (overdue)
-                actions['sell'].forEach(async sellSymbol => {
+                for (let i = 0; i < actions['sell'].length; ++i) {
+                    let sellSymbol = actions['sell'][i];
                     let marketOrderReasons: Backtest.EventReason[] = ['overdue', 'indicator'];
                     if (marketOrderReasons.includes(sellData[sellSymbol]['event']['reason'])) {
-                        await requestMarketOrderSell(sellSymbol);
+                        try {
+                            await convertToMarketSell(sellSymbol);
+                            console.log('Successfully Sold:', sellSymbol);
+                        }
+                        catch (e) {
+                            console.log('Sell Order Failed:', e)
+                        }
                     }
-                })
+                }
             }
 
             console.log(`#Buys: ${actions['buy'].length}, #Sells: ${actions['sell'].length}`)
