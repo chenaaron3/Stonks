@@ -12,7 +12,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "@types/axios": "^0.14.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "color-interpolate": "^1.0.5",
     "distinct-colors": "^3.0.0",
     "immer": "^9.0.5",
